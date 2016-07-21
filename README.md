@@ -35,8 +35,6 @@ Aurora, etc...), database size, etc...
 
 TODO: decide on startup command
 
-TODO:
-
 # CloudFoundry Broker Mode
 
 (Note: the features described in this section are not yet implemented)
@@ -54,7 +52,5 @@ To start Steward in CloudFoundry broker mode, run the following command:
 ```
 
 # Helm mode
-
-(Note: the features described in this section are not yet implemented)
 
 TODO
