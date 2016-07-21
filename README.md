@@ -39,7 +39,7 @@ it executes the following algorithm:
     field to a human-readable description of the error. Then stops processing
 2. Creates the service according to its configuration (see below)
   - If creation failed, Steward sets the `status` field to `Failed` and adds an appropriate explanation to the `statusDescription` field
-3. Creates a [ConfigMap][configMap] that contains the non-secret data describing how to use the service. The ConfigMap will contain a field called `metadata`, which is a `ServicePlanCreation` object
+3. Creates a [ConfigMap][configMap] that contains the non-secret data describing how to use the service. The ConfigMap will contain a field called `metadata`, which is a [`ServicePlanCreation`][servicePlanCreation] object
 
 # Backing Services
 
@@ -82,3 +82,4 @@ TODO
 [3pr]: https://github.com/kubernetes/kubernetes/blob/master/docs/design/extending-api.md
 [rds]: https://aws.amazon.com/rds
 [configMap]: http://kubernetes.io/docs/user-guide/configmap/
+[servicePlanCreation]: ./DATA_STRUCTURES.md#serviceplancreation
