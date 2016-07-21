@@ -9,8 +9,9 @@ TODO
 # `ServicePlanClaim`
 
 This object is submitted by the application as JSON in a [`ThirdPartyResource`][3pr]
-when the application wants Steward to create a new service for its use. Steward then uses the object
-to communicate the status of the service creation operation.
+when the application wants Steward to create a new service for its use. Steward then mutates the object
+to communicate the status of the service creation operation. Applications may watch the event stream
+for this object to watch progress of service creation.
 
 - `serviceProvider` - the name of the `ServiceProvider` the application wants
 - `servicePlan` - the name of the `ServicePlan` the application wants
