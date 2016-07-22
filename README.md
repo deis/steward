@@ -71,7 +71,7 @@ appropriate 3PR.
 To start Steward in CloudFoundry broker mode, run the following command:
 
 ```console
-./steward --mode=cf --hostname=broker.domain.com --username=admin --password=foo`
+./steward --mode=cf --hostname=broker.domain.com --username=admin --password=foo
 ```
 
 ## Helm mode
