@@ -13,9 +13,9 @@ Specifically, its high-level goals are to:
 
 # Concepts
 
-Steward is a Go program that runs in 1 or more namespaces. It has a control loop that writes to
-reads from a set of [`ThirdPartyResource`][3pr]s
-(called 3PRs hereafter).
+Steward is a Go program that runs in 1 or more Kubernetes Pods. It runs a control loop that watches
+the event stream for a set of [`ThirdPartyResource`][3pr]s (called 3PRs hereafter), in one, some, or
+all available namespaces.
 
 ## Available Services
 
