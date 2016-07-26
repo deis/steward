@@ -15,16 +15,19 @@ Specifically, its high-level goals are to:
 
 Steward is a Go program that runs in 1 or more Kubernetes Pods. It runs a control loop that watches
 the event stream for a set of [`ThirdPartyResource`][3pr]s (called 3PRs hereafter), in one, some, or
-all available namespaces.
+all available namespaces. An operator may run many Stewards in a Kubernetes cluster, all responsible
+for provisioning different sets of services.
 
 ## Available Services
 
-On startup, Steward publishes data to a set of 3PRs that indicate the availability of an available service
-(`ServiceProvider` hereafter). It also publishes the set of plans the service provides (`ServicePlan` hereafter).
+On startup, a Steward publishes its data to a set of 3PRs that indicate the availability of a
+service (`ServiceProvider` hereafter). It also publishes a set of plans availble for the service
+provides (`ServicePlan` hereafter).  A plan is a specific "size" of a service like `mysql:small`,
+`mysql:large`, `memcache:xlarge`.
 Steward can be configured to publish this data to any subset of namespaces in the Kubernetes cluster, or all of them.
 
-Once published, the application should query these `ServiceProvider` and `ServicePlan` 3PRs to determine what
-services are available.
+Once published, an application that needs some service should query these `ServiceProvider` and
+`ServicePlan` 3PRs to determine what services are available in its namespace or cluster.
 
 ## Using a Service
 
