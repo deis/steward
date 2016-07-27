@@ -13,10 +13,13 @@ Specifically, its high-level goals are to:
 
 # Concepts
 
-Steward is a Go program that runs in 1 or more Kubernetes Pods. It runs a control loop that watches
-the event stream for a set of [`ThirdPartyResource`][3pr]s (called 3PRs hereafter), in one, some, or
-all available namespaces. An operator may run many Stewards in a Kubernetes cluster, all responsible
-for provisioning different sets of services.
+Steward is a program written in Go that runs a control loop to watch the Kubernetes event stream
+for a set of [`ThirdPartyResource`][3pr]s (called 3PRs hereafter), in one, some, or all available
+namespaces. It uses these 3PRs to communicate with an application that requests a service.
+
+A single Steward process is responsible for provisioning one specific _type_ of service. For each
+service type you intend to support, you should run exactly one Steward in your cluster that is
+configured to provision that service type.
 
 ## Available Services
 
