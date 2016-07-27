@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: deis-steward
+  labels:
+    heritage: deis
+spec:
+  replicas: 1
+  selector:
+    app: deis-steward
+  template:
+    metadata:
+      labels:
+        app: deis-steward
+    spec:
+      containers:
+        - name: deis-steward
+          image: quay.io/arschles/steward:devel
+          imagePullPolicy: Always

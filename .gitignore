@@ -22,3 +22,7 @@ _testmain.go
 *.exe
 *.test
 *.prof
+steward
+rootfs/bin/steward
+rootfs/bin/steward.upx
+vendor

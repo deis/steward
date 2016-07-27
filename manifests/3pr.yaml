@@ -1,0 +1,9 @@
+apiVersion: extensions/v1beta1
+kind: ThirdPartyResource
+metadata:
+  name: service-plan-claim.steward.deis.com
+  labels:
+    heritage: deis
+description: "A request to steward that an application makes to create a new service"
+versions:
+- name: v1
