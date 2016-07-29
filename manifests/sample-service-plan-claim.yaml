@@ -2,7 +2,7 @@ apiVersion: steward.deis.com/v1
 kind: "ServicePlanClaim"
 metadata:
   name: test-service-plan-claim
-  namespace: default
+  namespace: steward
 service_provider: testProvider
 service_plan: testPlan
 claim_id: 452ca412-b55d-4601-8d17-eb2172499596

@@ -50,10 +50,8 @@ func (s ServicePlanClaim) String() string {
 
 // ServicePlanClaimList is the data structure returned by the GET call to the 3rd party resource
 type ServicePlanClaimList struct {
-	APIVersion string              `json:"apiVersion"`
-	Kind       string              `json:"kind"`
-	Metadata   map[string]string   `json:"metadata"`
-	Items      []*ServicePlanClaim `json:"items"`
+	KubeCommonData
+	Items []*ServicePlanClaim `json:"items"`
 }
 
 func getServicePlanClaimsAbsPath(namespace string) []string {

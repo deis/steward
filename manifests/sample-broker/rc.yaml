@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: sample-broker
+  namespace: steward
+  labels:
+    heritage: deis
+spec:
+  replicas: 1
+  selector:
+    app: sample-broker
+  template:
+    metadata:
+      labels:
+        app: sample-broker
+    spec:
+      containers:
+        - name: sample-broker
+          image: deis/cloudfoundry-github-service-broker:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 9292
+              name: http

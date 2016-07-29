@@ -74,15 +74,25 @@ it will immediately make a request to the broker's catalog (i.e. `GET /v2/catalo
 catalog results to a `ServiceProvider` and set of `ServicePlan`s, and write the results to the
 appropriate 3PR.
 
-To start Steward in CloudFoundry broker mode, run the following command:
+To start Steward in CloudFoundry broker mode, run the following commands:
 
 ```console
-./steward --mode=cf --hostname=broker.domain.com --username=admin --password=foo
+export STEWARD_MODE=cf
+export STEWARD_CF_HOSTNAME=broker.domain.com
+export STEWARD_CF_USERNAME=admin
+export STEWARD_CF_PASSWORD=foo
+./steward
 ```
 
 ## Helm mode
 
 TODO
+
+# Development & Testing
+
+Steward is written in Go, and tested with [Go unit tests](https://godoc.org/testing) and an integration test suite. See [INTEGRATION_TESTING.md](./INTEGRATION_TESTING.md) for more information on the latter.
+
+If you'd like to contribute to this project, simply fork the repository, make your changes, and submit a pull request. Please make sure to follow [these guidelines](https://deis.com/docs/workflow/contributing/submitting-a-pull-request/) when contributing.
 
 [cfbroker]: https://docs.cloudfoundry.org/services/overview.html
 [3pr]: https://github.com/kubernetes/kubernetes/blob/master/docs/design/extending-api.md

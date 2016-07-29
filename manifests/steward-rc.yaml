@@ -1,0 +1,31 @@
+apiVersion: v1
+kind: ReplicationController
+metadata:
+  name: steward
+  namespace: steward
+  labels:
+    heritage: deis
+spec:
+  replicas: 1
+  selector:
+    app: steward
+  template:
+    metadata:
+      labels:
+        app: steward
+    spec:
+      containers:
+        - name: steward
+          image: quay.io/arschles/steward:devel
+          imagePullPolicy: Always
+          env:
+            - name: STEWARD_MODE
+              value: cf
+            - name: STEWARD_CF_BROKER_SCHEME
+              value: "http"
+            - name: STEWARD_CF_BROKER_HOSTNAME
+              value: $(SAMPLE_BROKER_SERVICE_HOST):$(SAMPLE_BROKER_SERVICE_PORT)
+            - name: STEWARD_CF_BROKER_USERNAME
+              value: admin
+            - name: STEWARD_CF_BROKER_PASSWORD
+              value: password
