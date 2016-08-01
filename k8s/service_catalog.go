@@ -6,6 +6,8 @@ import (
 
 	"github.com/deis/steward/cf"
 	"github.com/juju/loggo"
+	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/client/restclient"
 )
 
@@ -23,9 +25,9 @@ type ServiceCatalogEntry struct {
 
 // TODO: make this conform to runtime.Object
 type serviceCatalogEntry3PRWrapper struct {
-	*KubeCommonData
-	Metadata *KubeCommonMetadata `json:"metadata"`
-	*ServiceCatalogEntry
+	api.ObjectMeta       `json:"metadata,omitempty"`
+	unversioned.TypeMeta `json:",inline"`
+	*ServiceCatalogEntry `json:",inline"`
 }
 
 // ResourceName returns the name of the ServiceProviderPlanPair third party resource
@@ -34,19 +36,16 @@ func (sce ServiceCatalogEntry) ResourceName() string {
 }
 
 type serviceCatalogEntries3PRWrapper struct {
-	*KubeCommonData
-	Metadata KubeCommonMetadata     `json:"metadata"`
-	Items    []*ServiceCatalogEntry `json:"items"`
+	api.ObjectMeta       `json:"metadata,omitempty"`
+	unversioned.TypeMeta `json:",inline"`
+	Items                []*ServiceCatalogEntry `json:"items"`
 }
 
 // PublishServiceCatalogEntry publishes spp to the service catalog third party resource
 func PublishServiceCatalogEntry(cl *restclient.RESTClient, spp *ServiceCatalogEntry) error {
 	wrapper := serviceCatalogEntry3PRWrapper{
-		KubeCommonData: &KubeCommonData{
-			APIVersion: resourceAPIVersion("v1"),
-			Kind:       serviceCatalogEntry3PRName,
-		},
-		Metadata:            &KubeCommonMetadata{Name: spp.ResourceName()},
+		ObjectMeta:          api.ObjectMeta{Name: spp.ResourceName()},
+		TypeMeta:            unversioned.TypeMeta{Kind: serviceCatalogEntry3PRName, APIVersion: resourceAPIVersion(apiVersionV1)},
 		ServiceCatalogEntry: spp,
 	}
 	// TODO: once serviceCatalogEntry3PRWrapper implements runtime.Object, remove this marshal and send wrapper directly

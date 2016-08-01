@@ -6,18 +6,15 @@ import (
 	"fmt"
 	"time"
 
+	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/kubernetes/pkg/api/unversioned"
 	kcl "k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/client/restclient"
-	// "k8s.io/kubernetes/pkg/watch"
 )
 
 const (
 	servicePlanClaims3PRName = "serviceplanclaims"
 )
-
-// var (
-// 	errUnknownEventObject = errors.New("unknown event object")
-// )
 
 // ServicePlanClaim represents the JSON data an application should put into a Kubernetes third party resource to tell steward that it wants to provision a service. See https://github.com/deis/steward/blob/master/DATA_STRUCTURES.md#serviceplanclaim for more detail
 //
@@ -33,7 +30,7 @@ type ServicePlanClaim struct {
 
 // GetObjectKind is the (k8s.io/kubernetes/pkg/runtime).Object interface implementation
 func (s ServicePlanClaim) GetObjectKind() kcl.ObjectKind {
-	return &kcl.TypeMeta{Kind: "serviceplanclaim", APIVersion: "v1"}
+	return &kcl.TypeMeta{Kind: "serviceplanclaim", APIVersion: resourceAPIVersion(apiVersionV1)}
 }
 
 func (s ServicePlanClaim) String() string {
@@ -48,10 +45,17 @@ func (s ServicePlanClaim) String() string {
 	)
 }
 
-// ServicePlanClaimList is the data structure returned by the GET call to the 3rd party resource
-type ServicePlanClaimList struct {
-	KubeCommonData
-	Items []*ServicePlanClaim `json:"items"`
+type servicePlanClaim3PRWrapper struct {
+	api.ObjectMeta       `json:"metadata,omitempty"`
+	unversioned.TypeMeta `json:",inline"`
+	*ServicePlanClaim    `json:",inline"`
+}
+
+// ServicePlanClaims3PRWrapper is the data structure returned by the GET call for all of the service plan claims
+type servicePlanClaims3PRWrapper struct {
+	api.ObjectMeta       `json:"metadata,omitempty"`
+	unversioned.TypeMeta `json:",inline"`
+	Items                []*ServicePlanClaim `json:"items"`
 }
 
 func getServicePlanClaimsAbsPath(namespace string) []string {
@@ -59,18 +63,18 @@ func getServicePlanClaimsAbsPath(namespace string) []string {
 }
 
 // get service plan claims in namespaces from k8s using cl
-func getServicePlanClaims(cl *restclient.RESTClient, namespace string) (*ServicePlanClaimList, error) {
+func getServicePlanClaims(cl *restclient.RESTClient, namespace string) ([]*ServicePlanClaim, error) {
 	req := cl.Get().AbsPath(getServicePlanClaimsAbsPath(namespace)...)
 	resBody, err := req.DoRaw()
 	if err != nil {
 		return nil, err
 	}
 
-	lst := new(ServicePlanClaimList)
+	lst := new(servicePlanClaims3PRWrapper)
 	if err := json.Unmarshal(resBody, lst); err != nil {
 		return nil, err
 	}
-	return lst, nil
+	return lst.Items, nil
 }
 
 // launches a new goroutine to query the service plan claims endpoint in namespace using cl. this func maintains a cache and, after each claim, returns those that haven't been returned already. pauses sleepDur between queries for claims, and on each iteration either sends claims on the first returned channel or errors on the second. stops the internal goroutine if the first channel is closed
@@ -96,7 +100,7 @@ func watchServicePlanClaims(
 				time.Sleep(sleepDur)
 				continue
 			}
-			for _, claim := range claimsList.Items {
+			for _, claim := range claimsList {
 				if _, ok := cache[claim.String()]; ok {
 					continue
 				}
@@ -108,37 +112,3 @@ func watchServicePlanClaims(
 	}()
 	return stopCh, spcCh, errCh
 }
-
-// query the service plan claims watch endpoint in namespace using cl.
-//
-// TODO: get actual watches working, so we don't have to do the above get-and-cache logic
-// func watchServicePlanClaims(cl *restclient.RESTClient, namespace string) (watch.Interface, error) {
-// 	// req := cl.Get().AbsPath(getServicePlanClaimsAbsPath(namespace)...).Param("watch", "true")
-// 	fullURL := cl.Get().AbsPath(getServicePlanClaimsAbsPath(namespace)...).Param("watch", "true").URL()
-// 	baseURL := *fullURL
-// 	baseURL.Path = ""
-// 	baseURL.RawPath = ""
-// 	baseURL.RawQuery = ""
-// 	baseURL.Fragment = ""
-// 	cfg := restclient.ContentConfig{}
-// 	serializer, err := servicePlanClaimSerializer(cfg)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	req := restclient.NewRequest(
-// 		cl.Client,
-// 		"GET",
-// 		&baseURL,
-// 		fmt.Sprintf("%s?%s", fullURL.Path, fullURL.RawQuery),
-// 		cfg,
-// 		*serializer,
-// 		&restclient.NoBackoff{},
-// 		cl.GetRateLimiter(),
-// 	)
-//
-// 	watcher, err := req.Watch()
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	return watcher, nil
-// }

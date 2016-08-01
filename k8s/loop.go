@@ -20,7 +20,7 @@ func StartLoop(logger loggo.Logger, cl *restclient.RESTClient, namespace string,
 		errCh <- err
 		return
 	}
-	for _, claim := range claims.Items {
+	for _, claim := range claims {
 		processClaim(logger, claim)
 	}
 
