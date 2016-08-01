@@ -19,6 +19,8 @@ spec:
           image: quay.io/arschles/steward:devel
           imagePullPolicy: Always
           env:
+            - name: STEWARD_LOG_LEVEL
+              value: debug
             - name: STEWARD_MODE
               value: cf
             - name: STEWARD_CF_BROKER_SCHEME

@@ -6,3 +6,4 @@ import:
   - pkg/client/unversioned
 - package: github.com/arschles/assert
 - package: github.com/kelseyhightower/envconfig
+- package: github.com/juju/loggo

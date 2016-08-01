@@ -2,10 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/deis/steward/cf"
 	"github.com/deis/steward/k8s"
+	"github.com/juju/loggo"
 	"k8s.io/kubernetes/pkg/client/restclient"
 )
 
@@ -24,17 +24,17 @@ func (e errServiceAlreadyPublished) Error() string {
 //	3. if none error-ed in #2, publishes 3prs for all of the catalog entries
 //
 // returns all of the entries it wrote into the catalog, or an error
-func publishCloudFoundryCatalog(cl *cf.Client, restCl *restclient.RESTClient) ([]*k8s.ServiceCatalogEntry, error) {
+func publishCloudFoundryCatalog(logger loggo.Logger, cl *cf.Client, restCl *restclient.RESTClient) ([]*k8s.ServiceCatalogEntry, error) {
 	// get catalog from cloud foundry
-	cfServices, err := cf.GetCatalog(cl)
+	cfServices, err := cf.GetCatalog(logger, cl)
 	if err != nil {
-		log.Printf("1 (%s)", err)
+		logger.Debugf("error getting CF catalog (%s)", err)
 		return nil, err
 	}
 	// get existing catalog from 3pr
-	catalogEntries, err := k8s.GetServiceCatalogEntries(restCl)
+	catalogEntries, err := k8s.GetServiceCatalogEntries(logger, restCl)
 	if err != nil {
-		log.Printf("2 (%s)", err)
+		logger.Debugf("error getting existing service catalog entries from k8s (%s)", err)
 		return nil, err
 	}
 	// create in-mem lookup table from 3pr catalog, check for duplicate entries in cf catalog
@@ -54,7 +54,7 @@ func publishCloudFoundryCatalog(cl *cf.Client, restCl *restclient.RESTClient) ([
 		for _, plan := range cfService.Plans {
 			entry := &k8s.ServiceCatalogEntry{Info: cfService.ServiceInfo, Plan: plan}
 			if err := k8s.PublishServiceCatalogEntry(restCl, entry); err != nil {
-				log.Printf("error publishing catalog entry %s (%s), continuing", entry.ResourceName(), err)
+				logger.Errorf("error publishing catalog entry %s (%s), continuing", entry.ResourceName(), err)
 				continue
 			}
 			published = append(published, entry)

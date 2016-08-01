@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/juju/loggo"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -43,6 +44,7 @@ type config struct {
 	CFBrokerHostname string `envconfig:"STEWARD_CF_BROKER_HOSTNAME" default:"localhost:8080"`
 	CFBrokerUsername string `envconfig:"STEWARD_CF_BROKER_USERNAME" default:"admin"`
 	CFBrokerPassword string `envconfig:"STEWARD_CF_BROKER_PASSWORD" default:"password"`
+	LogLevel         string `envconfig:"STEWARD_LOG_LEVEL" default:"info"`
 }
 
 func (c config) validate() error {
@@ -55,6 +57,25 @@ func (c config) validate() error {
 		return errModeUnsupported{mode: c.Mode}
 	}
 	return nil
+}
+
+func (c config) logLevel() loggo.Level {
+	switch c.LogLevel {
+	case "trace":
+		return loggo.TRACE
+	case "debug":
+		return loggo.DEBUG
+	case "info":
+		return loggo.INFO
+	case "warning":
+		return loggo.WARNING
+	case "error":
+		return loggo.ERROR
+	case "critical":
+		return loggo.CRITICAL
+	default:
+		return loggo.INFO
+	}
 }
 
 func getConfig(appName string) (*config, error) {

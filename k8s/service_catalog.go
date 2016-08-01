@@ -3,9 +3,9 @@ package k8s
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/deis/steward/cf"
+	"github.com/juju/loggo"
 	"k8s.io/kubernetes/pkg/client/restclient"
 )
 
@@ -63,10 +63,12 @@ func PublishServiceCatalogEntry(cl *restclient.RESTClient, spp *ServiceCatalogEn
 
 // GetServiceCatalogEntries gets a list of all services
 func GetServiceCatalogEntries(
+	logger loggo.Logger,
 	cl *restclient.RESTClient,
 ) ([]*ServiceCatalogEntry, error) {
+	logger, _ = loggo.NewLogger("k8s", logger)
 	req := cl.Get().AbsPath(getServiceCatalogEntriesAbsPath()...)
-	log.Printf("making request to %s", req.URL().String())
+	logger.Debugf("making request to %s", req.URL().String())
 	res := req.Do()
 	if res.Error() != nil {
 		return nil, res.Error()

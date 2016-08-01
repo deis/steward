@@ -2,9 +2,10 @@ package cf
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strings"
+
+	"github.com/juju/loggo"
 )
 
 const (
@@ -27,14 +28,15 @@ func NewClient(cl *http.Client, scheme, host, user, pass string) *Client {
 }
 
 // Get creates a GET request with the given path
-func (c *Client) Get(pathElts ...string) (*http.Request, error) {
+func (c *Client) Get(logger loggo.Logger, pathElts ...string) (*http.Request, error) {
+	logger, _ = loggo.NewLogger("cf", logger)
 	pathStr := strings.Join(pathElts, "/")
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s://%s:%s@%s/%s", c.Scheme, c.Username, c.Password, c.Host, pathStr), nil)
 	if err != nil {
-		log.Printf("CF Client Get error (%s)", err)
+		logger.Debugf("CF Client Get error (%s)", err)
 		return nil, err
 	}
-	log.Printf("CF client making request to %s", req.URL.String())
+	logger.Debugf("CF client making request to %s", req.URL.String())
 	req.Header.Set(versionHeader, apiVersion)
 	return req, nil
 }
