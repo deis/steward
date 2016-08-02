@@ -7,3 +7,11 @@ import:
 - package: github.com/arschles/assert
 - package: github.com/kelseyhightower/envconfig
 - package: github.com/juju/loggo
+- package: github.com/gorilla/mux
+- package: context
+  version: 76e74a336561c500a376b406eb649727eeb3477f
+  repo: https://github.com/golang/net.git
+  vcs: git
+  subpackages:
+  - context
+- package: github.com/arschles/testsrv

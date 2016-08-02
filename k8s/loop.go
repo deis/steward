@@ -8,11 +8,12 @@ import (
 	"github.com/juju/loggo"
 )
 
+// NOTE: all code in this file is not used pending resolution of https://github.com/deis/steward/issues/17
+
 // StartLoop starts an infinite loop that polls third party resources on the given apiEndpoint for the given namespace. It's intended to be called in a goroutine.
 //
 // This function sends any errors encountered on errCh, and closes errCh if the loop terminates for any reason (including if an error occurred). Callers also must pass a chan struct{} to this function, which can be closed to terminate the loop that this function runs
 func StartLoop(logger loggo.Logger, cl *restclient.RESTClient, namespace string, stopCh <-chan struct{}, errCh chan<- error) {
-	logger, _ = loggo.NewLogger("k8s", logger)
 	defer close(errCh)
 	claims, err := getServicePlanClaims(cl, namespace)
 	if err != nil {

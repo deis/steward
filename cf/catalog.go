@@ -20,7 +20,6 @@ func (e errUnexpectedResponseCode) Error() string {
 
 // GetCatalog fetches the catalog of services from baseURL, which is expected to be a valid CloudFoundry service broker API. It assumes that the API version is 2.9. See https://docs.cloudfoundry.org/services/api.html for more detail
 func GetCatalog(logger loggo.Logger, cl *Client) ([]Service, error) {
-	logger, _ = loggo.NewLogger("cf", logger)
 	req, err := cl.Get(logger, "v2", "catalog")
 	if err != nil {
 		return nil, err

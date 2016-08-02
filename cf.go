@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"net/http"
 
 	"github.com/deis/steward/cf"
+	"github.com/deis/steward/cf/broker"
 	"github.com/deis/steward/k8s"
+	"github.com/deis/steward/web"
 	"github.com/juju/loggo"
 	"k8s.io/kubernetes/pkg/client/restclient"
 )
@@ -17,6 +20,45 @@ func (e errServiceAlreadyPublished) Error() string {
 	return fmt.Sprintf("duplicate service catalog entry: %s", e.entry.ResourceName())
 }
 
+func runCFMode(
+	logger loggo.Logger,
+	apiServerHostStr string,
+	frontendAuth *web.BasicAuth,
+	cl *restclient.RESTClient,
+	errCh chan<- error) error {
+
+	cfCfg, err := cf.GetConfig()
+	if err != nil {
+		logger.Criticalf("error getting CloudFoundry broker config (%s)", err)
+		return err
+	}
+	logger.Infof(
+		"starting in CloudFoundry mode with hostname %s, port %d and username %s",
+		cfCfg.Hostname,
+		cfCfg.Port,
+		cfCfg.Username,
+	)
+	cfClient := cf.NewClient(
+		http.DefaultClient,
+		cfCfg.Scheme,
+		cfCfg.Hostname,
+		cfCfg.Port,
+		cfCfg.Username,
+		cfCfg.Password,
+	)
+	published, err := publishCloudFoundryCatalog(logger, cfClient, cl)
+	if err != nil {
+		logger.Criticalf("error publishing the cloud foundry service catalog (%s)", err)
+		return err
+	}
+	logger.Infof("published %d entries into the catalog", len(published))
+	for _, pub := range published {
+		logger.Debugf("%s", pub.Info.Name)
+	}
+	go runBrokerAPI(logger, cfClient, frontendAuth, cfCfg.BasicAuth(), apiServerHostStr, errCh)
+	return nil
+}
+
 // does the following:
 //
 //	1. fetches the service catalog from cloud foundry
@@ -24,7 +66,12 @@ func (e errServiceAlreadyPublished) Error() string {
 //	3. if none error-ed in #2, publishes 3prs for all of the catalog entries
 //
 // returns all of the entries it wrote into the catalog, or an error
-func publishCloudFoundryCatalog(logger loggo.Logger, cl *cf.Client, restCl *restclient.RESTClient) ([]*k8s.ServiceCatalogEntry, error) {
+func publishCloudFoundryCatalog(
+	logger loggo.Logger,
+	cl *cf.Client,
+	restCl *restclient.RESTClient,
+) ([]*k8s.ServiceCatalogEntry, error) {
+
 	// get catalog from cloud foundry
 	cfServices, err := cf.GetCatalog(logger, cl)
 	if err != nil {
@@ -62,4 +109,20 @@ func publishCloudFoundryCatalog(logger loggo.Logger, cl *cf.Client, restCl *rest
 	}
 
 	return published, nil
+}
+
+func runBrokerAPI(
+	logger loggo.Logger,
+	cl *cf.Client,
+	frontendAuth,
+	backendAuth *web.BasicAuth,
+	hostStr string,
+	errCh chan<- error,
+) {
+
+	logger.Infof("starting CF broker API server on %s", hostStr)
+	hdl := broker.Handler(logger, cl, frontendAuth, backendAuth)
+	if err := http.ListenAndServe(hostStr, hdl); err != nil {
+		errCh <- err
+	}
 }

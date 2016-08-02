@@ -65,7 +65,7 @@ func GetServiceCatalogEntries(
 	logger loggo.Logger,
 	cl *restclient.RESTClient,
 ) ([]*ServiceCatalogEntry, error) {
-	logger, _ = loggo.NewLogger("k8s", logger)
+
 	req := cl.Get().AbsPath(getServiceCatalogEntriesAbsPath()...)
 	logger.Debugf("making request to %s", req.URL().String())
 	res := req.Do()

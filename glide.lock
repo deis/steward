@@ -1,8 +1,16 @@
-hash: 17a91fe87225548e68dec663a9769c0e4d4a424be667f07a5ea7f9a089e9813f
-updated: 2016-07-29T15:41:29.146317375-07:00
+hash: 40f703c595312eb75485a0442e1c3a2f9479ff4e01fb5782a1339ed235fff9cd
+updated: 2016-08-02T10:58:03.402023923-07:00
 imports:
+- name: context
+  version: 76e74a336561c500a376b406eb649727eeb3477f
+  repo: https://github.com/golang/net.git
+  vcs: git
+  subpackages:
+  - context
 - name: github.com/arschles/assert
   version: fc2da9844984ce5093111298174706e14d4c0c47
+- name: github.com/arschles/testsrv
+  version: 1ca51fb1a3b6e612411883cf1c9dbc58319b1d5b
 - name: github.com/beorn7/perks
   version: 3ac7bf7a47d159a033b107610db8a1b6575507a4
   subpackages:
@@ -141,10 +149,14 @@ imports:
   - version
 - name: github.com/google/gofuzz
   version: bbcb9da2d746f8bdbd6a936686a0a6067ada0ec5
+- name: github.com/gorilla/context
+  version: 215affda49addc4c8ef7e2534915df2c8c35c6cd
+- name: github.com/gorilla/mux
+  version: 780415097119f6f61c55475fe59b66f3c3e9ea53
 - name: github.com/jonboulle/clockwork
   version: 3f831b65b61282ba6bece21b91beea2edc4c887a
 - name: github.com/juju/loggo
-  version: 0e0537f18a29c2f0a814dad75b1ccc577852538a
+  version: 8d5890ff96acedea50bd07f74a223231effab29b
 - name: github.com/juju/ratelimit
   version: 77ed1c8a01217656d2080ad51981f6e99adaa177
 - name: github.com/kelseyhightower/envconfig
@@ -242,9 +254,9 @@ imports:
   subpackages:
   - pkg/client/unversioned
   - pkg/client/restclient
+  - pkg/api
   - pkg/api/unversioned
   - pkg/runtime
-  - pkg/api
   - pkg/api/errors
   - pkg/api/v1
   - pkg/api/validation
@@ -283,18 +295,18 @@ imports:
   - pkg/client/typed/discovery
   - pkg/util/wait
   - plugin/pkg/client/auth
-  - pkg/conversion
   - pkg/api/meta/metatypes
-  - pkg/conversion/queryparams
-  - pkg/types
-  - pkg/util/errors
-  - pkg/util/json
   - pkg/api/resource
   - pkg/auth/user
+  - pkg/conversion
   - pkg/runtime/serializer
+  - pkg/types
   - pkg/util
   - pkg/util/intstr
   - pkg/util/rand
+  - pkg/conversion/queryparams
+  - pkg/util/errors
+  - pkg/util/json
   - pkg/util/validation/field
   - pkg/util/parsers
   - pkg/api/endpoints

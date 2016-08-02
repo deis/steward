@@ -19,14 +19,19 @@ spec:
           image: quay.io/arschles/steward:devel
           imagePullPolicy: Always
           env:
-            - name: STEWARD_LOG_LEVEL
-              value: debug
-            - name: STEWARD_MODE
+            - name: MODE
               value: cf
+            - name: LOG_LEVEL
+              value: debug
+            - name: BROKER_API_SERVER_PORT
+              value: "8080"
+            # CloudFoundry specific config
             - name: STEWARD_CF_BROKER_SCHEME
               value: "http"
             - name: STEWARD_CF_BROKER_HOSTNAME
-              value: $(SAMPLE_BROKER_SERVICE_HOST):$(SAMPLE_BROKER_SERVICE_PORT)
+              value: $(SAMPLE_BROKER_SERVICE_HOST)
+            - name: STEWARD_CF_BROKER_PORT
+              value: "$(SAMPLE_BROKER_SERVICE_PORT)"
             - name: STEWARD_CF_BROKER_USERNAME
               value: admin
             - name: STEWARD_CF_BROKER_PASSWORD
