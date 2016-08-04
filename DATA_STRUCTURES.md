@@ -8,6 +8,8 @@ TODO
 
 # `ServicePlanClaim`
 
+NOTE: `ServicePlanClaim`s are not yet supported because of [issue #17](https://github.com/deis/steward/issues/17) and its related issues
+
 This object is submitted by the application as JSON in a [`ThirdPartyResource`][3pr]
 when the application wants Steward to create a new service for its use. Steward then mutates the object
 to communicate the status of the service creation operation. Applications may watch the event stream

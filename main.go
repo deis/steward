@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 
+	"github.com/deis/steward/k8s"
 	"github.com/juju/loggo"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
@@ -40,7 +41,15 @@ func main() {
 
 	switch cfg.Mode {
 	case cfMode:
-		if err := runCFMode(logger, cfg.hostString(), cfg.basicAuth(), k8sClient.RESTClient, errCh); err != nil {
+		if err := runCFMode(
+			logger,
+			cfg.hostString(),
+			cfg.basicAuth(),
+			k8sClient.RESTClient,
+			errCh,
+			k8s.NewConfigMapCreator(k8sClient),
+			k8s.NewSecretCreator(k8sClient),
+		); err != nil {
 			logger.Criticalf("error executing in CloudFoundry mode (%s)", err)
 			os.Exit(1)
 		}

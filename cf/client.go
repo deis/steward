@@ -52,7 +52,7 @@ func (c *Client) Get(logger loggo.Logger, pathElts ...string) (*http.Request, er
 	return req, nil
 }
 
-// Put creates a PUT request with the given path
+// Put creates a PUT request with the given path and body
 func (c *Client) Put(logger loggo.Logger, body io.Reader, pathElts ...string) (*http.Request, error) {
 	req, err := http.NewRequest("GET", c.urlStr(pathElts...), body)
 	if err != nil {
@@ -62,4 +62,13 @@ func (c *Client) Put(logger loggo.Logger, body io.Reader, pathElts ...string) (*
 	logger.Debugf("CF client making request to %s", req.URL.String())
 	req.Header.Set(versionHeader, apiVersion)
 	return req, nil
+}
+
+// DoPut creates a PUT request with the given path and body, then executes the request using c.Client
+func (c *Client) DoPut(logger loggo.Logger, body io.Reader, pathElts ...string) (*http.Response, error) {
+	req, err := c.Put(logger, body, pathElts...)
+	if err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }

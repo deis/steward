@@ -11,10 +11,6 @@ import (
 	"github.com/juju/loggo"
 )
 
-const (
-	instanceIDPathKey = "instance_id"
-)
-
 func provisioningHandler(logger loggo.Logger, cl *cf.Client, frontendAuth, backendAuth *web.BasicAuth) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)

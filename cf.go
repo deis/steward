@@ -25,7 +25,10 @@ func runCFMode(
 	apiServerHostStr string,
 	frontendAuth *web.BasicAuth,
 	cl *restclient.RESTClient,
-	errCh chan<- error) error {
+	errCh chan<- error,
+	cmCreator k8s.ConfigMapCreator,
+	secCreator k8s.SecretCreator,
+) error {
 
 	cfCfg, err := cf.GetConfig()
 	if err != nil {
@@ -55,7 +58,16 @@ func runCFMode(
 	for _, pub := range published {
 		logger.Debugf("%s", pub.Info.Name)
 	}
-	go runBrokerAPI(logger, cfClient, frontendAuth, cfCfg.BasicAuth(), apiServerHostStr, errCh)
+	go runBrokerAPI(
+		logger,
+		cfClient,
+		frontendAuth,
+		cfCfg.BasicAuth(),
+		apiServerHostStr,
+		errCh,
+		cmCreator,
+		secCreator,
+	)
 	return nil
 }
 
@@ -118,10 +130,12 @@ func runBrokerAPI(
 	backendAuth *web.BasicAuth,
 	hostStr string,
 	errCh chan<- error,
+	cmCreator k8s.ConfigMapCreator,
+	secCreator k8s.SecretCreator,
 ) {
 
 	logger.Infof("starting CF broker API server on %s", hostStr)
-	hdl := broker.Handler(logger, cl, frontendAuth, backendAuth)
+	hdl := broker.Handler(logger, cl, frontendAuth, backendAuth, cmCreator, secCreator)
 	if err := http.ListenAndServe(hostStr, hdl); err != nil {
 		errCh <- err
 	}

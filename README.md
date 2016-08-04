@@ -21,6 +21,8 @@ A single Steward process is responsible for provisioning one specific _type_ of 
 service type you intend to support, you should run exactly one Steward in your cluster that is
 configured to provision that service type.
 
+Each steward instance runs an API server that implements part of the [CloudFoundry Broker API](https://docs.cloudfoundry.org/services/api.html). See [API.md](./API.md) for more information.
+
 ## Available Services
 
 On startup, a Steward publishes its data to a set of 3PRs that indicate the availability of a
