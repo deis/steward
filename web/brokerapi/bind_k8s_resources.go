@@ -51,7 +51,7 @@ func writeToKubernetes(
 		ObjectMeta: getObjectMeta(namespace, serviceID, planID, bindingID, instanceID),
 		Data:       publicCreds,
 	}
-	if _, err := configMapCreator(namespace, configMap); err != nil {
+	if _, err := configMapCreator.Create(namespace, configMap); err != nil {
 		return nil, nil, err
 	}
 	configMapQualifiedName := &qualifiedName{
@@ -70,7 +70,7 @@ func writeToKubernetes(
 		Type:       api.SecretTypeOpaque,
 		Data:       map[string][]byte{"password": []byte(encodedPrivateCreds)},
 	}
-	if _, err := secretCreator(namespace, secret); err != nil {
+	if _, err := secretCreator.Create(namespace, secret); err != nil {
 		return nil, nil, err
 	}
 	secretQualifiedNames := []*qualifiedName{
@@ -89,13 +89,13 @@ func deleteFromKubernetes(
 	configMapDeleter k8s.ConfigMapDeleter,
 	secretDeleter k8s.SecretDeleter,
 ) error {
-	if err := configMapDeleter(
+	if err := configMapDeleter.Delete(
 		namespace,
 		getResourceName(serviceID, planID, bindingID, instanceID),
 	); err != nil {
 		return err
 	}
-	if err := secretDeleter(
+	if err := secretDeleter.Delete(
 		namespace,
 		getResourceName(serviceID, planID, bindingID, instanceID),
 	); err != nil {

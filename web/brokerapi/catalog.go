@@ -5,7 +5,6 @@ import (
 	"net/http"
 
 	"github.com/deis/steward/mode"
-	"github.com/deis/steward/web"
 	"github.com/juju/loggo"
 )
 

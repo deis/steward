@@ -47,8 +47,8 @@ func main() {
 			cfg.basicAuth(),
 			k8sClient.RESTClient,
 			errCh,
-			k8s.NewConfigMapCreator(k8sClient),
-			k8s.NewSecretCreator(k8sClient),
+			k8s.NewConfigMapCreatorDeleter(k8sClient),
+			k8s.NewSecretCreatorDeleter(k8sClient),
 		); err != nil {
 			logger.Criticalf("error executing in CloudFoundry mode (%s)", err)
 			os.Exit(1)

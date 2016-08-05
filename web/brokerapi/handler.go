@@ -25,9 +25,10 @@ func Handler(
 	cataloger mode.Cataloger,
 	provisioner mode.Provisioner,
 	binder mode.Binder,
+	unbinder mode.Unbinder,
 	frontendAuth *web.BasicAuth,
-	cmCreator k8s.ConfigMapCreator,
-	secCreator k8s.SecretCreator,
+	cmCreatorDeleter k8s.ConfigMapCreatorDeleter,
+	secCreatorDeleter k8s.SecretCreatorDeleter,
 ) http.Handler {
 
 	r := mux.NewRouter()
@@ -46,9 +47,18 @@ func Handler(
 		fmt.Sprintf("/v2/service_instances/{%s}/service_bindings/{%s}", instanceIDPathKey, bindingIDPathKey),
 		withBasicAuth(
 			frontendAuth,
-			bindingHandler(logger, binder, cmCreator, secCreator),
+			bindingHandler(logger, binder, cmCreatorDeleter, secCreatorDeleter),
 		),
 	).Methods("PUT")
+
+	// unbinding
+	r.Handle(
+		fmt.Sprintf("/v2/service_instances/{%s}/service_bindings/{%s}", instanceIDPathKey, bindingIDPathKey),
+		withBasicAuth(
+			frontendAuth,
+			unbindHandler(logger, unbinder, cmCreatorDeleter, secCreatorDeleter),
+		),
+	)
 
 	// catalog listing
 	r.Handle(

@@ -6,7 +6,6 @@ import (
 
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
-	"github.com/deis/steward/web"
 	"github.com/gorilla/mux"
 	"github.com/juju/loggo"
 )

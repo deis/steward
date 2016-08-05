@@ -27,8 +27,8 @@ func runCFMode(
 	frontendAuth *web.BasicAuth,
 	cl *restclient.RESTClient,
 	errCh chan<- error,
-	cmCreator k8s.ConfigMapCreator,
-	secCreator k8s.SecretCreator,
+	cmCreatorDeleter k8s.ConfigMapCreatorDeleter,
+	secCreatorDeleter k8s.SecretCreatorDeleter,
 ) error {
 
 	cfCfg, err := cf.GetConfig()
@@ -52,6 +52,7 @@ func runCFMode(
 	)
 	provisioner := cf.NewProvisioner(logger, cfClient)
 	binder := cf.NewBinder(logger, cfClient)
+	unbinder := cf.NewUnbinder(logger, cfClient)
 	cataloger := cf.NewCataloger(logger, cfClient)
 
 	published, err := publishCatalog(logger, cataloger, cl)
@@ -68,11 +69,12 @@ func runCFMode(
 		cataloger,
 		provisioner,
 		binder,
+		unbinder,
 		frontendAuth,
 		apiServerHostStr,
 		errCh,
-		cmCreator,
-		secCreator,
+		cmCreatorDeleter,
+		secCreatorDeleter,
 	)
 	return nil
 }
@@ -134,15 +136,25 @@ func runBrokerAPI(
 	cataloger mode.Cataloger,
 	provisioner mode.Provisioner,
 	binder mode.Binder,
+	unbinder mode.Unbinder,
 	frontendAuth *web.BasicAuth,
 	hostStr string,
 	errCh chan<- error,
-	cmCreator k8s.ConfigMapCreator,
-	secCreator k8s.SecretCreator,
+	cmCreatorDeleter k8s.ConfigMapCreatorDeleter,
+	secCreatorDeleter k8s.SecretCreatorDeleter,
 ) {
 
 	logger.Infof("starting CF broker API server on %s", hostStr)
-	hdl := brokerapi.Handler(logger, cataloger, provisioner, binder, frontendAuth, cmCreator, secCreator)
+	hdl := brokerapi.Handler(
+		logger,
+		cataloger,
+		provisioner,
+		binder,
+		unbinder,
+		frontendAuth,
+		cmCreatorDeleter,
+		secCreatorDeleter,
+	)
 	if err := http.ListenAndServe(hostStr, hdl); err != nil {
 		errCh <- err
 	}
