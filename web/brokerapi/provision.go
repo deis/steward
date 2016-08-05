@@ -11,21 +11,12 @@ import (
 	"github.com/juju/loggo"
 )
 
-func provisioningHandler(logger loggo.Logger, provisioner mode.Provisioner, auth *web.BasicAuth) http.Handler {
+func provisioningHandler(logger loggo.Logger, provisioner mode.Provisioner) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		instanceID, ok := vars[instanceIDPathKey]
 		if !ok {
 			http.Error(w, "missing instance ID", http.StatusBadRequest)
-			return
-		}
-		username, password, ok := r.BasicAuth()
-		if !ok {
-			http.Error(w, "authorization missing", http.StatusBadRequest)
-			return
-		}
-		if username != auth.Username || password != auth.Password {
-			http.Error(w, "wrong login credentials", http.StatusUnauthorized)
 			return
 		}
 		provisionReq := new(mode.ProvisionRequest)

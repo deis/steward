@@ -30,7 +30,6 @@ type qualifiedName struct {
 func bindingHandler(
 	logger loggo.Logger,
 	binder mode.Binder,
-	auth *web.BasicAuth,
 	cmCreator k8s.ConfigMapCreator,
 	secCreator k8s.SecretCreator,
 ) http.Handler {
@@ -45,15 +44,6 @@ func bindingHandler(
 		bindingID, ok := vars[bindingIDPathKey]
 		if !ok {
 			http.Error(w, "missing binding ID", http.StatusBadRequest)
-			return
-		}
-		username, password, ok := r.BasicAuth()
-		if !ok {
-			http.Error(w, "authorization missing", http.StatusBadRequest)
-			return
-		}
-		if username != auth.Username || password != auth.Password {
-			http.Error(w, "wrong login credentials", http.StatusUnauthorized)
 			return
 		}
 

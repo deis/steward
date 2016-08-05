@@ -31,14 +31,32 @@ func Handler(
 ) http.Handler {
 
 	r := mux.NewRouter()
+
+	// provisioning
 	r.Handle(
 		fmt.Sprintf("/v2/service_instances/{%s}", instanceIDPathKey),
-		provisioningHandler(logger, provisioner, frontendAuth),
+		withBasicAuth(
+			frontendAuth,
+			provisioningHandler(logger, provisioner),
+		),
 	).Methods("PUT")
+
+	// binding
 	r.Handle(
 		fmt.Sprintf("/v2/service_instances/{%s}/service_bindings/{%s}", instanceIDPathKey, bindingIDPathKey),
-		bindingHandler(logger, binder, frontendAuth, cmCreator, secCreator),
+		withBasicAuth(
+			frontendAuth,
+			bindingHandler(logger, binder, cmCreator, secCreator),
+		),
 	).Methods("PUT")
-	r.Handle("/v2/catalog", catalogHandler(logger, cataloger, frontendAuth)).Methods("GET")
+
+	// catalog listing
+	r.Handle(
+		"/v2/catalog",
+		withBasicAuth(frontendAuth,
+			catalogHandler(logger, cataloger),
+		),
+	).Methods("GET")
+
 	return r
 }

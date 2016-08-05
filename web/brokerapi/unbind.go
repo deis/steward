@@ -13,20 +13,10 @@ import (
 func unbindHandler(
 	logger loggo.Logger,
 	unbinder mode.Unbinder,
-	auth *web.BasicAuth,
 	configMapDeleter k8s.ConfigMapDeleter,
 	secretDeleter k8s.SecretDeleter,
 ) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username, password, ok := r.BasicAuth()
-		if !ok {
-			http.Error(w, "missing basic auth", http.StatusUnauthorized)
-			return
-		}
-		if username != auth.Username || password != auth.Password {
-			http.Error(w, "username or password are invalid", http.StatusUnauthorized)
-			return
-		}
 		vars := mux.Vars(r)
 		instanceID, ok := vars[instanceIDPathKey]
 		if !ok {

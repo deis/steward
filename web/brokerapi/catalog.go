@@ -13,17 +13,8 @@ type catalogResp struct {
 	Services []*mode.Service `json:"services"`
 }
 
-func catalogHandler(logger loggo.Logger, cataloger mode.Cataloger, auth *web.BasicAuth) http.Handler {
+func catalogHandler(logger loggo.Logger, cataloger mode.Cataloger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		username, password, ok := r.BasicAuth()
-		if !ok {
-			http.Error(w, "basic auth must be provided", http.StatusUnauthorized)
-			return
-		}
-		if username != auth.Username || password != auth.Password {
-			http.Error(w, "invalid username or password", http.StatusUnauthorized)
-			return
-		}
 		svcs, err := cataloger.List()
 		if err != nil {
 			logger.Debugf("error listing services (%s)", err)
