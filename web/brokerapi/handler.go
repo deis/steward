@@ -12,6 +12,8 @@ import (
 )
 
 const (
+	serviceIDQueryKey  = "service_id"
+	planIDQueryKey     = "plan_id"
 	instanceIDPathKey  = "instance_id"
 	bindingIDPathKey   = "binding_id"
 	targetNamespaceKey = "target_namespace"

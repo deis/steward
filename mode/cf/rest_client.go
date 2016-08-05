@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/juju/loggo"
@@ -12,6 +13,10 @@ import (
 const (
 	apiVersion    = "2.9"
 	versionHeader = "X-Broker-Api-Version"
+)
+
+var (
+	emptyQuery = url.Values(map[string][]string{})
 )
 
 // RESTClient represents a client to talk to a CloudFoundry broker API at a given location
@@ -40,25 +45,40 @@ func (c RESTClient) urlStr(pathElts ...string) string {
 	return fmt.Sprintf("%s/%s", c.fullBaseURL(), pathStr)
 }
 
-// Get creates a GET request with the given path
-func (c *RESTClient) Get(logger loggo.Logger, pathElts ...string) (*http.Request, error) {
+// Get creates a GET request with the given query string values and path, or a non-nil error if request creation failed
+func (c *RESTClient) Get(logger loggo.Logger, query url.Values, pathElts ...string) (*http.Request, error) {
 	req, err := http.NewRequest("GET", c.urlStr(pathElts...), nil)
 	if err != nil {
 		logger.Debugf("CF Client GET error (%s)", err)
 		return nil, err
 	}
+	req.URL.RawQuery = query.Encode()
 	logger.Debugf("CF client making request to %s", req.URL.String())
 	req.Header.Set(versionHeader, apiVersion)
 	return req, nil
 }
 
-// Put creates a PUT request with the given path and body
-func (c *RESTClient) Put(logger loggo.Logger, body io.Reader, pathElts ...string) (*http.Request, error) {
+// Put creates a PUT request with the given query string values, request body and path, or a non-nil error if request creation failed
+func (c *RESTClient) Put(logger loggo.Logger, query url.Values, body io.Reader, pathElts ...string) (*http.Request, error) {
 	req, err := http.NewRequest("GET", c.urlStr(pathElts...), body)
 	if err != nil {
 		logger.Debugf("CF Client PUT error (%s)", err)
 		return nil, err
 	}
+	req.URL.RawQuery = query.Encode()
+	logger.Debugf("CF client making request to %s", req.URL.String())
+	req.Header.Set(versionHeader, apiVersion)
+	return req, nil
+}
+
+// Delete creates a DELETE request with the given query string and path, or a non-nil error if request creation failed
+func (c *RESTClient) Delete(logger loggo.Logger, query url.Values, pathElts ...string) (*http.Request, error) {
+	req, err := http.NewRequest("DELETE", c.urlStr(pathElts...), nil)
+	if err != nil {
+		logger.Debugf("CF Client DELETE error (%s)", err)
+		return nil, err
+	}
+	req.URL.RawQuery = query.Encode()
 	logger.Debugf("CF client making request to %s", req.URL.String())
 	req.Header.Set(versionHeader, apiVersion)
 	return req, nil
@@ -66,14 +86,5 @@ func (c *RESTClient) Put(logger loggo.Logger, body io.Reader, pathElts ...string
 
 // Do is a convenience function for c.Client.Do(req)
 func (c *RESTClient) Do(req *http.Request) (*http.Response, error) {
-	return c.Client.Do(req)
-}
-
-// DoPut creates a PUT request with the given path and body, then executes the request using c.Client
-func (c *RESTClient) DoPut(logger loggo.Logger, body io.Reader, pathElts ...string) (*http.Response, error) {
-	req, err := c.Put(logger, body, pathElts...)
-	if err != nil {
-		return nil, err
-	}
 	return c.Client.Do(req)
 }

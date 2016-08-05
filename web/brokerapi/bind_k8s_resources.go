@@ -17,13 +17,17 @@ const (
 	secretKind    = "Secret"
 )
 
-func getObjectMeta(namespace, serviceID, planID, kind string) api.ObjectMeta {
+func getResourceName(serviceID, planID, bindingID, instanceID string) string {
+	return fmt.Sprintf("%s-%s-%s-%s", serviceID, planID, bindingID, instanceID)
+}
+
+func getObjectMeta(namespace, serviceID, planID, bindingID, instanceID string) api.ObjectMeta {
 	standardLabels := map[string]string{
 		"created-by": "steward",
 		"created-at": time.Now().String(),
 	}
 	return api.ObjectMeta{
-		Name:      fmt.Sprintf("%s-%s-%s", serviceID, planID, kind),
+		Name:      getResourceName(serviceID, planID, bindingID, instanceID),
 		Namespace: namespace,
 		Labels:    standardLabels,
 	}
@@ -33,15 +37,18 @@ func getObjectMeta(namespace, serviceID, planID, kind string) api.ObjectMeta {
 func writeToKubernetes(
 	serviceID,
 	planID,
+	bindingID,
+	instanceID,
 	namespace string,
 	publicCreds mode.JSONObject,
 	privateCreds mode.JSONObject,
 	configMapCreator k8s.ConfigMapCreator,
 	secretCreator k8s.SecretCreator,
 ) (*qualifiedName, []*qualifiedName, error) {
+
 	configMap := &api.ConfigMap{
 		TypeMeta:   unversioned.TypeMeta{Kind: configMapKind},
-		ObjectMeta: getObjectMeta(namespace, serviceID, planID, configMapKind),
+		ObjectMeta: getObjectMeta(namespace, serviceID, planID, bindingID, instanceID),
 		Data:       publicCreds,
 	}
 	if _, err := configMapCreator(namespace, configMap); err != nil {
@@ -59,7 +66,7 @@ func writeToKubernetes(
 	encodedPrivateCreds := base64.StdEncoding.EncodeToString(privateCredsBytes)
 	secret := &api.Secret{
 		TypeMeta:   unversioned.TypeMeta{Kind: secretKind},
-		ObjectMeta: getObjectMeta(namespace, serviceID, planID, secretKind),
+		ObjectMeta: getObjectMeta(namespace, serviceID, planID, bindingID, instanceID),
 		Type:       api.SecretTypeOpaque,
 		Data:       map[string][]byte{"password": []byte(encodedPrivateCreds)},
 	}
@@ -71,4 +78,28 @@ func writeToKubernetes(
 	}
 
 	return configMapQualifiedName, secretQualifiedNames, nil
+}
+
+func deleteFromKubernetes(
+	serviceID,
+	planID,
+	bindingID,
+	instanceID,
+	namespace string,
+	configMapDeleter k8s.ConfigMapDeleter,
+	secretDeleter k8s.SecretDeleter,
+) error {
+	if err := configMapDeleter(
+		namespace,
+		getResourceName(serviceID, planID, bindingID, instanceID),
+	); err != nil {
+		return err
+	}
+	if err := secretDeleter(
+		namespace,
+		getResourceName(serviceID, planID, bindingID, instanceID),
+	); err != nil {
+		return err
+	}
+	return nil
 }

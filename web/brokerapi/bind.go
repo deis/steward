@@ -81,6 +81,8 @@ func bindingHandler(
 		configMapQualified, secretsQualified, err := writeToKubernetes(
 			bindReq.ServiceID,
 			bindReq.PlanID,
+			bindingID,
+			instanceID,
 			targetNamespace,
 			bindRes.PublicCreds,
 			bindRes.PrivateCreds,

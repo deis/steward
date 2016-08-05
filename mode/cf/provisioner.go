@@ -24,7 +24,7 @@ func (p provisioner) Provision(instanceID string, pReq *mode.ProvisionRequest) (
 	if err := json.NewEncoder(bodyBytes).Encode(pReq); err != nil {
 		return nil, err
 	}
-	req, err := p.cl.Put(p.logger, bodyBytes, "/v2", "service_instances", instanceID)
+	req, err := p.cl.Put(p.logger, emptyQuery, bodyBytes, "/v2", "service_instances", instanceID)
 	if err != nil {
 		return nil, err
 	}

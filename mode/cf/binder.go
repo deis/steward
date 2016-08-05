@@ -31,7 +31,7 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 		return nil, err
 	}
 
-	req, err := b.cl.Put(b.logger, bodyBytes, "v2", "service_instances", instanceID, "service_bindings", bindingID)
+	req, err := b.cl.Put(b.logger, emptyQuery, bodyBytes, "v2", "service_instances", instanceID, "service_bindings", bindingID)
 	if err != nil {
 		return nil, err
 	}

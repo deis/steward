@@ -22,5 +22,5 @@ type Binder interface {
 
 // Unbinder unbinds services from apps, according to the mode implementation
 type Unbinder interface {
-	//TODO
+	Unbind(serviceID, planID, instanceID, bindingID string) error
 }

@@ -20,7 +20,7 @@ type cataloger struct {
 }
 
 func (c cataloger) List() ([]*mode.Service, error) {
-	req, err := c.cl.Get(c.logger, "v2", "catalog")
+	req, err := c.cl.Get(c.logger, emptyQuery, "v2", "catalog")
 	if err != nil {
 		return nil, err
 	}
