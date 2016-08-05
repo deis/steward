@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/deis/steward/cf"
+	"github.com/deis/steward/mode"
 	"github.com/juju/loggo"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
@@ -19,8 +19,8 @@ const (
 
 // ServiceCatalogEntry is the third party resource data that represents a single service provider + plan. note that this structure is not written directly into the third party.
 type ServiceCatalogEntry struct {
-	Info cf.ServiceInfo `json:"service_info"`
-	Plan cf.ServicePlan `json:"service_plan"`
+	Info mode.ServiceInfo `json:"service_info"`
+	Plan mode.ServicePlan `json:"service_plan"`
 }
 
 // TODO: make this conform to runtime.Object

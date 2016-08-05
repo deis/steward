@@ -8,6 +8,8 @@ Steward does not implement 100% of the CF service broker API, but strives to be 
 
 Steward implements, and is 100% compatible with, the synchronous [provisioning API](https://docs.cloudfoundry.org/services/api.html#provisioning). Note, however, that it does not currently implement the `GET /v2/service_instances/:instance_id/last_operation` API endpoint, so is not compatible with asynchronous provisioning.
 
+Also note that all key/value pairs in the `parameters` object, both in the request and response to this API call, must be strings.
+
 ## Deprovisioning
 
 Steward does not yet implement the [deprovisioning](https://docs.cloudfoundry.org/services/api.html#deprovisioning) API endpoint.
@@ -24,7 +26,7 @@ When steward binds a service to an application, it stores the service's informat
 
 Therefore, steward requires a `target_namespace` parameter inside the standard `parameters` field. This value tells steward in which namespace to write the resulting ConfigMap and set of Secrets.
 
-Finally, the steward broker API proxy does not return standard [binding credentials](https://docs.cloudfoundry.org/services/binding-credentials.html) in its response. Instead, it returns a JSON object that looks like the following:
+The steward broker API proxy does not return standard [binding credentials](https://docs.cloudfoundry.org/services/binding-credentials.html) in its response. Instead, it returns a JSON object that looks like the following:
 
 ```json
 {
@@ -41,3 +43,5 @@ Note that each `qualifiedName` instance above specifies the name and namespace o
   "namespace": "myApp"
 }
 ```
+
+Finally, note that all key/value pairs in the `parameters` object, both in the request and response to this API call, must be strings.

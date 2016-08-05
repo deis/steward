@@ -1,4 +1,4 @@
-package broker
+package brokerapi
 
 import (
 	"net/http"
@@ -7,7 +7,6 @@ import (
 
 	"github.com/arschles/assert"
 	"github.com/arschles/testsrv"
-	"github.com/deis/steward/cf"
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/web"
 	"github.com/juju/loggo"
@@ -23,11 +22,9 @@ func provisionReqBody() string {
 }
 
 func TestProvisionUnauthorized(t *testing.T) {
-	cl := &cf.Client{}
 	logger := loggo.GetLogger("testprovision")
 	feAuth := &web.BasicAuth{Username: "testFEUser", Password: "testFEPass"}
-	beAuth := &web.BasicAuth{Username: "testBEUser", Password: "testBEPass"}
-	hdl := Handler(logger, cl, feAuth, beAuth, k8s.FakeConfigMapCreator(), k8s.FakeSecretCreator())
+	hdl := Handler(logger, nil, nil, nil, feAuth, k8s.FakeConfigMapCreator(), k8s.FakeSecretCreator())
 	srv := testsrv.StartServer(hdl)
 	defer srv.Close()
 

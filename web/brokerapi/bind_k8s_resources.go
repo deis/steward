@@ -1,12 +1,13 @@
-package broker
+package brokerapi
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/deis/steward/k8s"
+	"github.com/deis/steward/mode"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 )
@@ -33,20 +34,15 @@ func writeToKubernetes(
 	serviceID,
 	planID,
 	namespace string,
-	creds bindingCredentials,
+	publicCreds mode.JSONObject,
+	privateCreds mode.JSONObject,
 	configMapCreator k8s.ConfigMapCreator,
 	secretCreator k8s.SecretCreator,
 ) (*qualifiedName, []*qualifiedName, error) {
 	configMap := &api.ConfigMap{
 		TypeMeta:   unversioned.TypeMeta{Kind: configMapKind},
 		ObjectMeta: getObjectMeta(namespace, serviceID, planID, configMapKind),
-		Data: map[string]string{
-			"uri":      creds.URI,
-			"hostname": creds.Hostname,
-			"port":     strconv.Itoa(creds.Port),
-			"name":     creds.Name,
-			"username": creds.Username,
-		},
+		Data:       publicCreds,
 	}
 	if _, err := configMapCreator(namespace, configMap); err != nil {
 		return nil, nil, err
@@ -56,12 +52,16 @@ func writeToKubernetes(
 		Namespace: namespace,
 	}
 
-	encodedPassword := []byte(base64.StdEncoding.EncodeToString([]byte(creds.Password)))
+	privateCredsBytes, err := json.Marshal(privateCreds)
+	if err != nil {
+		return nil, nil, err
+	}
+	encodedPrivateCreds := base64.StdEncoding.EncodeToString(privateCredsBytes)
 	secret := &api.Secret{
 		TypeMeta:   unversioned.TypeMeta{Kind: secretKind},
 		ObjectMeta: getObjectMeta(namespace, serviceID, planID, secretKind),
 		Type:       api.SecretTypeOpaque,
-		Data:       map[string][]byte{"password": encodedPassword},
+		Data:       map[string][]byte{"password": []byte(encodedPrivateCreds)},
 	}
 	if _, err := secretCreator(namespace, secret); err != nil {
 		return nil, nil, err

@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/deis/steward/cf"
-	"github.com/deis/steward/cf/broker"
 	"github.com/deis/steward/k8s"
+	"github.com/deis/steward/mode"
+	"github.com/deis/steward/mode/cf"
 	"github.com/deis/steward/web"
+	"github.com/deis/steward/web/brokerapi"
 	"github.com/juju/loggo"
 	"k8s.io/kubernetes/pkg/client/restclient"
 )
@@ -41,7 +42,7 @@ func runCFMode(
 		cfCfg.Port,
 		cfCfg.Username,
 	)
-	cfClient := cf.NewClient(
+	cfClient := cf.NewRESTClient(
 		http.DefaultClient,
 		cfCfg.Scheme,
 		cfCfg.Hostname,
@@ -49,7 +50,11 @@ func runCFMode(
 		cfCfg.Username,
 		cfCfg.Password,
 	)
-	published, err := publishCloudFoundryCatalog(logger, cfClient, cl)
+	provisioner := cf.NewProvisioner(logger, cfClient)
+	binder := cf.NewBinder(logger, cfClient)
+	cataloger := cf.NewCataloger(logger, cfClient)
+
+	published, err := publishCatalog(logger, cataloger, cl)
 	if err != nil {
 		logger.Criticalf("error publishing the cloud foundry service catalog (%s)", err)
 		return err
@@ -60,9 +65,10 @@ func runCFMode(
 	}
 	go runBrokerAPI(
 		logger,
-		cfClient,
+		cataloger,
+		provisioner,
+		binder,
 		frontendAuth,
-		cfCfg.BasicAuth(),
 		apiServerHostStr,
 		errCh,
 		cmCreator,
@@ -78,18 +84,18 @@ func runCFMode(
 //	3. if none error-ed in #2, publishes 3prs for all of the catalog entries
 //
 // returns all of the entries it wrote into the catalog, or an error
-func publishCloudFoundryCatalog(
+func publishCatalog(
 	logger loggo.Logger,
-	cl *cf.Client,
+	cataloger mode.Cataloger,
 	restCl *restclient.RESTClient,
 ) ([]*k8s.ServiceCatalogEntry, error) {
 
-	// get catalog from cloud foundry
-	cfServices, err := cf.GetCatalog(logger, cl)
+	services, err := cataloger.List()
 	if err != nil {
 		logger.Debugf("error getting CF catalog (%s)", err)
 		return nil, err
 	}
+
 	// get existing catalog from 3pr
 	catalogEntries, err := k8s.GetServiceCatalogEntries(logger, restCl)
 	if err != nil {
@@ -98,9 +104,9 @@ func publishCloudFoundryCatalog(
 	}
 	// create in-mem lookup table from 3pr catalog, check for duplicate entries in cf catalog
 	lookup := k8s.NewServiceCatalogLookup(catalogEntries)
-	for _, cfService := range cfServices {
-		for _, plan := range cfService.Plans {
-			entry := &k8s.ServiceCatalogEntry{Info: cfService.ServiceInfo, Plan: plan}
+	for _, service := range services {
+		for _, plan := range service.Plans {
+			entry := &k8s.ServiceCatalogEntry{Info: service.ServiceInfo, Plan: plan}
 			if lookup.Get(entry) != nil {
 				return nil, errServiceAlreadyPublished{entry: entry}
 			}
@@ -109,9 +115,9 @@ func publishCloudFoundryCatalog(
 	}
 	published := []*k8s.ServiceCatalogEntry{}
 	// write all entries from cf catalog to 3pr
-	for _, cfService := range cfServices {
-		for _, plan := range cfService.Plans {
-			entry := &k8s.ServiceCatalogEntry{Info: cfService.ServiceInfo, Plan: plan}
+	for _, service := range services {
+		for _, plan := range service.Plans {
+			entry := &k8s.ServiceCatalogEntry{Info: service.ServiceInfo, Plan: plan}
 			if err := k8s.PublishServiceCatalogEntry(restCl, entry); err != nil {
 				logger.Errorf("error publishing catalog entry %s (%s), continuing", entry.ResourceName(), err)
 				continue
@@ -125,9 +131,10 @@ func publishCloudFoundryCatalog(
 
 func runBrokerAPI(
 	logger loggo.Logger,
-	cl *cf.Client,
-	frontendAuth,
-	backendAuth *web.BasicAuth,
+	cataloger mode.Cataloger,
+	provisioner mode.Provisioner,
+	binder mode.Binder,
+	frontendAuth *web.BasicAuth,
 	hostStr string,
 	errCh chan<- error,
 	cmCreator k8s.ConfigMapCreator,
@@ -135,7 +142,7 @@ func runBrokerAPI(
 ) {
 
 	logger.Infof("starting CF broker API server on %s", hostStr)
-	hdl := broker.Handler(logger, cl, frontendAuth, backendAuth, cmCreator, secCreator)
+	hdl := brokerapi.Handler(logger, cataloger, provisioner, binder, frontendAuth, cmCreator, secCreator)
 	if err := http.ListenAndServe(hostStr, hdl); err != nil {
 		errCh <- err
 	}
