@@ -24,6 +24,7 @@ func Handler(
 	logger loggo.Logger,
 	cataloger mode.Cataloger,
 	provisioner mode.Provisioner,
+	deprovisioner mode.Deprovisioner,
 	binder mode.Binder,
 	unbinder mode.Unbinder,
 	frontendAuth *web.BasicAuth,
@@ -41,6 +42,15 @@ func Handler(
 			provisioningHandler(logger, provisioner),
 		),
 	).Methods("PUT")
+
+	// deprovisioning
+	r.Handle(
+		fmt.Sprintf("/v2/service_instances/{%s}", instanceIDPathKey),
+		withBasicAuth(
+			frontendAuth,
+			deprovisioningHandler(logger, deprovisioner),
+		),
+	).Methods("DELETE")
 
 	// binding
 	r.Handle(

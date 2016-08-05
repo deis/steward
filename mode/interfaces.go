@@ -12,7 +12,7 @@ type Provisioner interface {
 
 // Deprovisioner deprovisions services, according to the mode implementation
 type Deprovisioner interface {
-	//TODO
+	Deprovision(instanceID, serviceID, planID string) (*DeprovisionResponse, error)
 }
 
 // Binder binds services to apps, according to the mode implementation

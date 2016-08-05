@@ -41,7 +41,7 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 		return nil, err
 	}
 	defer res.Body.Close()
-	if res.StatusCode == http.StatusConflict || res.StatusCode == web.StatusUnprocessableEntity {
+	if res.StatusCode == http.StatusConflict && res.StatusCode == web.StatusUnprocessableEntity {
 		return nil, web.ErrUnexpectedResponseCode{URL: req.URL.String(), Expected: http.StatusOK, Actual: res.StatusCode}
 	}
 

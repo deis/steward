@@ -1,20 +1,25 @@
 # Steward API
 
-Much of the steward API conforms to the [CloudFoundry service broker API](https://docs.cloudfoundry.org/services/api.html). In all cases, the steward API acts as a proxy. Depending on its mode, it proxies API requests to a backing [Helm](https://github.com/kubernetes/helm) (Tiller) server, its own built-in logic, or a backing CF broker.
+Much of the steward API conforms to the [CloudFoundry service broker API](https://docs.cloudfoundry.org/services/api.html). In all cases, the steward API acts as a proxy. Depending on its mode, it proxies API requests to a backing [Helm](https://github.com/kubernetes/helm) (Tiller) server, its own built-in logic, or a backing CF broker (_NOTE: currently, only backend CF broker support is implemented_).
 
-Steward does not implement 100% of the CF service broker API, but strives to be 100% compatible with the API endpoints that it does implement. See below for details on each API.
+Steward does not implement 100% of the CF service broker API, but strives to be as compatible as possible with the API endpoints that it does implement. Since the proxy also interacts with Kubernetes primitives, 100% API compatibility is sometimes not possible.
 
-## Provisioning
+See below for details on each API.
 
-Steward implements, and is 100% compatible with, the synchronous [provisioning API](https://docs.cloudfoundry.org/services/api.html#provisioning). Note, however, that it does not currently implement the `GET /v2/service_instances/:instance_id/last_operation` API endpoint, so is not compatible with asynchronous provisioning.
+# Provisioning
 
-Also note that all key/value pairs in the `parameters` object, both in the request and response to this API call, must be strings.
+Steward implements the synchronous [provisioning API](https://docs.cloudfoundry.org/services/api.html#provisioning). However, note the following restrictions and changes between Steward's implementation and the that according to the published CloudFoundry documentation:
 
-## Deprovisioning
+- It does not currently implement the `GET /v2/service_instances/:instance_id/last_operation` API endpoint, so is not compatible with asynchronous provisioning.
+- All key/value pairs in the `parameters` object, both in the request and response to this API call, must be strings.
 
-Steward does not yet implement the [deprovisioning](https://docs.cloudfoundry.org/services/api.html#deprovisioning) API endpoint.
+# Deprovisioning
 
-## Updating a Service Instance
+Steward implements, and is 100% compatible with, the synchronous [deprovisioning API](https://docs.cloudfoundry.org/services/api.html#deprovisioning). However, note the following restrictions and chnages between Steward's implementation and that according to the published CloudFoundry documentation:
+
+- It does not currently implement the `GET /v2/service_instances/:instance_id/last_operation` API endpoint, so is not compatible with asynchronous deprovisioning.
+
+# Updating a Service Instance
 
 Steward does not yet implement the [updating a service instance](https://docs.cloudfoundry.org/services/api.html#updating_service_instance) API endpoint.
 
@@ -45,3 +50,9 @@ Note that each `qualifiedName` instance above specifies the name and namespace o
 ```
 
 Finally, note that all key/value pairs in the `parameters` object, both in the request and response to this API call, must be strings.
+
+# Unbinding
+
+Steward implements the [unbinding API](https://docs.cloudfoundry.org/services/api.html#unbinding). It, however, requires one extra query string parameter, called `target_namespace`, to function properly. This parameter will be used to locate the `ConfigMap` and `Secret` resources that it wrote to Kubernetes as a result of the bind API call (see above). Upon successful completion of an unbind API call, those resources will have been deleted.
+
+As with the standard CF broker API for unbinding, be sure to call this API with the same `instance_id`, `binding_id`, `service_id` and `plan_id` paramters, as all of these parameters - which were used to name and create `ConfigMap`s and `Secret`s in the above bind API call - are used to locate and delete the created resources.

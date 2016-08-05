@@ -51,6 +51,7 @@ func runCFMode(
 		cfCfg.Password,
 	)
 	provisioner := cf.NewProvisioner(logger, cfClient)
+	deprovisioner := cf.NewDeprovisioner(logger, cfClient)
 	binder := cf.NewBinder(logger, cfClient)
 	unbinder := cf.NewUnbinder(logger, cfClient)
 	cataloger := cf.NewCataloger(logger, cfClient)
@@ -68,6 +69,7 @@ func runCFMode(
 		logger,
 		cataloger,
 		provisioner,
+		deprovisioner,
 		binder,
 		unbinder,
 		frontendAuth,
@@ -135,6 +137,7 @@ func runBrokerAPI(
 	logger loggo.Logger,
 	cataloger mode.Cataloger,
 	provisioner mode.Provisioner,
+	deprovisioner mode.Deprovisioner,
 	binder mode.Binder,
 	unbinder mode.Unbinder,
 	frontendAuth *web.BasicAuth,
@@ -149,6 +152,7 @@ func runBrokerAPI(
 		logger,
 		cataloger,
 		provisioner,
+		deprovisioner,
 		binder,
 		unbinder,
 		frontendAuth,
