@@ -1,5 +1,7 @@
 # Steward
 
+[![Build Status](https://travis-ci.com/deis/steward.svg?token=UQsxfwHAz3NPyVqxkrrp&branch=master)](https://travis-ci.com/deis/steward)
+
 This is the Kubernetes-native service broker. Modeled after the [CloudFoundry Service Broker System][cfbroker]
 it functions as a gateway from your cluster-aware applications to other services, both inside and outside your cluster.
 

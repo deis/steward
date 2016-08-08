@@ -1,0 +1,18 @@
+language: generic
+branches:
+  only:
+    - master
+cache:
+  directories:
+    - vendor
+env:
+  DEV_REGISTRY=quay.io
+services:
+  - docker
+sudo: required
+install:
+  - make bootstrap
+script:
+  - make test test-cover docker-build
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
