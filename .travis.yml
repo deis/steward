@@ -6,7 +6,7 @@ cache:
   directories:
     - vendor
 env:
-  DEV_REGISTRY=quay.io
+  DEIS_REGISTRY=quay.io
 services:
   - docker
 sudo: required
