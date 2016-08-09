@@ -18,6 +18,9 @@ spec:
         - name: steward
           image: quay.io/arschles/steward:devel
           imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
           env:
             - name: MODE
               value: cf
