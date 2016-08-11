@@ -32,13 +32,15 @@ func bind(
 	planID,
 	instanceID,
 	bindID,
-	targetNS string,
+	targetNS,
+	targetName string,
 ) (*bindResp, error) {
 	bindReq := &bindReq{
 		ServiceID: svcID,
 		PlanID:    planID,
 		Parameters: map[string]string{
 			"target_namespace": targetNS,
+			"target_name":      targetName,
 		},
 	}
 	reqBody := new(bytes.Buffer)

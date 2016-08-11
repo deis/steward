@@ -16,6 +16,7 @@ type config struct {
 	APIUser         string `envconfig:"API_USER" required:"true"`
 	APIPass         string `envconfig:"API_PASS" required:"true"`
 	TargetNamespace string `envconfig:"TARGET_NAMESPACE" default:"steward"`
+	TargetName      string `envconfig:"TARGET_NAME" default:"steward-creds"`
 }
 
 const (
@@ -31,7 +32,7 @@ func main() {
 		os.Exit(1)
 	}
 	cl := cf.NewRESTClient(http.DefaultClient, cfg.APIScheme, cfg.APIHost, cfg.APIPort, cfg.APIUser, cfg.APIPass)
-	if err := drive(logger, cl, cfg.TargetNamespace); err != nil {
+	if err := drive(logger, cl, cfg.TargetNamespace, cfg.TargetName); err != nil {
 		logger.Criticalf("integration test error (%s)", err)
 		os.Exit(1)
 	}

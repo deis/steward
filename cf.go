@@ -28,7 +28,6 @@ func runCFMode(
 	cl *restclient.RESTClient,
 	errCh chan<- error,
 	cmCreatorDeleter k8s.ConfigMapCreatorDeleter,
-	secCreatorDeleter k8s.SecretCreatorDeleter,
 ) error {
 
 	cfCfg, err := cf.GetConfig()
@@ -76,7 +75,6 @@ func runCFMode(
 		apiServerHostStr,
 		errCh,
 		cmCreatorDeleter,
-		secCreatorDeleter,
 	)
 	return nil
 }
@@ -144,7 +142,6 @@ func runBrokerAPI(
 	hostStr string,
 	errCh chan<- error,
 	cmCreatorDeleter k8s.ConfigMapCreatorDeleter,
-	secCreatorDeleter k8s.SecretCreatorDeleter,
 ) {
 
 	logger.Infof("starting CF broker API server on %s", hostStr)
@@ -157,7 +154,6 @@ func runBrokerAPI(
 		unbinder,
 		frontendAuth,
 		cmCreatorDeleter,
-		secCreatorDeleter,
 	)
 	if err := http.ListenAndServe(hostStr, hdl); err != nil {
 		errCh <- err

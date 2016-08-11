@@ -10,29 +10,11 @@ import (
 	"github.com/juju/loggo"
 )
 
-type fullBindingResponse struct {
-	ConfigMapAndSecret configMapAndSecret `json:"credentials"`
+type bindResponse struct {
+	Credentials mode.JSONObject `json:"credentials"`
 }
 
-// a pair of qualified names describing the config map and associated secrets
-type configMapAndSecret struct {
-	ConfigMapInfo *qualifiedName   `json:"config_map_info"`
-	SecretsInfo   []*qualifiedName `json:"secrets_info"`
-}
-
-// a (name, namespace) pair to identify exactly where a resource is
-type qualifiedName struct {
-	Name      string `json:"name"`
-	Namespace string `json:"namespace"`
-}
-
-func bindingHandler(
-	logger loggo.Logger,
-	binder mode.Binder,
-	cmCreator k8s.ConfigMapCreator,
-	secCreator k8s.SecretCreator,
-) http.Handler {
-
+func bindingHandler(logger loggo.Logger, binder mode.Binder, cmCreator k8s.ConfigMapCreator) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		instanceID, ok := vars[instanceIDPathKey]
@@ -53,11 +35,17 @@ func bindingHandler(
 			return
 		}
 
-		targetNamespace, err := bindReq.Parameters.String(targetNamespaceKey)
+		targetNamespace, err := bindReq.TargetNamespace()
 		if err != nil {
-			logger.Debugf("parameter %s is missing or malformed (%s)", targetNamespaceKey, err)
-			http.Error(w, "target namespace param is missing or malformed", http.StatusBadRequest)
+			logger.Debugf("target namespace is missing (%s)", err)
+			http.Error(w, "target namespace param is missing", http.StatusBadRequest)
 			return
+		}
+
+		targetName, err := bindReq.TargetName()
+		if err != nil {
+			logger.Debugf("target name is missing (%s)", err)
+			http.Error(w, "target name param is missing", http.StatusBadRequest)
 		}
 
 		bindRes, err := binder.Bind(instanceID, bindingID, bindReq)
@@ -67,27 +55,18 @@ func bindingHandler(
 			return
 		}
 
-		configMapQualified, secretsQualified, err := writeToKubernetes(
-			bindReq.ServiceID,
-			bindReq.PlanID,
-			bindingID,
-			instanceID,
-			targetNamespace,
-			bindRes.PublicCreds,
-			bindRes.PrivateCreds,
-			cmCreator,
-			secCreator,
-		)
-		if err != nil {
+		logger.Debugf("writing creds %+v to configmap %s/%s", bindRes.Creds, targetNamespace, targetName)
+
+		if err := writeToKubernetes(logger, targetNamespace, targetName, bindRes.Creds, cmCreator); err != nil {
 			logger.Debugf("error writing service access data to kubernetes (%s)", err)
 			http.Error(w, "error writing service access data to kubernetes", http.StatusInternalServerError)
 			return
 		}
-		fullResp := fullBindingResponse{
-			ConfigMapAndSecret: configMapAndSecret{
-				ConfigMapInfo: configMapQualified,
-				SecretsInfo:   secretsQualified,
-			},
+		fullResp := bindResponse{
+			Credentials: mode.JSONObject(map[string]string{
+				mode.TargetNameKey:      targetName,
+				mode.TargetNamespaceKey: targetNamespaceKey,
+			}),
 		}
 		if err := json.NewEncoder(w).Encode(fullResp); err != nil {
 			logger.Debugf("error encoding response to client (%s)", err)

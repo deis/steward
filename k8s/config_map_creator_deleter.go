@@ -68,13 +68,16 @@ func NewConfigMapDeleter(configMapsNamespacer kcl.ConfigMapsNamespacer) ConfigMa
 	return cmDeleterImpl{nsr: configMapsNamespacer}
 }
 
-// FakeConfigMapCreator is a fake ConfigMapCreator, suitable for mocking in tests
-type FakeConfigMapCreator struct{}
+// FakeConfigMapCreator is a fake ConfigMapCreator, suitable for mocking in tests. It is not concurrency safe
+type FakeConfigMapCreator struct {
+	Created []*api.ConfigMap
+}
 
 // Create is the ConfigMapCreator interface implementation. It simply copies cm, changes its namespace to ns, and returns it along with a nil error
-func (f FakeConfigMapCreator) Create(ns string, cm *api.ConfigMap) (*api.ConfigMap, error) {
+func (f *FakeConfigMapCreator) Create(ns string, cm *api.ConfigMap) (*api.ConfigMap, error) {
 	ret := *cm
 	ret.ObjectMeta.Namespace = ns
+	f.Created = append(f.Created, &ret)
 	return &ret, nil
 }
 
@@ -82,6 +85,6 @@ func (f FakeConfigMapCreator) Create(ns string, cm *api.ConfigMap) (*api.ConfigM
 type FakeConfigMapDeleter struct{}
 
 // Delete is the ConfigMapDeleter interface implementation. It simply returns nil
-func (f FakeConfigMapDeleter) Delete(ns, name string) error {
+func (f *FakeConfigMapDeleter) Delete(ns, name string) error {
 	return nil
 }

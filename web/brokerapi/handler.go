@@ -29,7 +29,6 @@ func Handler(
 	unbinder mode.Unbinder,
 	frontendAuth *web.BasicAuth,
 	cmCreatorDeleter k8s.ConfigMapCreatorDeleter,
-	secCreatorDeleter k8s.SecretCreatorDeleter,
 ) http.Handler {
 
 	r := mux.NewRouter()
@@ -57,7 +56,7 @@ func Handler(
 		fmt.Sprintf("/v2/service_instances/{%s}/service_bindings/{%s}", instanceIDPathKey, bindingIDPathKey),
 		withBasicAuth(
 			frontendAuth,
-			bindingHandler(logger, binder, cmCreatorDeleter, secCreatorDeleter),
+			bindingHandler(logger, binder, cmCreatorDeleter),
 		),
 	).Methods("PUT")
 
@@ -66,7 +65,7 @@ func Handler(
 		fmt.Sprintf("/v2/service_instances/{%s}/service_bindings/{%s}", instanceIDPathKey, bindingIDPathKey),
 		withBasicAuth(
 			frontendAuth,
-			unbindHandler(logger, unbinder, cmCreatorDeleter, secCreatorDeleter),
+			unbindHandler(logger, unbinder, cmCreatorDeleter),
 		),
 	)
 

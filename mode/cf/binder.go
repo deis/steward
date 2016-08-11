@@ -49,19 +49,9 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 	if err := json.NewDecoder(res.Body).Decode(resp); err != nil {
 		return nil, err
 	}
-	publicCreds := map[string]string{}
-	privateCreds := map[string]string{}
-	for credKey, credVal := range resp.Credentials {
-		if credKey == "password" {
-			privateCreds[credKey] = credVal
-		} else {
-			publicCreds[credKey] = credVal
-		}
-	}
 	return &mode.BindResponse{
-		Status:       res.StatusCode,
-		PublicCreds:  publicCreds,
-		PrivateCreds: privateCreds,
+		Status: res.StatusCode,
+		Creds:  resp.Credentials,
 	}, nil
 }
 

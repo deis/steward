@@ -10,12 +10,7 @@ import (
 	"github.com/juju/loggo"
 )
 
-func unbindHandler(
-	logger loggo.Logger,
-	unbinder mode.Unbinder,
-	configMapDeleter k8s.ConfigMapDeleter,
-	secretDeleter k8s.SecretDeleter,
-) http.Handler {
+func unbindHandler(logger loggo.Logger, unbinder mode.Unbinder, configMapDeleter k8s.ConfigMapDeleter) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		instanceID, ok := vars[instanceIDPathKey]
@@ -43,10 +38,15 @@ func unbindHandler(
 			http.Error(w, "missing namespace in query string", http.StatusBadRequest)
 			return
 		}
+		name := r.URL.Query().Get(mode.TargetNameKey)
+		if name == "" {
+			http.Error(w, "missing name in query string", http.StatusBadRequest)
+			return
+		}
 		if err := unbinder.Unbind(serviceID, planID, instanceID, bindingID); err != nil {
 			switch t := err.(type) {
 			case web.ErrUnexpectedResponseCode:
-				logger.Debugf("expected response code %d, got %d for unbinding (%s)", t.Expected, t.Actual, t.Expected)
+				logger.Debugf("expected response code %d, got %d for unbinding (%s)", t.Expected, t.Actual, t.URL)
 				http.Error(w, "error unbinding. backend returned failure response", t.Actual)
 				return
 			default:
@@ -55,15 +55,7 @@ func unbindHandler(
 				return
 			}
 		}
-		if err := deleteFromKubernetes(
-			serviceID,
-			planID,
-			bindingID,
-			instanceID,
-			namespace,
-			configMapDeleter,
-			secretDeleter,
-		); err != nil {
+		if err := deleteFromKubernetes(namespace, name, configMapDeleter); err != nil {
 			logger.Debugf("error deleting bind resources from kubernetes (%s)", err)
 			http.Error(w, "error deleting bind resources from kubernetes", http.StatusInternalServerError)
 			return

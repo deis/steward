@@ -27,28 +27,36 @@ Steward does not yet implement the [updating a service instance](https://docs.cl
 
 Steward implements the [binding API](https://docs.cloudfoundry.org/services/api.html#binding). It uses a few extensions to do Kubernetes-specific tasks.
 
-When steward binds a service to an application, it stores the service's information (i.e. the data that is returned from the broker in the `credentials` field of the JSON response body) in a [ConfigMap](http://kubernetes.io/docs/user-guide/configmap/) and set of [Secret](http://kubernetes.io/docs/user-guide/secrets/)s. It does not return any credentials information in the response body, but instead returns information on where to find those resources.
+When steward binds a service to an application, it stores the service's information (i.e. the data that is returned from the broker in the `credentials` field of the JSON response body) in a [ConfigMap](http://kubernetes.io/docs/user-guide/configmap/) and returns _only_ the information on where to find the resulting ConfigMap. Note that it does not return any credentials information in the response body.
 
-Therefore, steward requires a `target_namespace` parameter inside the standard `parameters` field. This value tells steward in which namespace to write the resulting ConfigMap and set of Secrets.
+Steward requires that the application pass information to it indicating where to store the ConfigMap. This information must be passed in two key/value pairs in the standard `parameters` field of the request body:
 
-The steward broker API proxy does not return standard [binding credentials](https://docs.cloudfoundry.org/services/binding-credentials.html) in its response. Instead, it returns a JSON object that looks like the following:
+- `target_namespace` - which namespace to write the resulting ConfigMap
+- `target_name` - the name of the resuting ConfigMap
+
+On success, steward will simply return the information on where it stored the ConfigMap:
 
 ```json
 {
-  "config_map_info": {"name": "name1", "namespace": "namespace1"},
-  "secrets_info": [
-    {"name": "name2", "namespace": "namespace2"},
-    {"name": "name3", "namespace": "namespace3"}
-  ]
+  "credentias": {
+    "target_namespace": "namespace-that-was-given",
+    "target_name": "name-that-was-given"
+  }
 }
 ```
 
-Also, note that all key/value pairs in the `parameters` object, both in the request and response to this API call, must be strings.
+A few final notes:
 
-Finally, note that all data contained in the resulting `ConfigMap` and `Secret`s will be base64 encoded with [Go's ``(encoding/base64).StdEncoding` encoder](https://godoc.org/encoding/base64#pkg-variables)
+- All _other_ key/value pairs in the request and response body's `parameters` object must be strings
+- All data contained in the resulting `ConfigMap` will be base64 encoded with [Go's ``(encoding/base64).StdEncoding` encoder](https://godoc.org/encoding/base64#pkg-variables)
 
 # Unbinding
 
-Steward implements the [unbinding API](https://docs.cloudfoundry.org/services/api.html#unbinding). It, however, requires one extra query string parameter, called `target_namespace`, to function properly. This parameter will be used to locate the `ConfigMap` and `Secret` resources that it wrote to Kubernetes as a result of the bind API call (see above). Upon successful completion of an unbind API call, those resources will have been deleted.
+Steward implements the [unbinding API](https://docs.cloudfoundry.org/services/api.html#unbinding). It, however, requires two extra query string parameters to ensure it can clean up all Kubernetes resources it created during the bind API call:
+
+- `target_namespace` - the namespace that was passed in the `parameters` object in the associated bind request
+- `target_name` - the name that was passed in the `parameters` object in the associated bind request
+
+Upon successful completion of an unbind API call, those resources will have been deleted.
 
 As with the standard CF broker API for unbinding, be sure to call this API with the same `instance_id`, `binding_id`, `service_id` and `plan_id` paramters, as all of these parameters - which were used to name and create `ConfigMap`s and `Secret`s in the above bind API call - are used to locate and delete the created resources.

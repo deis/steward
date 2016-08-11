@@ -20,7 +20,7 @@ func catalogHandler(logger loggo.Logger, cataloger mode.Cataloger) http.Handler 
 		if err != nil {
 			switch t := err.(type) {
 			case web.ErrUnexpectedResponseCode:
-				logger.Debugf("expected response code %d, got %d for listing services (%s)", t.Expected, t.Actual, t.Expected)
+				logger.Debugf("expected response code %d, got %d for listing services (%s)", t.Expected, t.Actual, t.URL)
 				http.Error(w, "error listing services. backend returned failure response", t.Actual)
 				return
 			default:

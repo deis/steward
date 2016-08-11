@@ -19,7 +19,7 @@ func (m multipleErrors) Error() string {
 	return fmt.Sprintf("%d error(s): %s", len(m.errs), m.errs)
 }
 
-func drive(logger loggo.Logger, cl *cf.RESTClient, targetNS string) error {
+func drive(logger loggo.Logger, cl *cf.RESTClient, targetNS, targetName string) error {
 	cataloger := cf.NewCataloger(logger, cl)
 	provisioner := cf.NewProvisioner(logger, cl)
 	deprovisioner := cf.NewDeprovisioner(logger, cl)
@@ -49,13 +49,13 @@ func drive(logger loggo.Logger, cl *cf.RESTClient, targetNS string) error {
 				}
 
 				logger.Debugf("service %d (%s), plan %d (%s) binding", svcIdx, svc.Name, planIdx, plan.Name)
-				if _, err := bind(logger, cl, svc.ID, plan.ID, instID, bindID, targetNS); err != nil {
+				if _, err := bind(logger, cl, svc.ID, plan.ID, instID, bindID, targetNS, targetName); err != nil {
 					errCh <- err
 					return
 				}
 
 				logger.Debugf("service %d (%s), plan %d (%s) unbinding", svcIdx, svc.Name, planIdx, plan.Name)
-				if err := unbind(logger, cl, svc.ID, plan.ID, instID, bindID, targetNS); err != nil {
+				if err := unbind(logger, cl, svc.ID, plan.ID, instID, bindID, targetNS, targetName); err != nil {
 					errCh <- err
 					return
 				}

@@ -32,7 +32,7 @@ func deprovisioningHandler(logger loggo.Logger, deprovisioner mode.Deprovisioner
 		if err != nil {
 			switch t := err.(type) {
 			case web.ErrUnexpectedResponseCode:
-				logger.Debugf("expected response code %d, got %d for deprovision (%s)", t.Expected, t.Actual, t.Expected)
+				logger.Debugf("expected response code %d, got %d for deprovision (%s)", t.Expected, t.Actual, t.URL)
 				http.Error(w, "error deprovisioning. backend returned failure response", t.Actual)
 				return
 			default:

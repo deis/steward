@@ -1,28 +1,39 @@
 package brokerapi
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/arschles/assert"
+	"github.com/deis/steward/k8s"
+	"github.com/deis/steward/mode"
+	"github.com/juju/loggo"
 )
 
 const (
-	ns     = "testnamespace"
-	svcID  = "testsvc"
-	planID = "testplan"
-	bindID = "testbind"
-	instID = "testinst"
+	ns   = "testnamespace"
+	name = "testname"
 )
 
-func TestGetResourceName(t *testing.T) {
-	name := getResourceName(svcID, planID, bindID, instID)
-	assert.Equal(t, name, fmt.Sprintf("%s-%s-%s-%s", svcID, planID, bindID, instID), "resource name")
-}
-
 func TestGetObjectMeta(t *testing.T) {
-	meta := getObjectMeta(ns, svcID, planID, bindID, instID)
+	meta := getObjectMeta(ns, name)
 	assert.Equal(t, meta.Labels["created-by"], "steward", "created-by label")
 	assert.Equal(t, meta.Namespace, ns, "namespace")
-	assert.Equal(t, meta.Name, getResourceName(svcID, planID, bindID, instID), "resource name")
+	assert.Equal(t, meta.Name, name, "resource name")
+}
+
+func TestWriteToKubernetes(t *testing.T) {
+	logger := loggo.GetLogger("test")
+	creds := mode.JSONObject(map[string]string{
+		"username": "testuser",
+		"password": "testpass",
+		"key":      "testkey",
+	})
+	cmCreator := &k8s.FakeConfigMapCreator{}
+	assert.NoErr(t, writeToKubernetes(logger, ns, name, creds, cmCreator))
+	assert.Equal(t, len(cmCreator.Created), 1, "number of created ConfigMaps")
+	cm := cmCreator.Created[0]
+	assert.Equal(t, cm.Name, name, "ConfigMap name")
+	assert.Equal(t, cm.Namespace, ns, "ConfigMap namespace")
+	assert.Equal(t, cm.Labels["created-by"], "steward", "created-by label")
+	assert.Equal(t, len(cm.Data), len(creds), "amount of stored data")
 }

@@ -20,10 +20,12 @@ func unbind(
 	planID,
 	instanceID,
 	bindID,
-	targetNS string,
+	targetNS,
+	targetName string,
 ) error {
 	query := url.Values(map[string][]string{
 		"target-namespace": []string{targetNS},
+		"target-name":      []string{targetName},
 	})
 	req, err := cl.Delete(logger, query, "v2", "service_instances", svcID, "service_bindings", bindID)
 	if err != nil {
