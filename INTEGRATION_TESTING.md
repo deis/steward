@@ -1,74 +1,56 @@
 # Integration Testing
 
-This document describes how to run integration tests against Steward.
+This document describes how to set up and run integration tests against Steward. Each section below explains the process for each respective steward mode.
 
-# Cloud Foundry Service Broker
+All sections assume the following:
 
-This suite of tests is completely manual for now. Automated tests are forthcoming (see https://github.com/deis/steward/issues/20). See below for testing instructions.
+- You've installed [Deis Workflow](https://github.com/deis/workflow) onto your Kubernetes cluster and configured your `deis` command line client to talk to your Workflow controller
+  - If you haven't, see the instructions at https://deis.com/docs/workflow/installing-workflow/
+  - After you've set up your cluster, store the router IP in the `DEIS_ROUTER_IP` environment variable for later use. Find the router IP by running `kubectl get svc deis-router --namespace=deis`
+- You've already deployed steward to your cluster
+  - If you haven't, see the instructions at [INSTALLATION.md](./INSTALLATION.md)
 
-1. Make sure you have a `steward` namespace:
+# Cloud Foundry Service Broker Mode
 
-  ```console
-  kubectl create -f manifests/steward-ns.yaml
-  ```
+Integration tests for service broker mode require a running service broker. To make it easy to run one, we've forked the CloudFoundry service broker from https://github.com/cloudfoundry-samples/github-service-broker-ruby and adapted it to run on Deis Workflow. The fork can be found at https://github.com/deis/cloudfoundry-github-service-broker-ruby.
 
-2. Create a service broker RC and service:
+## Preparation
 
-  ```console
-  kubectl create -f manifests/sample-broker/rc.yaml --namespace=steward
-  kubectl create -f manifests/sample-broker/svc.yaml --namespace=steward
-  ```
+To run a broker on Workflow, create the project:
 
-3. Create the `ServiceCatalogEntry` [third party resource](https://github.com/kubernetes/kubernetes/blob/release-1.3/docs/design/extending-api.md), which describes the data type that holds available services:
+```console
+deis create --no-remote cf-sample-broker
+```
 
-  ```console
-  kubectl create -f manifests/3pr/service-catalog-entry.yaml
-  ```
+Configure it with your github username and token:
 
-  Note: do not create any other third party resoruces (including the one in `manifests/3pr/service-plan-claim.yaml`), or you'll hit https://github.com/deis/steward/issues/17
-4. Start steward:
+```console
+deis config:set GITHUB_USER=${GITHUB_USER} GITHUB_TOKEN=${GITHUB_TOKEN} -a cf-sample-broker
+```
 
-  ```console
-  kubectl create -f manifests/steward-rc.yaml --namespace=steward
-  ```
+And finally, deploy it:
 
-5. View logs (substitute your steward pod's name in for `<pod_name>`):
+```console
+deis pull quay.io/deis/cloudfoundry-github-service-broker:master
+```
 
-  ```console
-  kubectl logs -f <pod_name> --namespace=steward
-  ```
+After you've set up the broker, make sure steward can talk to it by re-configuring the following configuration values on steward:
 
-  They should look similar to the following:
+- `CF_BROKER_SCHEME` - `http`
+- `CF_BROKER_HOSTNAME` - `cf-sample-broker.${DEIS_ROUTER_IP}.nip.io`
+- `CF_BROKER_PORT` - `80`
+- `CF_BROKER_USERNAME` - admin
+- `CF_BROKER_PASSWORD` - password
 
-  ```console
-  2016-07-28 23:49:52.494438 I | steward version dev started
-  2016-07-28 23:49:52.495583 I | starting in CloudFoundry mode with hostname 10.171.244.158:9292 and username admin
-  2016-07-28 23:49:52.495608 I | CF client making request to http://admin:password@10.171.244.158:9292/v2/catalog
-  2016-07-28 23:49:52.527358 I | making request to https://10.171.240.1:443/apis/steward.deis.com/v1/namespaces/steward/servicecatalogentries
-  2016-07-28 23:49:52.561523 I | published 1 entries into the catalog:
-  2016-07-28 23:49:52.561560 I | github-repo
-  ```
+## Running the tests
 
-  Note: if steward has already run and published its service catalog, it will try to publish a `ServiceCatalogEntry` that already exists, print an error and crash:
+After you've set up your broker, compile the integration tests:
 
-  ```console
-  2016-07-29 00:05:37.049442 I | steward version dev started
-  2016-07-29 00:05:37.052923 I | starting in CloudFoundry mode with hostname 10.171.250.49:9292 and username admin
-  2016-07-29 00:05:37.052989 I | CF client making request to http://admin:password@10.171.250.49:9292/v2/catalog
-  2016-07-29 00:05:37.065077 I | making request to https://10.171.240.1:443/apis/steward.deis.com/v1/namespaces/steward/servicecatalogentries
-  2016-07-29 00:05:37.096350 I | error publishing the cloud foundry service catalog (duplicate service catalog entry: github-repo-public)
-  ```
+```console
+make build-integration
+```
 
-  To resolve this issue, delete the `ServiceCatalogEntry`:
+Then run them:
 
-  ```console
-  kubectl delete servicecatalogentry github-repo-public
-  ```
-
-  and restart the server. https://github.com/deis/steward/issues/14 will remove the need for this extra step.
-
-6. View the newly-created `ServiceCatalogEntry` that steward just published:
-
-  ```console
-  kubectl get servicecatalogentry github-repo-public --namespace=steward
-  ```
+```console
+API_SCHEME=http API_HOST=steward.${DEIS_ROUTER_IP}.nip.io API_PORT=80 API_USER=deis API_PASS=steward TARGET_NAMESPACE=steward integration/integration

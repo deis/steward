@@ -13,6 +13,10 @@ Specifically, its high-level goals are to:
 4. Provides a standard way to provision or bind to resources
 5. Provides a standard way for applications to consume those resources through configuration
 
+# Installation
+
+Please see [INSTALLATION.md](./INSTALLATION.md) for full instructions on how to install steward.
+
 # Concepts
 
 Steward is a program written in Go that runs a control loop to watch the Kubernetes event stream
