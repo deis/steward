@@ -18,5 +18,6 @@ deploy:
   on:
     branch: master
 
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+# TODO: uncomment this. see https://github.com/deis/steward/issues/58
+#after_success:
+# - bash <(curl -s https://codecov.io/bash)
