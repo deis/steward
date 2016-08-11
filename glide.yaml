@@ -15,3 +15,4 @@ import:
   subpackages:
   - context
 - package: github.com/arschles/testsrv
+- package: github.com/pborman/uuid

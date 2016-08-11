@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/deis/steward/mode"
+	"github.com/deis/steward/web"
 	"github.com/gorilla/mux"
 	"github.com/juju/loggo"
 )
@@ -29,10 +30,18 @@ func deprovisioningHandler(logger loggo.Logger, deprovisioner mode.Deprovisioner
 		}
 		resp, err := deprovisioner.Deprovision(instanceID, serviceID, planID)
 		if err != nil {
-			logger.Debugf("error deprovisioning (%s)", err)
-			http.Error(w, "error deprovisioning", http.StatusInternalServerError)
-			return
+			switch t := err.(type) {
+			case web.ErrUnexpectedResponseCode:
+				logger.Debugf("expected response code %d, got %d for deprovision (%s)", t.Expected, t.Actual, t.Expected)
+				http.Error(w, "error deprovisioning. backend returned failure response", t.Actual)
+				return
+			default:
+				logger.Debugf("error deprovisioning (%s)", err)
+				http.Error(w, "error deprovisioning", http.StatusInternalServerError)
+				return
+			}
 		}
+
 		respStr := fmt.Sprintf(`{"operation":"%s"}`, resp.Operation)
 		w.WriteHeader(resp.Status)
 		w.Write([]byte(respStr))

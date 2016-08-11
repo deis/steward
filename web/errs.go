@@ -15,3 +15,9 @@ type ErrUnexpectedResponseCode struct {
 func (e ErrUnexpectedResponseCode) Error() string {
 	return fmt.Sprintf("%s - expected response code %d, actual %d", e.URL, e.Expected, e.Actual)
 }
+
+// IsErrUnexpectedResponseCode returns true if e is an ErrUnexpectedResponseCode error, false otherwise
+func IsErrUnexpectedResponseCode(e error) bool {
+	_, ok := e.(ErrUnexpectedResponseCode)
+	return ok
+}

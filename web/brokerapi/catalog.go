@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/deis/steward/mode"
+	"github.com/deis/steward/web"
 	"github.com/juju/loggo"
 )
 
@@ -15,10 +16,18 @@ type catalogResp struct {
 func catalogHandler(logger loggo.Logger, cataloger mode.Cataloger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		svcs, err := cataloger.List()
+
 		if err != nil {
-			logger.Debugf("error listing services (%s)", err)
-			http.Error(w, "error listing services", http.StatusInternalServerError)
-			return
+			switch t := err.(type) {
+			case web.ErrUnexpectedResponseCode:
+				logger.Debugf("expected response code %d, got %d for listing services (%s)", t.Expected, t.Actual, t.Expected)
+				http.Error(w, "error listing services. backend returned failure response", t.Actual)
+				return
+			default:
+				logger.Debugf("error listing services (%s)", err)
+				http.Error(w, "error listing services", http.StatusInternalServerError)
+				return
+			}
 		}
 		resp := catalogResp{Services: svcs}
 		if err := json.NewEncoder(w).Encode(resp); err != nil {

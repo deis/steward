@@ -24,7 +24,7 @@ func getResourceName(serviceID, planID, bindingID, instanceID string) string {
 func getObjectMeta(namespace, serviceID, planID, bindingID, instanceID string) api.ObjectMeta {
 	standardLabels := map[string]string{
 		"created-by": "steward",
-		"created-at": time.Now().String(),
+		"created-at": fmt.Sprintf("%d", time.Now().Unix()),
 	}
 	return api.ObjectMeta{
 		Name:      getResourceName(serviceID, planID, bindingID, instanceID),
@@ -49,7 +49,7 @@ func writeToKubernetes(
 	configMap := &api.ConfigMap{
 		TypeMeta:   unversioned.TypeMeta{Kind: configMapKind},
 		ObjectMeta: getObjectMeta(namespace, serviceID, planID, bindingID, instanceID),
-		Data:       publicCreds,
+		Data:       publicCreds.Base64EncodedVals(),
 	}
 	if _, err := configMapCreator.Create(namespace, configMap); err != nil {
 		return nil, nil, err

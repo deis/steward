@@ -1,6 +1,7 @@
 package mode
 
 import (
+	"encoding/base64"
 	"errors"
 )
 
@@ -23,4 +24,13 @@ func (j JSONObject) String(key string) (string, error) {
 func (j JSONObject) Exists(key string) bool {
 	_, ok := j[key]
 	return ok
+}
+
+// Base64EncodedVals returns a new JSONObject equivalent to j with all values base64 Encoded
+func (j JSONObject) Base64EncodedVals() JSONObject {
+	newMap := make(map[string]string)
+	for k, v := range j {
+		newMap[k] = base64.StdEncoding.EncodeToString([]byte(v))
+	}
+	return JSONObject(newMap)
 }

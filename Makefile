@@ -37,3 +37,6 @@ docker-build: build
 
 docker-push:
 	docker push ${IMAGE}
+
+build-integration:
+	go build -o integration/integration ./integration

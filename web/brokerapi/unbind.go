@@ -5,6 +5,7 @@ import (
 
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
+	"github.com/deis/steward/web"
 	"github.com/gorilla/mux"
 	"github.com/juju/loggo"
 )
@@ -43,9 +44,16 @@ func unbindHandler(
 			return
 		}
 		if err := unbinder.Unbind(serviceID, planID, instanceID, bindingID); err != nil {
-			logger.Debugf("error unbinding (%s)", err)
-			http.Error(w, "error unbinding", http.StatusInternalServerError)
-			return
+			switch t := err.(type) {
+			case web.ErrUnexpectedResponseCode:
+				logger.Debugf("expected response code %d, got %d for unbinding (%s)", t.Expected, t.Actual, t.Expected)
+				http.Error(w, "error unbinding. backend returned failure response", t.Actual)
+				return
+			default:
+				logger.Debugf("error unbinding (%s)", err)
+				http.Error(w, "error unbinding", http.StatusInternalServerError)
+				return
+			}
 		}
 		if err := deleteFromKubernetes(
 			serviceID,

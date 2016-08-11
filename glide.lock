@@ -1,5 +1,5 @@
-hash: 40f703c595312eb75485a0442e1c3a2f9479ff4e01fb5782a1339ed235fff9cd
-updated: 2016-08-02T10:58:03.402023923-07:00
+hash: 84da75113a9ed58b15e875195558c4edb38a495db5356cd935ae265a7479ee64
+updated: 2016-08-10T10:05:26.053428559-07:00
 imports:
 - name: context
   version: 76e74a336561c500a376b406eb649727eeb3477f
@@ -156,7 +156,7 @@ imports:
 - name: github.com/jonboulle/clockwork
   version: 3f831b65b61282ba6bece21b91beea2edc4c887a
 - name: github.com/juju/loggo
-  version: 8d5890ff96acedea50bd07f74a223231effab29b
+  version: 15901ae4de786d05edae84a27c93d3fbef66c91e
 - name: github.com/juju/ratelimit
   version: 77ed1c8a01217656d2080ad51981f6e99adaa177
 - name: github.com/kelseyhightower/envconfig
@@ -184,7 +184,7 @@ imports:
   - libcontainer/user
   - libcontainer/utils
 - name: github.com/pborman/uuid
-  version: ca53cad383cad2479bbba7f7a1a05797ec1386e4
+  version: c55201b036063326c5b1b89ccfe45a184973d073
 - name: github.com/prometheus/client_golang
   version: 3b78d7a77f51ccbc364d4bc170920153022cfd08
   subpackages:

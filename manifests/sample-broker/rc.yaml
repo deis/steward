@@ -1,3 +1,4 @@
+# TODO: remove this in favor of deploying the (automatically built) quay.io/deis/cloudfoundry-github-service-broker:master docker image onto a deis cluster. Upon removal of this manifest, instructions should be added to the INTEGRATION_TESTING.md file on how to set up a broker for testing
 apiVersion: v1
 kind: ReplicationController
 metadata:

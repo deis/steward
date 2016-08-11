@@ -53,20 +53,20 @@ func (c *RESTClient) Get(logger loggo.Logger, query url.Values, pathElts ...stri
 		return nil, err
 	}
 	req.URL.RawQuery = query.Encode()
-	logger.Debugf("CF client making request to %s", req.URL.String())
+	logger.Debugf("CF client making GET request to %s", req.URL.String())
 	req.Header.Set(versionHeader, apiVersion)
 	return req, nil
 }
 
 // Put creates a PUT request with the given query string values, request body and path, or a non-nil error if request creation failed
 func (c *RESTClient) Put(logger loggo.Logger, query url.Values, body io.Reader, pathElts ...string) (*http.Request, error) {
-	req, err := http.NewRequest("GET", c.urlStr(pathElts...), body)
+	req, err := http.NewRequest("PUT", c.urlStr(pathElts...), body)
 	if err != nil {
 		logger.Debugf("CF Client PUT error (%s)", err)
 		return nil, err
 	}
 	req.URL.RawQuery = query.Encode()
-	logger.Debugf("CF client making request to %s", req.URL.String())
+	logger.Debugf("CF client making PUT request to %s", req.URL.String())
 	req.Header.Set(versionHeader, apiVersion)
 	return req, nil
 }
@@ -79,7 +79,7 @@ func (c *RESTClient) Delete(logger loggo.Logger, query url.Values, pathElts ...s
 		return nil, err
 	}
 	req.URL.RawQuery = query.Encode()
-	logger.Debugf("CF client making request to %s", req.URL.String())
+	logger.Debugf("CF client making DELETE request to %s", req.URL.String())
 	req.Header.Set(versionHeader, apiVersion)
 	return req, nil
 }

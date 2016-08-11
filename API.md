@@ -35,21 +35,17 @@ The steward broker API proxy does not return standard [binding credentials](http
 
 ```json
 {
-  "config_map_info": <qualifiedName>,
-  "secrets_info": [<qualifiedName1>, <qualifiedName2>, ...]
+  "config_map_info": {"name": "name1", "namespace": "namespace1"},
+  "secrets_info": [
+    {"name": "name2", "namespace": "namespace2"},
+    {"name": "name3", "namespace": "namespace3"}
+  ]
 }
 ```
 
-Note that each `qualifiedName` instance above specifies the name and namespace of a kubernetes resource. For example:
+Also, note that all key/value pairs in the `parameters` object, both in the request and response to this API call, must be strings.
 
-```json
-{
-  "name": "mySecret1",
-  "namespace": "myApp"
-}
-```
-
-Finally, note that all key/value pairs in the `parameters` object, both in the request and response to this API call, must be strings.
+Finally, note that all data contained in the resulting `ConfigMap` and `Secret`s will be base64 encoded with [Go's ``(encoding/base64).StdEncoding` encoder](https://godoc.org/encoding/base64#pkg-variables)
 
 # Unbinding
 

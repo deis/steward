@@ -17,7 +17,7 @@ type bindRequest struct {
 }
 
 type bindResponse struct {
-	Credentials mode.JSONObject `json:"parameters"`
+	Credentials mode.JSONObject `json:"credentials"`
 }
 
 type binder struct {
@@ -27,7 +27,7 @@ type binder struct {
 
 func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest) (*mode.BindResponse, error) {
 	bodyBytes := new(bytes.Buffer)
-	if err := json.NewDecoder(bodyBytes).Decode(bindRequest); err != nil {
+	if err := json.NewEncoder(bodyBytes).Encode(bindRequest); err != nil {
 		return nil, err
 	}
 
