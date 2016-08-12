@@ -21,6 +21,11 @@ func (e errServiceAlreadyPublished) Error() string {
 	return fmt.Sprintf("duplicate service catalog entry: %s", e.entry.ResourceName())
 }
 
+func isErrServiceAlreadyPublished(e error) bool {
+	_, ok := e.(errServiceAlreadyPublished)
+	return ok
+}
+
 func runCFMode(
 	logger loggo.Logger,
 	apiServerHostStr string,
@@ -56,7 +61,9 @@ func runCFMode(
 	cataloger := cf.NewCataloger(logger, cfClient)
 
 	published, err := publishCatalog(logger, cataloger, cl)
-	if err != nil {
+	if isErrServiceAlreadyPublished(err) {
+		logger.Debugf("%s, continuing", err)
+	} else if err != nil {
 		logger.Criticalf("error publishing the cloud foundry service catalog (%s)", err)
 		return err
 	}
