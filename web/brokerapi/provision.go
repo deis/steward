@@ -8,10 +8,9 @@ import (
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
 	"github.com/gorilla/mux"
-	"github.com/juju/loggo"
 )
 
-func provisioningHandler(logger loggo.Logger, provisioner mode.Provisioner) http.Handler {
+func provisioningHandler(provisioner mode.Provisioner) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		instanceID, ok := vars[instanceIDPathKey]

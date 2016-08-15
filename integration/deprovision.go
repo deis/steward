@@ -2,11 +2,9 @@ package main
 
 import (
 	"github.com/deis/steward/mode"
-	"github.com/juju/loggo"
 )
 
 func deprovision(
-	logger loggo.Logger,
 	deprovisioner mode.Deprovisioner,
 	svcID,
 	planID,

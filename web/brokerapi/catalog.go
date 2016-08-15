@@ -6,14 +6,13 @@ import (
 
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
-	"github.com/juju/loggo"
 )
 
 type catalogResp struct {
 	Services []*mode.Service `json:"services"`
 }
 
-func catalogHandler(logger loggo.Logger, cataloger mode.Cataloger) http.Handler {
+func catalogHandler(cataloger mode.Cataloger) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		svcs, err := cataloger.List()
 

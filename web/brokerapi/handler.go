@@ -8,7 +8,6 @@ import (
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
 	"github.com/gorilla/mux"
-	"github.com/juju/loggo"
 )
 
 const (
@@ -21,7 +20,6 @@ const (
 
 // Handler returns the HTTP handler for all CloudFoundry API endpoints
 func Handler(
-	logger loggo.Logger,
 	cataloger mode.Cataloger,
 	provisioner mode.Provisioner,
 	deprovisioner mode.Deprovisioner,
@@ -38,7 +36,7 @@ func Handler(
 		fmt.Sprintf("/v2/service_instances/{%s}", instanceIDPathKey),
 		web.WithBasicAuth(
 			frontendAuth,
-			provisioningHandler(logger, provisioner),
+			provisioningHandler(provisioner),
 		),
 	).Methods("PUT")
 
@@ -47,7 +45,7 @@ func Handler(
 		fmt.Sprintf("/v2/service_instances/{%s}", instanceIDPathKey),
 		web.WithBasicAuth(
 			frontendAuth,
-			deprovisioningHandler(logger, deprovisioner),
+			deprovisioningHandler(deprovisioner),
 		),
 	).Methods("DELETE")
 
@@ -56,7 +54,7 @@ func Handler(
 		fmt.Sprintf("/v2/service_instances/{%s}/service_bindings/{%s}", instanceIDPathKey, bindingIDPathKey),
 		web.WithBasicAuth(
 			frontendAuth,
-			bindingHandler(logger, binder, cmCreatorDeleter),
+			bindingHandler(binder, cmCreatorDeleter),
 		),
 	).Methods("PUT")
 
@@ -65,7 +63,7 @@ func Handler(
 		fmt.Sprintf("/v2/service_instances/{%s}/service_bindings/{%s}", instanceIDPathKey, bindingIDPathKey),
 		web.WithBasicAuth(
 			frontendAuth,
-			unbindHandler(logger, unbinder, cmCreatorDeleter),
+			unbindHandler(unbinder, cmCreatorDeleter),
 		),
 	)
 
@@ -73,7 +71,7 @@ func Handler(
 	r.Handle(
 		"/v2/catalog",
 		web.WithBasicAuth(frontendAuth,
-			catalogHandler(logger, cataloger),
+			catalogHandler(cataloger),
 		),
 	).Methods("GET")
 

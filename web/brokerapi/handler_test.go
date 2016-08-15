@@ -8,7 +8,6 @@ import (
 	"github.com/arschles/assert"
 	"github.com/arschles/testsrv"
 	"github.com/deis/steward/web"
-	"github.com/juju/loggo"
 )
 
 func provisionReqBody() string {
@@ -21,9 +20,8 @@ func provisionReqBody() string {
 }
 
 func TestProvisionUnauthorized(t *testing.T) {
-	logger := loggo.GetLogger("testprovision")
 	feAuth := &web.BasicAuth{Username: "testFEUser", Password: "testFEPass"}
-	hdl := Handler(logger, nil, nil, nil, nil, nil, feAuth, nil)
+	hdl := Handler(nil, nil, nil, nil, nil, feAuth, nil)
 	srv := testsrv.StartServer(hdl)
 	defer srv.Close()
 

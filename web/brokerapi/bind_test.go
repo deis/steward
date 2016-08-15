@@ -18,7 +18,7 @@ import (
 func TestBind(t *testing.T) {
 	instID, bindID := uuid.New(), uuid.New()
 
-	logger := testutil.GetLogger()
+	testutil.ConfigLogger()
 	auth := testutil.GetAuth()
 	bindCreds := map[string]string{
 		"cred-1": "cred1",
@@ -29,14 +29,13 @@ func TestBind(t *testing.T) {
 	backendBrokerHost, backendBrokerPort, err := testutil.HostAndPort(backendBroker)
 	assert.NoErr(t, err)
 	binder := cf.NewBinder(
-		logger,
 		cf.NewRESTClient(http.DefaultClient, "http", backendBrokerHost, backendBrokerPort, auth.Username, auth.Password),
 	)
 	cmCreatorDeleter := k8s.FakeConfigMapCreatorDeleter{
 		FakeConfigMapCreator: &k8s.FakeConfigMapCreator{},
 		FakeConfigMapDeleter: &k8s.FakeConfigMapDeleter{},
 	}
-	hdl := Handler(logger, nil, nil, nil, binder, nil, auth, cmCreatorDeleter)
+	hdl := Handler(nil, nil, nil, binder, nil, auth, cmCreatorDeleter)
 	srv := testsrv.StartServer(hdl)
 	defer srv.Close()
 

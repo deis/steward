@@ -6,7 +6,6 @@ import (
 	"net/url"
 
 	"github.com/deis/steward/mode/cf"
-	"github.com/juju/loggo"
 )
 
 var (
@@ -14,7 +13,6 @@ var (
 )
 
 func unbind(
-	logger loggo.Logger,
 	cl *cf.RESTClient,
 	svcID,
 	planID,
@@ -29,7 +27,7 @@ func unbind(
 		"service_id":       []string{svcID},
 		"plan_id":          []string{planID},
 	})
-	req, err := cl.Delete(logger, query, "v2", "service_instances", svcID, "service_bindings", bindID)
+	req, err := cl.Delete(query, "v2", "service_instances", svcID, "service_bindings", bindID)
 	if err != nil {
 		return err
 	}

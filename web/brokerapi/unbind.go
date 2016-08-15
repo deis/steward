@@ -7,10 +7,9 @@ import (
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
 	"github.com/gorilla/mux"
-	"github.com/juju/loggo"
 )
 
-func unbindHandler(logger loggo.Logger, unbinder mode.Unbinder, configMapDeleter k8s.ConfigMapDeleter) http.Handler {
+func unbindHandler(unbinder mode.Unbinder, configMapDeleter k8s.ConfigMapDeleter) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		instanceID, ok := vars[instanceIDPathKey]

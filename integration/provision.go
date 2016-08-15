@@ -2,12 +2,10 @@ package main
 
 import (
 	"github.com/deis/steward/mode"
-	"github.com/juju/loggo"
 	"github.com/pborman/uuid"
 )
 
 func provision(
-	logger loggo.Logger,
 	provisioner mode.Provisioner,
 	svcID,
 	planID,

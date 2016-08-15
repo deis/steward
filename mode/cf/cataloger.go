@@ -6,7 +6,6 @@ import (
 
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
-	"github.com/juju/loggo"
 )
 
 // wrapper for a list of services, returned by the backend broker
@@ -15,12 +14,11 @@ type serviceList struct {
 }
 
 type cataloger struct {
-	logger loggo.Logger
-	cl     *RESTClient
+	cl *RESTClient
 }
 
 func (c cataloger) List() ([]*mode.Service, error) {
-	req, err := c.cl.Get(c.logger, emptyQuery, "v2", "catalog")
+	req, err := c.cl.Get(emptyQuery, "v2", "catalog")
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +30,7 @@ func (c cataloger) List() ([]*mode.Service, error) {
 	serviceList := new(serviceList)
 	// TODO: drain the response body to avoid a connection leak
 	if err := json.NewDecoder(res.Body).Decode(serviceList); err != nil {
-		c.logger.Debugf("error decoding JSON response body from backend CF broker (%s)", err)
+		logger.Debugf("error decoding JSON response body from backend CF broker (%s)", err)
 		return nil, err
 	}
 	if res.StatusCode != http.StatusOK {
@@ -42,6 +40,6 @@ func (c cataloger) List() ([]*mode.Service, error) {
 }
 
 // NewCataloger returns a new Cataloger implementation, backed by a CF service broker
-func NewCataloger(logger loggo.Logger, cl *RESTClient) mode.Cataloger {
-	return cataloger{logger: logger, cl: cl}
+func NewCataloger(cl *RESTClient) mode.Cataloger {
+	return cataloger{cl: cl}
 }

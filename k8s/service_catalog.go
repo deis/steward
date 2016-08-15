@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/deis/steward/mode"
-	"github.com/juju/loggo"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	"k8s.io/kubernetes/pkg/client/restclient"
@@ -62,7 +61,6 @@ func PublishServiceCatalogEntry(cl *restclient.RESTClient, spp *ServiceCatalogEn
 
 // GetServiceCatalogEntries gets a list of all services
 func GetServiceCatalogEntries(
-	logger loggo.Logger,
 	cl *restclient.RESTClient,
 ) ([]*ServiceCatalogEntry, error) {
 

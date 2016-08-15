@@ -7,7 +7,6 @@ import (
 
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
-	"github.com/juju/loggo"
 )
 
 type bindRequest struct {
@@ -21,8 +20,7 @@ type bindResponse struct {
 }
 
 type binder struct {
-	logger loggo.Logger
-	cl     *RESTClient
+	cl *RESTClient
 }
 
 func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest) (*mode.BindResponse, error) {
@@ -31,7 +29,7 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 		return nil, err
 	}
 
-	req, err := b.cl.Put(b.logger, emptyQuery, bodyBytes, "v2", "service_instances", instanceID, "service_bindings", bindingID)
+	req, err := b.cl.Put(emptyQuery, bodyBytes, "v2", "service_instances", instanceID, "service_bindings", bindingID)
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +47,7 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 	if err := json.NewDecoder(res.Body).Decode(resp); err != nil {
 		return nil, err
 	}
-	b.logger.Debugf("got response %+v from backing broker", *resp)
+	logger.Debugf("got response %+v from backing broker", *resp)
 	return &mode.BindResponse{
 		Status: res.StatusCode,
 		Creds:  resp.Credentials,
@@ -57,6 +55,6 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 }
 
 // NewBinder creates a new CloudFoundry-broker-backed binder implementation
-func NewBinder(logger loggo.Logger, cl *RESTClient) mode.Binder {
-	return binder{logger: logger, cl: cl}
+func NewBinder(cl *RESTClient) mode.Binder {
+	return binder{cl: cl}
 }

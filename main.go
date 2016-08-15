@@ -14,10 +14,10 @@ const (
 
 var (
 	version = "dev"
+	logger  = loggo.GetLogger("")
 )
 
 func main() {
-	logger := loggo.GetLogger("")
 	logger.SetLogLevel(loggo.TRACE)
 	logger.Infof("steward version %s started", version)
 	cfg, err := getConfig(appName)
@@ -42,7 +42,6 @@ func main() {
 	switch cfg.Mode {
 	case cfMode:
 		if err := runCFMode(
-			logger,
 			cfg.hostString(),
 			cfg.basicAuth(),
 			k8sClient.RESTClient,
@@ -60,7 +59,7 @@ func main() {
 	// NOTE: this code is pending resolution of https://github.com/deis/steward/issues/17
 	// namespaces := []string{"default", "deis", "steward"}
 	// go func() {
-	// 	k8s.StartLoops(logger, k8sClient.RESTClient, namespaces, stopCh, errCh)
+	// 	k8s.StartLoops(k8sClient.RESTClient, namespaces, stopCh, errCh)
 	// }()
 
 	// TODO: listen for signal and delete all service catalog entries before quitting

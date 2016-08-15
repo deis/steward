@@ -7,7 +7,6 @@ import (
 	"net/url"
 
 	"github.com/deis/steward/mode/cf"
-	"github.com/juju/loggo"
 )
 
 type bindReq struct {
@@ -27,7 +26,6 @@ type bindResp struct {
 }
 
 func bind(
-	logger loggo.Logger,
 	cl *cf.RESTClient,
 	svcID,
 	planID,
@@ -50,7 +48,6 @@ func bind(
 	}
 
 	req, err := cl.Put(
-		logger,
 		url.Values(map[string][]string{}),
 		reqBody,
 		"v2",

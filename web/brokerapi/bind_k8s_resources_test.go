@@ -6,7 +6,6 @@ import (
 	"github.com/arschles/assert"
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
-	"github.com/juju/loggo"
 )
 
 const (
@@ -22,14 +21,13 @@ func TestGetObjectMeta(t *testing.T) {
 }
 
 func TestWriteToKubernetes(t *testing.T) {
-	logger := loggo.GetLogger("test")
 	creds := mode.JSONObject(map[string]string{
 		"username": "testuser",
 		"password": "testpass",
 		"key":      "testkey",
 	})
 	cmCreator := &k8s.FakeConfigMapCreator{}
-	assert.NoErr(t, writeToKubernetes(logger, ns, name, creds, cmCreator))
+	assert.NoErr(t, writeToKubernetes(ns, name, creds, cmCreator))
 	assert.Equal(t, len(cmCreator.Created), 1, "number of created ConfigMaps")
 	cm := cmCreator.Created[0]
 	assert.Equal(t, cm.Name, name, "ConfigMap name")
