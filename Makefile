@@ -35,8 +35,5 @@ docker-build: build
 	docker build --rm -t ${IMAGE} rootfs
 	docker tag ${IMAGE} ${MUTABLE_IMAGE}
 
-docker-push:
-	docker push ${IMAGE}
-
 build-integration:
 	go build -o integration/integration ./integration
