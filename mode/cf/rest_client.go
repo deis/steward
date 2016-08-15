@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-
-	"github.com/juju/loggo"
 )
 
 const (
@@ -46,7 +44,7 @@ func (c RESTClient) urlStr(pathElts ...string) string {
 }
 
 // Get creates a GET request with the given query string values and path, or a non-nil error if request creation failed
-func (c *RESTClient) Get(logger loggo.Logger, query url.Values, pathElts ...string) (*http.Request, error) {
+func (c *RESTClient) Get(query url.Values, pathElts ...string) (*http.Request, error) {
 	req, err := http.NewRequest("GET", c.urlStr(pathElts...), nil)
 	if err != nil {
 		logger.Debugf("CF Client GET error (%s)", err)
@@ -59,7 +57,7 @@ func (c *RESTClient) Get(logger loggo.Logger, query url.Values, pathElts ...stri
 }
 
 // Put creates a PUT request with the given query string values, request body and path, or a non-nil error if request creation failed
-func (c *RESTClient) Put(logger loggo.Logger, query url.Values, body io.Reader, pathElts ...string) (*http.Request, error) {
+func (c *RESTClient) Put(query url.Values, body io.Reader, pathElts ...string) (*http.Request, error) {
 	req, err := http.NewRequest("PUT", c.urlStr(pathElts...), body)
 	if err != nil {
 		logger.Debugf("CF Client PUT error (%s)", err)
@@ -72,7 +70,7 @@ func (c *RESTClient) Put(logger loggo.Logger, query url.Values, body io.Reader, 
 }
 
 // Delete creates a DELETE request with the given query string and path, or a non-nil error if request creation failed
-func (c *RESTClient) Delete(logger loggo.Logger, query url.Values, pathElts ...string) (*http.Request, error) {
+func (c *RESTClient) Delete(query url.Values, pathElts ...string) (*http.Request, error) {
 	req, err := http.NewRequest("DELETE", c.urlStr(pathElts...), nil)
 	if err != nil {
 		logger.Debugf("CF Client DELETE error (%s)", err)

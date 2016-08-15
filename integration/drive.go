@@ -6,7 +6,6 @@ import (
 
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/mode/cf"
-	"github.com/juju/loggo"
 	"github.com/pborman/uuid"
 )
 
@@ -18,10 +17,10 @@ func (m multipleErrors) Error() string {
 	return fmt.Sprintf("%d error(s): %s", len(m.errs), m.errs)
 }
 
-func drive(logger loggo.Logger, cl *cf.RESTClient, targetNS, targetName string) error {
-	cataloger := cf.NewCataloger(logger, cl)
-	provisioner := cf.NewProvisioner(logger, cl)
-	deprovisioner := cf.NewDeprovisioner(logger, cl)
+func drive(cl *cf.RESTClient, targetNS, targetName string) error {
+	cataloger := cf.NewCataloger(cl)
+	provisioner := cf.NewProvisioner(cl)
+	deprovisioner := cf.NewDeprovisioner(cl)
 
 	svcs, err := cataloger.List()
 	if err != nil {
@@ -45,25 +44,25 @@ func drive(logger loggo.Logger, cl *cf.RESTClient, targetNS, targetName string) 
 				bindID := uuid.New()
 
 				logger.Debugf("service %s, plan %s provisioning", svc.Name, plan.Name)
-				if _, _, err := provision(logger, provisioner, svc.ID, plan.ID, instID); err != nil {
+				if _, _, err := provision(provisioner, svc.ID, plan.ID, instID); err != nil {
 					errCh <- err
 					return
 				}
 
 				logger.Debugf("service %s, plan %s binding", svc.Name, plan.Name)
-				if _, err := bind(logger, cl, svc.ID, plan.ID, instID, bindID, targetNS, targetName); err != nil {
+				if _, err := bind(cl, svc.ID, plan.ID, instID, bindID, targetNS, targetName); err != nil {
 					errCh <- err
 					return
 				}
 
 				logger.Debugf("service %s, plan %s unbinding", svc.Name, plan.Name)
-				if err := unbind(logger, cl, svc.ID, plan.ID, instID, bindID, targetNS, targetName); err != nil {
+				if err := unbind(cl, svc.ID, plan.ID, instID, bindID, targetNS, targetName); err != nil {
 					errCh <- err
 					return
 				}
 
 				logger.Debugf("service %s, plan %s deprovisioning", svc.Name, plan.Name)
-				if _, err := deprovision(logger, deprovisioner, svc.ID, plan.ID, instID); err != nil {
+				if _, err := deprovision(deprovisioner, svc.ID, plan.ID, instID); err != nil {
 					errCh <- err
 					return
 				}

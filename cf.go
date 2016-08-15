@@ -9,7 +9,6 @@ import (
 	"github.com/deis/steward/mode/cf"
 	"github.com/deis/steward/web"
 	"github.com/deis/steward/web/brokerapi"
-	"github.com/juju/loggo"
 	"k8s.io/kubernetes/pkg/client/restclient"
 )
 
@@ -27,7 +26,6 @@ func isErrServiceAlreadyPublished(e error) bool {
 }
 
 func runCFMode(
-	logger loggo.Logger,
 	apiServerHostStr string,
 	frontendAuth *web.BasicAuth,
 	cl *restclient.RESTClient,
@@ -54,13 +52,13 @@ func runCFMode(
 		cfCfg.Username,
 		cfCfg.Password,
 	)
-	provisioner := cf.NewProvisioner(logger, cfClient)
-	deprovisioner := cf.NewDeprovisioner(logger, cfClient)
-	binder := cf.NewBinder(logger, cfClient)
-	unbinder := cf.NewUnbinder(logger, cfClient)
-	cataloger := cf.NewCataloger(logger, cfClient)
+	provisioner := cf.NewProvisioner(cfClient)
+	deprovisioner := cf.NewDeprovisioner(cfClient)
+	binder := cf.NewBinder(cfClient)
+	unbinder := cf.NewUnbinder(cfClient)
+	cataloger := cf.NewCataloger(cfClient)
 
-	published, err := publishCatalog(logger, cataloger, cl)
+	published, err := publishCatalog(cataloger, cl)
 	if isErrServiceAlreadyPublished(err) {
 		logger.Debugf("%s, continuing", err)
 	} else if err != nil {
@@ -72,7 +70,6 @@ func runCFMode(
 		logger.Debugf("%s", pub.Info.Name)
 	}
 	go runBrokerAPI(
-		logger,
 		cataloger,
 		provisioner,
 		deprovisioner,
@@ -94,7 +91,6 @@ func runCFMode(
 //
 // returns all of the entries it wrote into the catalog, or an error
 func publishCatalog(
-	logger loggo.Logger,
 	cataloger mode.Cataloger,
 	restCl *restclient.RESTClient,
 ) ([]*k8s.ServiceCatalogEntry, error) {
@@ -106,7 +102,7 @@ func publishCatalog(
 	}
 
 	// get existing catalog from 3pr
-	catalogEntries, err := k8s.GetServiceCatalogEntries(logger, restCl)
+	catalogEntries, err := k8s.GetServiceCatalogEntries(restCl)
 	if err != nil {
 		logger.Debugf("error getting existing service catalog entries from k8s (%s)", err)
 		return nil, err
@@ -139,7 +135,6 @@ func publishCatalog(
 }
 
 func runBrokerAPI(
-	logger loggo.Logger,
 	cataloger mode.Cataloger,
 	provisioner mode.Provisioner,
 	deprovisioner mode.Deprovisioner,
@@ -153,7 +148,6 @@ func runBrokerAPI(
 
 	logger.Infof("starting CF broker API server on %s", hostStr)
 	hdl := brokerapi.Handler(
-		logger,
 		cataloger,
 		provisioner,
 		deprovisioner,

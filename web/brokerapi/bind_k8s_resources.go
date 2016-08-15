@@ -6,7 +6,6 @@ import (
 
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
-	"github.com/juju/loggo"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 )
@@ -29,7 +28,6 @@ func getObjectMeta(namespace, name string) api.ObjectMeta {
 
 // writes everything in creds to a config map with the given name and namespace. returns error if the create failed
 func writeToKubernetes(
-	logger loggo.Logger,
 	namespace,
 	name string,
 	creds mode.JSONObject,

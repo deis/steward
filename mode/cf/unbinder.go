@@ -6,7 +6,6 @@ import (
 
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
-	"github.com/juju/loggo"
 )
 
 const (
@@ -15,15 +14,14 @@ const (
 )
 
 type unbinder struct {
-	logger loggo.Logger
-	cl     *RESTClient
+	cl *RESTClient
 }
 
 func (u unbinder) Unbind(serviceID, planID, instanceID, bindingID string) error {
 	query := url.Values(map[string][]string{})
 	query.Add(serviceIDQueryKey, serviceID)
 	query.Add(planIDQueryKey, planID)
-	req, err := u.cl.Delete(u.logger, query, "v2", "service_instances", instanceID, "service_bindings", bindingID)
+	req, err := u.cl.Delete(query, "v2", "service_instances", instanceID, "service_bindings", bindingID)
 	if err != nil {
 		return err
 	}
@@ -38,6 +36,6 @@ func (u unbinder) Unbind(serviceID, planID, instanceID, bindingID string) error 
 }
 
 // NewUnbinder returns a CloudFoundry implementation of a mode.Unbinder
-func NewUnbinder(logger loggo.Logger, cl *RESTClient) mode.Unbinder {
-	return unbinder{logger: logger, cl: cl}
+func NewUnbinder(cl *RESTClient) mode.Unbinder {
+	return unbinder{cl: cl}
 }

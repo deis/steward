@@ -7,7 +7,6 @@ import (
 
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
-	"github.com/juju/loggo"
 )
 
 type backendDeprovisionResp struct {
@@ -15,15 +14,14 @@ type backendDeprovisionResp struct {
 }
 
 type deprovisioner struct {
-	logger loggo.Logger
-	cl     *RESTClient
+	cl *RESTClient
 }
 
 func (d deprovisioner) Deprovision(instanceID, serviceID, planID string) (*mode.DeprovisionResponse, error) {
 	query := url.Values(map[string][]string{})
 	query.Add(serviceIDQueryKey, serviceID)
 	query.Add(planIDQueryKey, planID)
-	req, err := d.cl.Delete(d.logger, query, "v2", "service_instances", instanceID)
+	req, err := d.cl.Delete(query, "v2", "service_instances", instanceID)
 	if err != nil {
 		return nil, err
 	}
@@ -47,6 +45,6 @@ func (d deprovisioner) Deprovision(instanceID, serviceID, planID string) (*mode.
 }
 
 // NewDeprovisioner creates a new CloudFoundry-broker-backed deprovisioner implementation
-func NewDeprovisioner(logger loggo.Logger, cl *RESTClient) mode.Deprovisioner {
-	return deprovisioner{logger: logger, cl: cl}
+func NewDeprovisioner(cl *RESTClient) mode.Deprovisioner {
+	return deprovisioner{cl: cl}
 }
