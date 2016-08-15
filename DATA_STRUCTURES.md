@@ -1,10 +1,27 @@
-# `ServiceProvider`
+# `ServiceCatalogEntry`
 
-TODO
+This object is written to the `steward` namespace and represents a single (service, plan) pair that at least one steward can provision and bind. It has the following fields:
 
-# `ServicePlan`
+- `service_info` - a JSON object containing the information on the service. See below for a description of the fields in this object
+- `service_plan` - a JSON object containing the information on the service's plan. See below for a description of the fields in this Object
 
-TODO
+## `service_info`
+
+This object contains information for a service offered by steward. It has the below fields. Each is a string unless otherwise indicated.
+
+- `name` - the name of the service
+- `id` - the ID of the service
+- `description` - the description of the service
+- `plan_updateable` - a boolean indicating whether the service's plans are updateable
+
+## `service_plan`
+
+This object contains information on an individual plan for a service offered by steward. It has the below fields. Each is a string unless otherwise indicated.
+
+- `id` - the ID of the plan
+- `name` - the name of the plan
+- `descripton` - the description of the plan
+- `free` - a boolean indicating whether this plan is free
 
 # `ServicePlanClaim`
 
