@@ -32,7 +32,7 @@ func (p provisioner) Provision(instanceID string, pReq *mode.ProvisionRequest) (
 	if err != nil {
 		return nil, err
 	}
-	if res.StatusCode == http.StatusConflict && res.StatusCode == web.StatusUnprocessableEntity {
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
 		return nil, web.ErrUnexpectedResponseCode{
 			URL:      req.URL.String(),
 			Expected: http.StatusOK,

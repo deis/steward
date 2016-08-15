@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/url"
 
 	"github.com/deis/steward/mode/cf"
@@ -40,7 +41,7 @@ func bind(
 		PlanID:    planID,
 		Parameters: map[string]string{
 			"target_namespace": targetNS,
-			"target_name":      targetName,
+			"target_name":      fmt.Sprintf("%s-%s-%s", targetName, svcID, planID),
 		},
 	}
 	reqBody := new(bytes.Buffer)

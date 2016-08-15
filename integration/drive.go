@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/deis/steward/mode"
@@ -28,45 +27,48 @@ func drive(logger loggo.Logger, cl *cf.RESTClient, targetNS, targetName string) 
 	if err != nil {
 		return err
 	}
-	log.Printf("found %d service(s)", len(svcs))
+	logger.Debugf("found %d service(s)", len(svcs))
 
 	var wg sync.WaitGroup
 	errCh := make(chan error)
 	doneCh := make(chan struct{})
 
-	for svcIdx, svc := range svcs {
-		for planIdx, plan := range svc.Plans {
+	for _, svc := range svcs {
+		for _, plan := range svc.Plans {
 			wg.Add(1)
-			go func(svcIdx, planIdx int, svc *mode.Service, plan *mode.ServicePlan) {
+			s := *svc
+			p := plan
+			go func(svc *mode.Service, plan *mode.ServicePlan) {
+				logger.Debugf("starting service %s, plan %s", svc.Name, plan.Name)
 				defer wg.Done()
 				instID := uuid.New()
 				bindID := uuid.New()
 
-				logger.Debugf("service %d (%s), plan %d (%s) provisioning", svcIdx, svc.Name, planIdx, plan.Name)
+				logger.Debugf("service %s, plan %s provisioning", svc.Name, plan.Name)
 				if _, _, err := provision(logger, provisioner, svc.ID, plan.ID, instID); err != nil {
 					errCh <- err
 					return
 				}
 
-				logger.Debugf("service %d (%s), plan %d (%s) binding", svcIdx, svc.Name, planIdx, plan.Name)
+				logger.Debugf("service %s, plan %s binding", svc.Name, plan.Name)
 				if _, err := bind(logger, cl, svc.ID, plan.ID, instID, bindID, targetNS, targetName); err != nil {
 					errCh <- err
 					return
 				}
 
-				logger.Debugf("service %d (%s), plan %d (%s) unbinding", svcIdx, svc.Name, planIdx, plan.Name)
+				logger.Debugf("service %s, plan %s unbinding", svc.Name, plan.Name)
 				if err := unbind(logger, cl, svc.ID, plan.ID, instID, bindID, targetNS, targetName); err != nil {
 					errCh <- err
 					return
 				}
 
-				logger.Debugf("service %d (%s), plan %d (%s) deprovisioning", svcIdx, svc.Name, planIdx, plan.Name)
+				logger.Debugf("service %s, plan %s deprovisioning", svc.Name, plan.Name)
 				if _, err := deprovision(logger, deprovisioner, svc.ID, plan.ID, instID); err != nil {
 					errCh <- err
 					return
 				}
 
-			}(svcIdx, planIdx, svc, &plan)
+			}(&s, &p)
 		}
 	}
 

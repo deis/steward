@@ -1,4 +1,4 @@
-package brokerapi
+package web
 
 import (
 	"net/http"
@@ -6,7 +6,6 @@ import (
 
 	"github.com/arschles/assert"
 	"github.com/arschles/testsrv"
-	"github.com/deis/steward/web"
 )
 
 type okHdl struct{}
@@ -16,11 +15,11 @@ func (o okHdl) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 var (
-	creds = web.BasicAuth{Username: "testuser", Password: "testpass"}
+	creds = BasicAuth{Username: "testuser", Password: "testpass"}
 )
 
 func TestBasicAuth(t *testing.T) {
-	srv := testsrv.StartServer(withBasicAuth(&creds, okHdl{}))
+	srv := testsrv.StartServer(WithBasicAuth(&creds, okHdl{}))
 	defer srv.Close()
 
 	resp, err := http.Get(srv.URLStr())

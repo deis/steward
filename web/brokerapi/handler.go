@@ -36,7 +36,7 @@ func Handler(
 	// provisioning
 	r.Handle(
 		fmt.Sprintf("/v2/service_instances/{%s}", instanceIDPathKey),
-		withBasicAuth(
+		web.WithBasicAuth(
 			frontendAuth,
 			provisioningHandler(logger, provisioner),
 		),
@@ -45,7 +45,7 @@ func Handler(
 	// deprovisioning
 	r.Handle(
 		fmt.Sprintf("/v2/service_instances/{%s}", instanceIDPathKey),
-		withBasicAuth(
+		web.WithBasicAuth(
 			frontendAuth,
 			deprovisioningHandler(logger, deprovisioner),
 		),
@@ -54,7 +54,7 @@ func Handler(
 	// binding
 	r.Handle(
 		fmt.Sprintf("/v2/service_instances/{%s}/service_bindings/{%s}", instanceIDPathKey, bindingIDPathKey),
-		withBasicAuth(
+		web.WithBasicAuth(
 			frontendAuth,
 			bindingHandler(logger, binder, cmCreatorDeleter),
 		),
@@ -63,7 +63,7 @@ func Handler(
 	// unbinding
 	r.Handle(
 		fmt.Sprintf("/v2/service_instances/{%s}/service_bindings/{%s}", instanceIDPathKey, bindingIDPathKey),
-		withBasicAuth(
+		web.WithBasicAuth(
 			frontendAuth,
 			unbindHandler(logger, unbinder, cmCreatorDeleter),
 		),
@@ -72,7 +72,7 @@ func Handler(
 	// catalog listing
 	r.Handle(
 		"/v2/catalog",
-		withBasicAuth(frontendAuth,
+		web.WithBasicAuth(frontendAuth,
 			catalogHandler(logger, cataloger),
 		),
 	).Methods("GET")

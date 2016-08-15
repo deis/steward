@@ -26,6 +26,8 @@ func unbind(
 	query := url.Values(map[string][]string{
 		"target-namespace": []string{targetNS},
 		"target-name":      []string{targetName},
+		"service_id":       []string{svcID},
+		"plan_id":          []string{planID},
 	})
 	req, err := cl.Delete(logger, query, "v2", "service_instances", svcID, "service_bindings", bindID)
 	if err != nil {

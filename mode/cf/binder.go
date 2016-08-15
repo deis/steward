@@ -41,7 +41,7 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 		return nil, err
 	}
 	defer res.Body.Close()
-	if res.StatusCode == http.StatusConflict && res.StatusCode == web.StatusUnprocessableEntity {
+	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
 		return nil, web.ErrUnexpectedResponseCode{URL: req.URL.String(), Expected: http.StatusOK, Actual: res.StatusCode}
 	}
 
@@ -49,6 +49,7 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 	if err := json.NewDecoder(res.Body).Decode(resp); err != nil {
 		return nil, err
 	}
+	b.logger.Debugf("got response %+v from backing broker", *resp)
 	return &mode.BindResponse{
 		Status: res.StatusCode,
 		Creds:  resp.Credentials,

@@ -88,3 +88,9 @@ type FakeConfigMapDeleter struct{}
 func (f *FakeConfigMapDeleter) Delete(ns, name string) error {
 	return nil
 }
+
+// FakeConfigMapCreatorDeleter is a fake implementation of ConfigMapCreatorDeleter, suitable for mocking in tests
+type FakeConfigMapCreatorDeleter struct {
+	*FakeConfigMapCreator
+	*FakeConfigMapDeleter
+}

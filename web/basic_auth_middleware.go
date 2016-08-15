@@ -1,12 +1,11 @@
-package brokerapi
+package web
 
 import (
 	"net/http"
-
-	"github.com/deis/steward/web"
 )
 
-func withBasicAuth(creds *web.BasicAuth, next http.Handler) http.Handler {
+// WithBasicAuth is HTTP middleware that executes next if the incoming request has basic auth equivalent to the auth described in creds
+func WithBasicAuth(creds *BasicAuth, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username, password, ok := r.BasicAuth()
 		if !ok {
