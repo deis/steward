@@ -18,7 +18,6 @@ var (
 )
 
 func main() {
-	logger.SetLogLevel(loggo.TRACE)
 	logger.Infof("steward version %s started", version)
 	cfg, err := getConfig(appName)
 	if err != nil {
