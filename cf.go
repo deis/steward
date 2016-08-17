@@ -5,11 +5,13 @@ import (
 	"net/http"
 
 	"github.com/deis/steward/k8s"
+	"github.com/deis/steward/k8s/claim"
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/mode/cf"
 	"github.com/deis/steward/web"
 	"github.com/deis/steward/web/brokerapi"
 	"k8s.io/kubernetes/pkg/client/restclient"
+	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
 type errServiceAlreadyPublished struct {
@@ -17,7 +19,11 @@ type errServiceAlreadyPublished struct {
 }
 
 func (e errServiceAlreadyPublished) Error() string {
-	return fmt.Sprintf("duplicate service catalog entry: %s", e.entry.ResourceName())
+	return fmt.Sprintf(
+		"duplicate service catalog entry (svc_id, plan_id) = (%s, %s)",
+		e.entry.Info.ID,
+		e.entry.Plan.ID,
+	)
 }
 
 func isErrServiceAlreadyPublished(e error) bool {
@@ -28,9 +34,9 @@ func isErrServiceAlreadyPublished(e error) bool {
 func runCFMode(
 	apiServerHostStr string,
 	frontendAuth *web.BasicAuth,
-	cl *restclient.RESTClient,
+	cl *kcl.Client,
 	errCh chan<- error,
-	cmCreatorDeleter k8s.ConfigMapCreatorDeleter,
+	namespaces []string,
 ) error {
 
 	cfCfg, err := cf.GetConfig()
@@ -52,34 +58,29 @@ func runCFMode(
 		cfCfg.Username,
 		cfCfg.Password,
 	)
-	provisioner := cf.NewProvisioner(cfClient)
-	deprovisioner := cf.NewDeprovisioner(cfClient)
-	binder := cf.NewBinder(cfClient)
-	unbinder := cf.NewUnbinder(cfClient)
 	cataloger := cf.NewCataloger(cfClient)
+	lifecycler := cf.NewLifecycler(cfClient)
 
-	published, err := publishCatalog(cataloger, cl)
+	published, err := publishCatalog(cataloger, cl.RESTClient)
 	if isErrServiceAlreadyPublished(err) {
 		logger.Debugf("%s, continuing", err)
 	} else if err != nil {
 		logger.Criticalf("error publishing the cloud foundry service catalog (%s)", err)
 		return err
 	}
+
 	logger.Infof("published %d entries into the catalog", len(published))
-	for _, pub := range published {
-		logger.Debugf("%s", pub.Info.Name)
+	go runBrokerAPI(cataloger, lifecycler, frontendAuth, apiServerHostStr, errCh, cl)
+
+	evtNamespacer := claim.NewConfigMapsInteractorNamespacer(cl)
+	lookup, err := k8s.FetchServiceCatalogLookup(cl.RESTClient)
+	if err != nil {
+		logger.Criticalf("error fetching the service catalog lookup table (%s)", err)
+		return err
 	}
-	go runBrokerAPI(
-		cataloger,
-		provisioner,
-		deprovisioner,
-		binder,
-		unbinder,
-		frontendAuth,
-		apiServerHostStr,
-		errCh,
-		cmCreatorDeleter,
-	)
+	logger.Infof("created service catalog lookup with %d items", lookup.Len())
+	go claim.StartControlLoops(evtNamespacer, cl, *lookup, lifecycler, namespaces, errCh)
+
 	return nil
 }
 
@@ -101,30 +102,18 @@ func publishCatalog(
 		return nil, err
 	}
 
-	// get existing catalog from 3pr
-	catalogEntries, err := k8s.GetServiceCatalogEntries(restCl)
-	if err != nil {
-		logger.Debugf("error getting existing service catalog entries from k8s (%s)", err)
-		return nil, err
-	}
-	// create in-mem lookup table from 3pr catalog, check for duplicate entries in cf catalog
-	lookup := k8s.NewServiceCatalogLookup(catalogEntries)
-	for _, service := range services {
-		for _, plan := range service.Plans {
-			entry := &k8s.ServiceCatalogEntry{Info: service.ServiceInfo, Plan: plan}
-			if lookup.Get(entry) != nil {
-				return nil, errServiceAlreadyPublished{entry: entry}
-			}
-			lookup.Set(entry)
-		}
-	}
 	published := []*k8s.ServiceCatalogEntry{}
 	// write all entries from cf catalog to 3pr
 	for _, service := range services {
 		for _, plan := range service.Plans {
 			entry := &k8s.ServiceCatalogEntry{Info: service.ServiceInfo, Plan: plan}
 			if err := k8s.PublishServiceCatalogEntry(restCl, entry); err != nil {
-				logger.Errorf("error publishing catalog entry %s (%s), continuing", entry.ResourceName(), err)
+				logger.Errorf(
+					"error publishing catalog entry (svc_name, plan_name) = (%s, %s) (%s), continuing",
+					entry.Info.Name,
+					entry.Plan.Name,
+					err,
+				)
 				continue
 			}
 			published = append(published, entry)
@@ -136,26 +125,15 @@ func publishCatalog(
 
 func runBrokerAPI(
 	cataloger mode.Cataloger,
-	provisioner mode.Provisioner,
-	deprovisioner mode.Deprovisioner,
-	binder mode.Binder,
-	unbinder mode.Unbinder,
+	lifecycler mode.Lifecycler,
 	frontendAuth *web.BasicAuth,
 	hostStr string,
 	errCh chan<- error,
-	cmCreatorDeleter k8s.ConfigMapCreatorDeleter,
+	cmNamespacer kcl.ConfigMapsNamespacer,
 ) {
 
 	logger.Infof("starting CF broker API server on %s", hostStr)
-	hdl := brokerapi.Handler(
-		cataloger,
-		provisioner,
-		deprovisioner,
-		binder,
-		unbinder,
-		frontendAuth,
-		cmCreatorDeleter,
-	)
+	hdl := brokerapi.Handler(cataloger, lifecycler, frontendAuth, cmNamespacer)
 	if err := http.ListenAndServe(hostStr, hdl); err != nil {
 		errCh <- err
 	}

@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 
-	"github.com/deis/steward/k8s"
 	"github.com/juju/loggo"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
@@ -13,8 +12,9 @@ const (
 )
 
 var (
-	version = "dev"
-	logger  = loggo.GetLogger("")
+	logger     = loggo.GetLogger("")
+	version    = "dev"
+	namespaces = []string{"steward", "default", "deis"}
 )
 
 func main() {
@@ -43,9 +43,9 @@ func main() {
 		if err := runCFMode(
 			cfg.hostString(),
 			cfg.basicAuth(),
-			k8sClient.RESTClient,
+			k8sClient,
 			errCh,
-			k8s.NewConfigMapCreatorDeleter(k8sClient),
+			namespaces,
 		); err != nil {
 			logger.Criticalf("error executing in CloudFoundry mode (%s)", err)
 			os.Exit(1)

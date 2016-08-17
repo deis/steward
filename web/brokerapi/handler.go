@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
 	"github.com/gorilla/mux"
+	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
 const (
@@ -21,12 +21,9 @@ const (
 // Handler returns the HTTP handler for all CloudFoundry API endpoints
 func Handler(
 	cataloger mode.Cataloger,
-	provisioner mode.Provisioner,
-	deprovisioner mode.Deprovisioner,
-	binder mode.Binder,
-	unbinder mode.Unbinder,
+	lifecycler mode.Lifecycler,
 	frontendAuth *web.BasicAuth,
-	cmCreatorDeleter k8s.ConfigMapCreatorDeleter,
+	cmNamespacer kcl.ConfigMapsNamespacer,
 ) http.Handler {
 
 	r := mux.NewRouter()
@@ -36,7 +33,7 @@ func Handler(
 		fmt.Sprintf("/v2/service_instances/{%s}", instanceIDPathKey),
 		web.WithBasicAuth(
 			frontendAuth,
-			provisioningHandler(provisioner),
+			provisioningHandler(lifecycler),
 		),
 	).Methods("PUT")
 
@@ -45,7 +42,7 @@ func Handler(
 		fmt.Sprintf("/v2/service_instances/{%s}", instanceIDPathKey),
 		web.WithBasicAuth(
 			frontendAuth,
-			deprovisioningHandler(deprovisioner),
+			deprovisioningHandler(lifecycler),
 		),
 	).Methods("DELETE")
 
@@ -54,7 +51,7 @@ func Handler(
 		fmt.Sprintf("/v2/service_instances/{%s}/service_bindings/{%s}", instanceIDPathKey, bindingIDPathKey),
 		web.WithBasicAuth(
 			frontendAuth,
-			bindingHandler(binder, cmCreatorDeleter),
+			bindingHandler(lifecycler, cmNamespacer),
 		),
 	).Methods("PUT")
 
@@ -63,7 +60,7 @@ func Handler(
 		fmt.Sprintf("/v2/service_instances/{%s}/service_bindings/{%s}", instanceIDPathKey, bindingIDPathKey),
 		web.WithBasicAuth(
 			frontendAuth,
-			unbindHandler(unbinder, cmCreatorDeleter),
+			unbindHandler(lifecycler, cmNamespacer),
 		),
 	)
 

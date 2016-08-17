@@ -20,12 +20,6 @@ func (j JSONObject) String(key string) (string, error) {
 	return i, nil
 }
 
-// Exists returns whether key exists
-func (j JSONObject) Exists(key string) bool {
-	_, ok := j[key]
-	return ok
-}
-
 // Base64EncodedVals returns a new JSONObject equivalent to j with all values base64 Encoded
 func (j JSONObject) Base64EncodedVals() JSONObject {
 	newMap := make(map[string]string)

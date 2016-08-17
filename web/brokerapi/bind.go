@@ -4,16 +4,16 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
 	"github.com/gorilla/mux"
+	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
 type bindResponse struct {
 	Credentials mode.JSONObject `json:"credentials"`
 }
 
-func bindingHandler(binder mode.Binder, cmCreator k8s.ConfigMapCreator) http.Handler {
+func bindingHandler(binder mode.Binder, cmNamespacer kcl.ConfigMapsNamespacer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		instanceID, ok := vars[instanceIDPathKey]
@@ -56,7 +56,7 @@ func bindingHandler(binder mode.Binder, cmCreator k8s.ConfigMapCreator) http.Han
 
 		logger.Debugf("writing creds %+v to configmap %s/%s", bindRes.Creds, targetNamespace, targetName)
 
-		if err := writeToKubernetes(targetNamespace, targetName, bindRes.Creds, cmCreator); err != nil {
+		if err := writeToKubernetes(targetNamespace, targetName, bindRes.Creds, cmNamespacer); err != nil {
 			logger.Debugf("error writing service access data to kubernetes (%s)", err)
 			http.Error(w, "error writing service access data to kubernetes", http.StatusInternalServerError)
 			return

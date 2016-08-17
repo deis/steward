@@ -28,14 +28,11 @@ func TestBind(t *testing.T) {
 	backendBroker := testutil.NewCFBroker(auth, bindCreds)
 	backendBrokerHost, backendBrokerPort, err := testutil.HostAndPort(backendBroker)
 	assert.NoErr(t, err)
-	binder := cf.NewBinder(
-		cf.NewRESTClient(http.DefaultClient, "http", backendBrokerHost, backendBrokerPort, auth.Username, auth.Password),
-	)
-	cmCreatorDeleter := k8s.FakeConfigMapCreatorDeleter{
-		FakeConfigMapCreator: &k8s.FakeConfigMapCreator{},
-		FakeConfigMapDeleter: &k8s.FakeConfigMapDeleter{},
-	}
-	hdl := Handler(nil, nil, nil, binder, nil, auth, cmCreatorDeleter)
+
+	cmNamespacer := k8s.NewFakeConfigMapsNamespacer()
+	cfClient := cf.NewRESTClient(http.DefaultClient, "http", backendBrokerHost, backendBrokerPort, auth.Username, auth.Password)
+	lifecycler := cf.NewLifecycler(cfClient)
+	hdl := Handler(nil, lifecycler, auth, cmNamespacer)
 	srv := testsrv.StartServer(hdl)
 	defer srv.Close()
 
@@ -54,8 +51,11 @@ func TestBind(t *testing.T) {
 	assert.Equal(t, w.Code, http.StatusOK, "response code")
 
 	// check the k8s ConfigMapCreator's call
-	assert.Equal(t, len(cmCreatorDeleter.FakeConfigMapCreator.Created), 1, "number of calls to the config map creator")
-	created := cmCreatorDeleter.FakeConfigMapCreator.Created[0]
+	assert.Equal(t, len(cmNamespacer.Returned), 1, "number of calls to the config map creator")
+	cmInterface, ok := cmNamespacer.Returned[ns]
+	assert.True(t, ok, "no config maps interface was returned for namespace %s", ns)
+	assert.Equal(t, len(cmInterface.Created), 1, "number of config maps created")
+	created := cmInterface.Created[0]
 	assert.Equal(t, created.Namespace, ns, "config map namespace")
 	assert.Equal(t, created.Name, name, "config map name")
 	assert.Equal(t, len(created.Data), len(bindCreds), "amount of data in config map")

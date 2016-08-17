@@ -21,7 +21,7 @@ func provisionReqBody() string {
 
 func TestProvisionUnauthorized(t *testing.T) {
 	feAuth := &web.BasicAuth{Username: "testFEUser", Password: "testFEPass"}
-	hdl := Handler(nil, nil, nil, nil, nil, feAuth, nil)
+	hdl := Handler(nil, nil, feAuth, nil)
 	srv := testsrv.StartServer(hdl)
 	defer srv.Close()
 

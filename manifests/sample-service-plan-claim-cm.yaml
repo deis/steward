@@ -1,0 +1,14 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: claim-1
+  namespace: steward
+  labels:
+    type: service-plan-claim
+data:
+  service-id: "service1"
+  plan-id: "plan1"
+  claim-id: "asdasd7234213"
+  action: "create"
+  target-name: "sample-result"
+  target-namespace: "steward"

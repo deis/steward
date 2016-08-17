@@ -3,13 +3,13 @@ package brokerapi
 import (
 	"net/http"
 
-	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
 	"github.com/gorilla/mux"
+	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
-func unbindHandler(unbinder mode.Unbinder, configMapDeleter k8s.ConfigMapDeleter) http.Handler {
+func unbindHandler(unbinder mode.Unbinder, configMapsNamespacer kcl.ConfigMapsNamespacer) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		instanceID, ok := vars[instanceIDPathKey]
@@ -54,7 +54,7 @@ func unbindHandler(unbinder mode.Unbinder, configMapDeleter k8s.ConfigMapDeleter
 				return
 			}
 		}
-		if err := deleteFromKubernetes(namespace, name, configMapDeleter); err != nil {
+		if err := deleteFromKubernetes(namespace, name, configMapsNamespacer); err != nil {
 			logger.Debugf("error deleting bind resources from kubernetes (%s)", err)
 			http.Error(w, "error deleting bind resources from kubernetes", http.StatusInternalServerError)
 			return

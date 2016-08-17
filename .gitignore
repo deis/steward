@@ -28,3 +28,4 @@ rootfs/bin/steward.upx
 vendor
 /coverage.txt
 integration/integration
+rootfs/bin/steward.000

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
+	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
 const (
@@ -31,7 +31,7 @@ func writeToKubernetes(
 	namespace,
 	name string,
 	creds mode.JSONObject,
-	cmCreator k8s.ConfigMapCreator,
+	cmNamespacer kcl.ConfigMapsNamespacer,
 ) error {
 
 	configMap := &api.ConfigMap{
@@ -41,12 +41,12 @@ func writeToKubernetes(
 	}
 
 	logger.Debugf("creating config map with bind credentials %+v", *configMap)
-	if _, err := cmCreator.Create(namespace, configMap); err != nil {
+	if _, err := cmNamespacer.ConfigMaps(namespace).Create(configMap); err != nil {
 		return err
 	}
 	return nil
 }
 
-func deleteFromKubernetes(namespace, name string, configMapDeleter k8s.ConfigMapDeleter) error {
-	return configMapDeleter.Delete(namespace, name)
+func deleteFromKubernetes(namespace, name string, cmNamespacer kcl.ConfigMapsNamespacer) error {
+	return cmNamespacer.ConfigMaps(namespace).Delete(name)
 }

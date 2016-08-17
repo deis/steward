@@ -29,11 +29,6 @@ type serviceCatalogEntry3PRWrapper struct {
 	*ServiceCatalogEntry `json:",inline"`
 }
 
-// ResourceName returns the name of the ServiceProviderPlanPair third party resource
-func (sce ServiceCatalogEntry) ResourceName() string {
-	return fmt.Sprintf("%s-%s", sce.Info.Name, sce.Plan.Name)
-}
-
 type serviceCatalogEntries3PRWrapper struct {
 	api.ObjectMeta       `json:"metadata,omitempty"`
 	unversioned.TypeMeta `json:",inline"`
@@ -43,7 +38,7 @@ type serviceCatalogEntries3PRWrapper struct {
 // PublishServiceCatalogEntry publishes spp to the service catalog third party resource
 func PublishServiceCatalogEntry(cl *restclient.RESTClient, spp *ServiceCatalogEntry) error {
 	wrapper := serviceCatalogEntry3PRWrapper{
-		ObjectMeta:          api.ObjectMeta{Name: spp.ResourceName()},
+		ObjectMeta:          api.ObjectMeta{Name: fmt.Sprintf("%s-%s", spp.Info.ID, spp.Plan.ID)},
 		TypeMeta:            unversioned.TypeMeta{Kind: serviceCatalogEntry3PRName, APIVersion: resourceAPIVersion(apiVersionV1)},
 		ServiceCatalogEntry: spp,
 	}
@@ -59,8 +54,7 @@ func PublishServiceCatalogEntry(cl *restclient.RESTClient, spp *ServiceCatalogEn
 	return nil
 }
 
-// GetServiceCatalogEntries gets a list of all services
-func GetServiceCatalogEntries(
+func getServiceCatalogEntries(
 	cl *restclient.RESTClient,
 ) ([]*ServiceCatalogEntry, error) {
 

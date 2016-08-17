@@ -26,10 +26,13 @@ func TestWriteToKubernetes(t *testing.T) {
 		"password": "testpass",
 		"key":      "testkey",
 	})
-	cmCreator := &k8s.FakeConfigMapCreator{}
-	assert.NoErr(t, writeToKubernetes(ns, name, creds, cmCreator))
-	assert.Equal(t, len(cmCreator.Created), 1, "number of created ConfigMaps")
-	cm := cmCreator.Created[0]
+	cmNamespacer := k8s.NewFakeConfigMapsNamespacer()
+	assert.NoErr(t, writeToKubernetes(ns, name, creds, cmNamespacer))
+	assert.Equal(t, len(cmNamespacer.Returned), 1, "number of returned config map interfaces")
+	cmInterface, ok := cmNamespacer.Returned[ns]
+	assert.True(t, ok, "no config maps interface was created with the namespace %s", ns)
+	assert.Equal(t, len(cmInterface.Created), 1, "number of created ConfigMaps")
+	cm := cmInterface.Created[0]
 	assert.Equal(t, cm.Name, name, "ConfigMap name")
 	assert.Equal(t, cm.Namespace, ns, "ConfigMap namespace")
 	assert.Equal(t, cm.Labels["created-by"], "steward", "created-by label")
