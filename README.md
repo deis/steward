@@ -27,8 +27,6 @@ A single Steward process is responsible for provisioning one specific _type_ of 
 service type you intend to support, you should run exactly one Steward in your cluster that is
 configured to provision that service type.
 
-Each steward instance runs an API server that implements part of the [CloudFoundry Broker API](https://docs.cloudfoundry.org/services/api.html). See [API.md](./API.md) for more information.
-
 ## Available Services
 
 On startup, a Steward publishes its data to a set of 3PRs that indicate the availability of a
@@ -98,7 +96,7 @@ TODO
 
 # Development & Testing
 
-Steward is written in Go, and tested with [Go unit tests](https://godoc.org/testing) and an integration test suite. See [INTEGRATION_TESTING.md](./INTEGRATION_TESTING.md) for more information on the latter.
+Steward is written in Go and tested with [Go unit tests](https://godoc.org/testing).
 
 If you'd like to contribute to this project, simply fork the repository, make your changes, and submit a pull request. Please make sure to follow [these guidelines](https://deis.com/docs/workflow/contributing/submitting-a-pull-request/) when contributing.
 

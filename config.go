@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 
-	"github.com/deis/steward/web"
 	"github.com/juju/loggo"
 	"github.com/kelseyhightower/envconfig"
 )
@@ -21,11 +20,8 @@ func (e errModeUnsupported) Error() string {
 }
 
 type config struct {
-	Mode              string `envconfig:"MODE" default:"cf"`
-	LogLevel          string `envconfig:"LOG_LEVEL" default:"info"`
-	ServerPort        int    `envconfig:"BROKER_API_SERVER_PORT" default:"8080"`
-	BrokerAPIUsername string `envconfig:"BROKER_API_USERNAME" default:"deis"`
-	BrokerAPIPassword string `envconfig:"BROKER_API_PASSWORD" default:"steward"`
+	Mode     string `envconfig:"MODE" default:"cf"`
+	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
 }
 
 func (c config) validate() error {
@@ -54,14 +50,6 @@ func (c config) logLevel() loggo.Level {
 	default:
 		return loggo.INFO
 	}
-}
-
-func (c config) hostString() string {
-	return fmt.Sprintf(":%d", c.ServerPort)
-}
-
-func (c config) basicAuth() *web.BasicAuth {
-	return &web.BasicAuth{Username: c.BrokerAPIUsername, Password: c.BrokerAPIPassword}
 }
 
 func getConfig(appName string) (*config, error) {
