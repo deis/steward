@@ -16,3 +16,6 @@ import:
   - context
 - package: github.com/arschles/testsrv
 - package: github.com/pborman/uuid
+- package: golang.org/x/net
+  subpackages:
+  - context

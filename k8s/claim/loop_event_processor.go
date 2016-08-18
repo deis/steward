@@ -7,6 +7,7 @@ import (
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
 	"github.com/pborman/uuid"
+	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/api"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
@@ -33,15 +34,13 @@ func newErrClaim(claim mode.ServicePlanClaim, err error) mode.ServicePlanClaim {
 }
 
 func processEvent(
+	ctx context.Context,
 	evt *Event,
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	catalog k8s.ServiceCatalogLookup,
 	lifecycler mode.Lifecycler,
 	claimCh chan<- mode.ServicePlanClaim,
-	doneCh <-chan struct{},
 ) {
-
-	defer close(claimCh)
 
 	claim := *evt.claim.Claim
 	svc := catalog.Get(claim.ServiceID, claim.PlanID)
@@ -53,31 +52,31 @@ func processEvent(
 		}
 		select {
 		case claimCh <- newErrClaim(claim, err):
-		case <-doneCh:
+		case <-ctx.Done():
 		}
 		return
 	}
 	if claim.Action == mode.ActionCreate {
 		logger.Debugf("creating service %s, plan %s from claim %s", svc.Info.Name, svc.Plan.Name, claim.ClaimID)
-		processCreate(claim, svc, lifecycler, cmNamespacer, claimCh, doneCh)
+		processCreate(ctx, claim, svc, lifecycler, cmNamespacer, claimCh)
 	} else if claim.Action == mode.ActionDelete {
 		logger.Debugf("deleting service %s, plan %s from claim %s", svc.Info.Name, svc.Plan.Name, claim.ClaimID)
-		processDelete(claim, svc, lifecycler, cmNamespacer, claimCh, doneCh)
+		processDelete(ctx, claim, svc, lifecycler, cmNamespacer, claimCh)
 	}
 }
 
 func processCreate(
+	ctx context.Context,
 	claim mode.ServicePlanClaim,
 	svc *k8s.ServiceCatalogEntry,
 	lifecycler mode.Lifecycler,
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	claimCh chan<- mode.ServicePlanClaim,
-	doneCh <-chan struct{},
 ) {
 	claim.Status = mode.StatusCreating
 	select {
 	case claimCh <- claim:
-	case <-doneCh:
+	case <-ctx.Done():
 		return
 	}
 
@@ -89,7 +88,7 @@ func processCreate(
 	claim.InstanceID = instanceID
 	select {
 	case claimCh <- claim:
-	case <-doneCh:
+	case <-ctx.Done():
 		return
 	}
 	if _, err := lifecycler.Provision(instanceID, &mode.ProvisionRequest{
@@ -101,7 +100,7 @@ func processCreate(
 	}); err != nil {
 		select {
 		case claimCh <- newErrClaim(claim, err):
-		case <-doneCh:
+		case <-ctx.Done():
 		}
 		return
 	}
@@ -112,14 +111,14 @@ func processCreate(
 	claim.BindID = bindID
 	select {
 	case claimCh <- claim:
-	case <-doneCh:
+	case <-ctx.Done():
 		return
 	}
 	bindRes, err := lifecycler.Bind(instanceID, bindID, &mode.BindRequest{})
 	if err != nil {
 		select {
 		case claimCh <- newErrClaim(claim, err):
-		case <-doneCh:
+		case <-ctx.Done():
 		}
 		return
 	}
@@ -134,30 +133,30 @@ func processCreate(
 	}); err != nil {
 		select {
 		case claimCh <- newErrClaim(claim, err):
-		case <-doneCh:
+		case <-ctx.Done():
 		}
 		return
 	}
 	claim.Status = mode.StatusCreated
 	select {
 	case claimCh <- claim:
-	case <-doneCh:
+	case <-ctx.Done():
 		return
 	}
 }
 
 func processDelete(
+	ctx context.Context,
 	claim mode.ServicePlanClaim,
 	svc *k8s.ServiceCatalogEntry,
 	lifecycler mode.Lifecycler,
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	claimCh chan<- mode.ServicePlanClaim,
-	doneCh <-chan struct{},
 ) {
 	claim.Status = mode.StatusDeleting
 	select {
 	case claimCh <- claim:
-	case <-doneCh:
+	case <-ctx.Done():
 		return
 	}
 
@@ -167,14 +166,14 @@ func processDelete(
 	if instanceID == "" {
 		select {
 		case claimCh <- newErrClaim(claim, errMissingInstanceID):
-		case <-doneCh:
+		case <-ctx.Done():
 			return
 		}
 	}
 	if bindID == "" {
 		select {
 		case claimCh <- newErrClaim(claim, errMissingBindID):
-		case <-doneCh:
+		case <-ctx.Done():
 			return
 		}
 	}
@@ -182,13 +181,13 @@ func processDelete(
 	claim.Status = mode.StatusUnbinding
 	select {
 	case claimCh <- claim:
-	case <-doneCh:
+	case <-ctx.Done():
 		return
 	}
 	if err := lifecycler.Unbind(claim.ServiceID, claim.PlanID, instanceID, bindID); err != nil {
 		select {
 		case claimCh <- newErrClaim(claim, err):
-		case <-doneCh:
+		case <-ctx.Done():
 		}
 		return
 	}
@@ -197,7 +196,7 @@ func processDelete(
 	if _, err := lifecycler.Deprovision(instanceID, claim.ServiceID, claim.PlanID); err != nil {
 		select {
 		case claimCh <- newErrClaim(claim, err):
-		case <-doneCh:
+		case <-ctx.Done():
 		}
 		return
 	}
@@ -206,7 +205,7 @@ func processDelete(
 	if err := cmNamespacer.ConfigMaps(claim.TargetNamespace).Delete(claim.TargetName); err != nil {
 		select {
 		case claimCh <- newErrClaim(claim, err):
-		case <-doneCh:
+		case <-ctx.Done():
 		}
 		return
 	}
@@ -214,6 +213,6 @@ func processDelete(
 	claim.Status = mode.StatusDeleted
 	select {
 	case claimCh <- claim:
-	case <-doneCh:
+	case <-ctx.Done():
 	}
 }

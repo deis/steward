@@ -1,8 +1,11 @@
 package claim
 
 import (
+	"errors"
+
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
+	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/api"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/labels"
@@ -18,10 +21,12 @@ var (
 	claimLabelSelector = labels.SelectorFromSet(labels.Set(map[string]string{
 		labelKeyType: labelValServicePlanClaim,
 	}))
+	errLoopStopped = errors.New("loop has been stopped")
 )
 
 // StartControlLoop starts an infinite loop that receives on watcher.ResultChan() and takes action on each change in service plan claims. It's intended to be called in a goroutine. Call watcher.Stop() to stop this loop
 func StartControlLoop(
+	ctx context.Context,
 	iface Interactor,
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	lookup k8s.ServiceCatalogLookup,
@@ -34,6 +39,7 @@ func StartControlLoop(
 		return err
 	}
 	ch := watcher.ResultChan()
+	defer watcher.Stop()
 
 	// iterate through all existing claims before streaming them
 	claimList, err := iface.List(api.ListOptions{LabelSelector: claimLabelSelector})
@@ -43,7 +49,7 @@ func StartControlLoop(
 
 	for _, wrapper := range claimList.Claims {
 		evt := &Event{claim: wrapper, operation: watch.Added}
-		receiveEvent(evt, iface, cmNamespacer, lookup, lifecycler)
+		receiveEvent(ctx, evt, iface, cmNamespacer, lookup, lifecycler)
 	}
 
 	for {
@@ -53,7 +59,10 @@ func StartControlLoop(
 				return nil
 			}
 			logger.Debugf("received event %s", *evt.claim.Claim)
-			receiveEvent(evt, iface, cmNamespacer, lookup, lifecycler)
+			receiveEvent(ctx, evt, iface, cmNamespacer, lookup, lifecycler)
+		case <-ctx.Done():
+			logger.Debugf("loop has been stopped")
+			return errLoopStopped
 		}
 	}
 }
@@ -77,6 +86,7 @@ func shouldProcessEvent(evt *Event) bool {
 }
 
 func receiveEvent(
+	ctx context.Context,
 	evt *Event,
 	iface Interactor,
 	cmNamespacer kcl.ConfigMapsNamespacer,
@@ -90,10 +100,8 @@ func receiveEvent(
 	}
 
 	claimCh := make(chan mode.ServicePlanClaim)
-	stopCh := make(chan struct{})
-	defer close(stopCh)
 	wrapper := evt.claim
-	go processEvent(evt, cmNamespacer, lookup, lifecycler, claimCh, stopCh)
+	go processEvent(ctx, evt, cmNamespacer, lookup, lifecycler, claimCh)
 	stopLoop := false
 	for {
 		select {
@@ -112,6 +120,8 @@ func receiveEvent(
 				break
 			}
 			wrapper = w
+		case <-ctx.Done():
+			return
 		}
 		if stopLoop {
 			break
