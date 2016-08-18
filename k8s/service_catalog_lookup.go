@@ -2,8 +2,6 @@ package k8s
 
 import (
 	"fmt"
-
-	"k8s.io/kubernetes/pkg/client/restclient"
 )
 
 // ServiceCatalogLookup is an an O(1) lookup table for service catalog entries, based on ServiceCatalogEntry names. None of the functions on this struct are thread-safe
@@ -21,13 +19,13 @@ func NewServiceCatalogLookup(catalog []*ServiceCatalogEntry) ServiceCatalogLooku
 }
 
 // FetchServiceCatalogLookup returns a new ServiceCatalogLookup from the Kubernetes cluster using cl. Returns a non-nil error if there was a problem communicating with the cluster
-func FetchServiceCatalogLookup(cl *restclient.RESTClient) (*ServiceCatalogLookup, error) {
+func FetchServiceCatalogLookup(iface ServiceCatalogInteractor) (*ServiceCatalogLookup, error) {
 	ret := NewServiceCatalogLookup(nil)
-	entries, err := getServiceCatalogEntries(cl)
+	entries, err := iface.List()
 	if err != nil {
 		return nil, err
 	}
-	for _, entry := range entries {
+	for _, entry := range entries.Items {
 		ret.Set(entry)
 	}
 	return &ret, nil

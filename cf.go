@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/deis/steward/k8s"
@@ -10,26 +9,9 @@ import (
 	"github.com/deis/steward/mode/cf"
 	"github.com/deis/steward/web"
 	"github.com/deis/steward/web/brokerapi"
-	"k8s.io/kubernetes/pkg/client/restclient"
+	"k8s.io/kubernetes/pkg/api"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
-
-type errServiceAlreadyPublished struct {
-	entry *k8s.ServiceCatalogEntry
-}
-
-func (e errServiceAlreadyPublished) Error() string {
-	return fmt.Sprintf(
-		"duplicate service catalog entry (svc_id, plan_id) = (%s, %s)",
-		e.entry.Info.ID,
-		e.entry.Plan.ID,
-	)
-}
-
-func isErrServiceAlreadyPublished(e error) bool {
-	_, ok := e.(errServiceAlreadyPublished)
-	return ok
-}
 
 func runCFMode(
 	apiServerHostStr string,
@@ -58,13 +40,13 @@ func runCFMode(
 		cfCfg.Username,
 		cfCfg.Password,
 	)
+
+	catalogInteractor := k8s.NewK8sServiceCatalogInteractor(cl.RESTClient)
 	cataloger := cf.NewCataloger(cfClient)
 	lifecycler := cf.NewLifecycler(cfClient)
 
-	published, err := publishCatalog(cataloger, cl.RESTClient)
-	if isErrServiceAlreadyPublished(err) {
-		logger.Debugf("%s, continuing", err)
-	} else if err != nil {
+	published, err := publishCatalog(cataloger, catalogInteractor)
+	if err != nil {
 		logger.Criticalf("error publishing the cloud foundry service catalog (%s)", err)
 		return err
 	}
@@ -73,7 +55,7 @@ func runCFMode(
 	go runBrokerAPI(cataloger, lifecycler, frontendAuth, apiServerHostStr, errCh, cl)
 
 	evtNamespacer := claim.NewConfigMapsInteractorNamespacer(cl)
-	lookup, err := k8s.FetchServiceCatalogLookup(cl.RESTClient)
+	lookup, err := k8s.FetchServiceCatalogLookup(catalogInteractor)
 	if err != nil {
 		logger.Criticalf("error fetching the service catalog lookup table (%s)", err)
 		return err
@@ -93,7 +75,7 @@ func runCFMode(
 // returns all of the entries it wrote into the catalog, or an error
 func publishCatalog(
 	cataloger mode.Cataloger,
-	restCl *restclient.RESTClient,
+	catalogEntries k8s.ServiceCatalogInteractor,
 ) ([]*k8s.ServiceCatalogEntry, error) {
 
 	services, err := cataloger.List()
@@ -106,8 +88,8 @@ func publishCatalog(
 	// write all entries from cf catalog to 3pr
 	for _, service := range services {
 		for _, plan := range service.Plans {
-			entry := &k8s.ServiceCatalogEntry{Info: service.ServiceInfo, Plan: plan}
-			if err := k8s.PublishServiceCatalogEntry(restCl, entry); err != nil {
+			entry := k8s.NewServiceCatalogEntry(api.ObjectMeta{}, service.ServiceInfo, plan)
+			if _, err := catalogEntries.Create(entry); err != nil {
 				logger.Errorf(
 					"error publishing catalog entry (svc_name, plan_name) = (%s, %s) (%s), continuing",
 					entry.Info.Name,
