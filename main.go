@@ -41,8 +41,6 @@ func main() {
 	switch cfg.Mode {
 	case cfMode:
 		if err := runCFMode(
-			cfg.hostString(),
-			cfg.basicAuth(),
 			k8sClient,
 			errCh,
 			namespaces,

@@ -34,6 +34,3 @@ docker-build: build
 	${DEV_ENV_CMD} upx -9 ${BINARY_DEST_DIR}/steward
 	docker build --rm -t ${IMAGE} rootfs
 	docker tag ${IMAGE} ${MUTABLE_IMAGE}
-
-build-integration:
-	go build -o integration/integration ./integration

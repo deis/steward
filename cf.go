@@ -7,16 +7,12 @@ import (
 	"github.com/deis/steward/k8s/claim"
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/mode/cf"
-	"github.com/deis/steward/web"
-	"github.com/deis/steward/web/brokerapi"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/api"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
 func runCFMode(
-	apiServerHostStr string,
-	frontendAuth *web.BasicAuth,
 	cl *kcl.Client,
 	errCh chan<- error,
 	namespaces []string,
@@ -53,7 +49,6 @@ func runCFMode(
 	}
 
 	logger.Infof("published %d entries into the catalog", len(published))
-	go runBrokerAPI(cataloger, lifecycler, frontendAuth, apiServerHostStr, errCh, cl)
 
 	evtNamespacer := claim.NewConfigMapsInteractorNamespacer(cl)
 	lookup, err := k8s.FetchServiceCatalogLookup(catalogInteractor)
@@ -105,20 +100,4 @@ func publishCatalog(
 	}
 
 	return published, nil
-}
-
-func runBrokerAPI(
-	cataloger mode.Cataloger,
-	lifecycler mode.Lifecycler,
-	frontendAuth *web.BasicAuth,
-	hostStr string,
-	errCh chan<- error,
-	cmNamespacer kcl.ConfigMapsNamespacer,
-) {
-
-	logger.Infof("starting CF broker API server on %s", hostStr)
-	hdl := brokerapi.Handler(cataloger, lifecycler, frontendAuth, cmNamespacer)
-	if err := http.ListenAndServe(hostStr, hdl); err != nil {
-		errCh <- err
-	}
 }
