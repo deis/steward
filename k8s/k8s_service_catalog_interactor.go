@@ -51,5 +51,5 @@ func (k k8sRestClientImpl) Create(entry *ServiceCatalogEntry) (*ServiceCatalogEn
 }
 
 func getServiceCatalogEntriesAbsPath() []string {
-	return []string{"apis", "steward.deis.com", "v1", "namespaces", serviceCatalogEntryNamespace, serviceCatalogEntries3PRURLName}
+	return []string{"apis", resourceAPIVersionBase, apiVersionV1, "namespaces", serviceCatalogEntryNamespace, serviceCatalogEntries3PRURLName}
 }

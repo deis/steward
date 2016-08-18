@@ -1,7 +1,7 @@
 apiVersion: extensions/v1beta1
 kind: ThirdPartyResource
 metadata:
-  name: service-catalog-entry.steward.deis.com
+  name: service-catalog-entry.steward.deis.io
   labels:
     heritage: deis
 description: "A description of a single (service, plan) pair that a steward instance is able to provision"

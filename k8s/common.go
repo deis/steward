@@ -8,7 +8,7 @@ import (
 
 const (
 	// TODO: consider making this configurable
-	resourceAPIVersionBase = "steward.deis.com"
+	resourceAPIVersionBase = "steward.deis.io"
 	apiVersionV1           = "v1"
 )
 

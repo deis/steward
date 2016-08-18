@@ -1,4 +1,4 @@
-apiVersion: steward.deis.com/v1
+apiVersion: steward.deis.io/v1
 kind: "ServicePlanClaim"
 metadata:
   name: test-service-plan-claim
