@@ -19,12 +19,16 @@ var (
 )
 
 type claimUpdate struct {
-	newClaim *mode.ServicePlanClaim
+	newClaim mode.ServicePlanClaim
 	err      error
 	stop     bool
 }
 
-func newErrClaimUpdate(claim *mode.ServicePlanClaim, err error) claimUpdate {
+func (c claimUpdate) String() string {
+	return fmt.Sprintf("new claim = %s. error = %s, stop = %t", c.newClaim, c.err, c.stop)
+}
+
+func newErrClaimUpdate(claim mode.ServicePlanClaim, err error) claimUpdate {
 	claim.Status = mode.StatusFailed.String()
 	claim.StatusDescription = fmt.Sprintf("error: %s", err)
 	return claimUpdate{
@@ -34,7 +38,7 @@ func newErrClaimUpdate(claim *mode.ServicePlanClaim, err error) claimUpdate {
 	}
 }
 
-func newClaimUpdate(claim *mode.ServicePlanClaim) claimUpdate {
+func newClaimUpdate(claim mode.ServicePlanClaim) claimUpdate {
 	stop := false
 	if mode.StringIsStatus(claim.Status, mode.StatusFailed) ||
 		mode.StringIsStatus(claim.Status, mode.StatusBound) ||
@@ -43,7 +47,6 @@ func newClaimUpdate(claim *mode.ServicePlanClaim) claimUpdate {
 		mode.StringIsStatus(claim.Status, mode.StatusDeprovisioned) {
 		stop = true
 	}
-
 	return claimUpdate{newClaim: claim, stop: stop}
 }
 
@@ -61,7 +64,7 @@ func isNoSuchServiceAndPlanErr(e error) bool {
 	return ok
 }
 
-func getService(claim *mode.ServicePlanClaim, catalog k8s.ServiceCatalogLookup) (*k8s.ServiceCatalogEntry, error) {
+func getService(claim mode.ServicePlanClaim, catalog k8s.ServiceCatalogLookup) (*k8s.ServiceCatalogEntry, error) {
 	svc := catalog.Get(claim.ServiceID, claim.PlanID)
 	if svc == nil {
 		logger.Debugf("service %s, plan %s not found", claim.ServiceID, claim.PlanID)
@@ -82,7 +85,7 @@ func processProvision(
 	claimCh chan<- claimUpdate,
 ) {
 
-	claim := evt.claim.Claim
+	claim := *evt.claim.Claim
 
 	svc, err := getService(claim, catalogLookup)
 	if err != nil {
@@ -134,7 +137,8 @@ func processBind(
 	claimCh chan<- claimUpdate,
 ) {
 
-	claim := evt.claim.Claim
+	claim := *evt.claim.Claim
+	claimWrapper := *evt.claim
 	if _, err := getService(claim, catalogLookup); err != nil {
 		select {
 		case claimCh <- newErrClaimUpdate(claim, err):
@@ -144,8 +148,9 @@ func processBind(
 	}
 
 	claim.Status = mode.StatusBinding.String()
+	claimUpdate := newClaimUpdate(claim)
 	select {
-	case claimCh <- newClaimUpdate(claim):
+	case claimCh <- claimUpdate:
 	case <-ctx.Done():
 		return
 	}
@@ -170,11 +175,11 @@ func processBind(
 		return
 	}
 
-	if _, err := cmNamespacer.ConfigMaps(claim.TargetNamespace).Create(&api.ConfigMap{
+	if _, err := cmNamespacer.ConfigMaps(claimWrapper.ObjectMeta.Namespace).Create(&api.ConfigMap{
 		TypeMeta: unversioned.TypeMeta{},
 		ObjectMeta: api.ObjectMeta{
 			Name:      claim.TargetName,
-			Namespace: claim.TargetNamespace,
+			Namespace: claimWrapper.ObjectMeta.Namespace,
 		},
 		Data: bindRes.Creds,
 	}); err != nil {
@@ -201,7 +206,8 @@ func processUnbind(
 	claimCh chan<- claimUpdate,
 ) {
 
-	claim := evt.claim.Claim
+	claimWrapper := evt.claim
+	claim := *evt.claim.Claim
 	if _, err := getService(claim, catalogLookup); err != nil {
 		select {
 		case claimCh <- newErrClaimUpdate(claim, err):
@@ -243,7 +249,7 @@ func processUnbind(
 	}
 
 	// delete configmap
-	if err := cmNamespacer.ConfigMaps(claim.TargetNamespace).Delete(claim.TargetName); err != nil {
+	if err := cmNamespacer.ConfigMaps(claimWrapper.ObjectMeta.Namespace).Delete(claim.TargetName); err != nil {
 		select {
 		case claimCh <- newErrClaimUpdate(claim, err):
 		case <-ctx.Done():
@@ -268,7 +274,7 @@ func processDeprovision(
 	claimCh chan<- claimUpdate,
 ) {
 
-	claim := evt.claim.Claim
+	claim := *evt.claim.Claim
 	if _, err := getService(claim, catalogLookup); err != nil {
 		select {
 		case claimCh <- newErrClaimUpdate(claim, err):

@@ -37,9 +37,6 @@ func matchClaimToMap(claim *mode.ServicePlanClaim, data map[string]string) error
 	if claim.TargetName != data["target-name"] {
 		return errClaimMapMismatch{name: "target name", claimVal: claim.TargetName, mapVal: data["target-name"]}
 	}
-	if claim.TargetNamespace != data["target-namespace"] {
-		return errClaimMapMismatch{name: "target namespace", claimVal: claim.TargetNamespace, mapVal: data["target-namespace"]}
-	}
 	if claim.ServiceID != data["service-id"] {
 		return errClaimMapMismatch{name: "service ID", claimVal: claim.ServiceID, mapVal: data["service-id"]}
 	}

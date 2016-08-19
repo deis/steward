@@ -38,12 +38,8 @@ func (c cmInterface) List(opts api.ListOptions) (*ServicePlanClaimsListWrapper, 
 
 func (c cmInterface) Update(spc *ServicePlanClaimWrapper) (*ServicePlanClaimWrapper, error) {
 	cm := &api.ConfigMap{
-		Data: spc.Claim.ToMap(),
-		ObjectMeta: api.ObjectMeta{
-			ResourceVersion: spc.ResourceVersion,
-			Name:            spc.OriginalName,
-			Labels:          spc.Labels,
-		},
+		Data:       spc.Claim.ToMap(),
+		ObjectMeta: spc.ObjectMeta,
 	}
 	logger.Debugf("updating ConfigMap %s with data %s", cm.Name, cm.Data)
 	newCM, err := c.cm.Update(cm)

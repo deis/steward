@@ -38,7 +38,6 @@ const (
 	statusMapKey            = "status"
 	statusDescriptionMapKey = "status-description"
 	targetNameMapKey        = "target-name"
-	targetNamespaceMapKey   = "target-namespace"
 	instanceIDMapKey        = "instance-id"
 	bindIDMapKey            = "bind-id"
 
@@ -82,7 +81,6 @@ func (e errServicePlanClaimMapMissingKey) Error() string {
 // ServicePlanClaim is the json-encodable struct that represents a service plan claim. See https://github.com/deis/steward/blob/master/DATA_STRUCTURES.md#serviceplanclaim for more detail. This struct implements fmt.Stringer
 type ServicePlanClaim struct {
 	TargetName        string `json:"target-name"`
-	TargetNamespace   string `json:"target-namespace"`
 	ServiceID         string `json:"service-id"`
 	PlanID            string `json:"plan-id"`
 	ClaimID           string `json:"claim-id"`
@@ -98,10 +96,6 @@ func ServicePlanClaimFromMap(m map[string]string) (*ServicePlanClaim, error) {
 	targetName, ok := m[targetNameMapKey]
 	if !ok {
 		return nil, errServicePlanClaimMapMissingKey{key: targetNameMapKey}
-	}
-	targetNamespace, ok := m[targetNamespaceMapKey]
-	if !ok {
-		return nil, errServicePlanClaimMapMissingKey{key: targetNamespaceMapKey}
 	}
 	serviceID, ok := m[serviceIDKey]
 	if !ok {
@@ -127,7 +121,6 @@ func ServicePlanClaimFromMap(m map[string]string) (*ServicePlanClaim, error) {
 
 	return &ServicePlanClaim{
 		TargetName:        targetName,
-		TargetNamespace:   targetNamespace,
 		ServiceID:         serviceID,
 		PlanID:            planID,
 		ClaimID:           claimID,
@@ -143,7 +136,6 @@ func ServicePlanClaimFromMap(m map[string]string) (*ServicePlanClaim, error) {
 func (s ServicePlanClaim) ToMap() map[string]string {
 	return map[string]string{
 		targetNameMapKey:        s.TargetName,
-		targetNamespaceMapKey:   s.TargetNamespace,
 		serviceIDKey:            s.ServiceID,
 		planIDKey:               s.PlanID,
 		claimIDMapKey:           s.ClaimID,

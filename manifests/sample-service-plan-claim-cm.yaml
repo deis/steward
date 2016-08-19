@@ -11,4 +11,3 @@ data:
   claim-id: "asdasd7234213"
   action: "create"
   target-name: "sample-result"
-  target-namespace: "steward"

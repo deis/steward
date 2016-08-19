@@ -9,10 +9,8 @@ import (
 
 // ServicePlanClaimWrapper is a wrapper for a ServicePlanClaim that also contains kubernetes-specific information
 type ServicePlanClaimWrapper struct {
-	Claim           *mode.ServicePlanClaim
-	ResourceVersion string
-	OriginalName    string
-	Labels          map[string]string
+	ObjectMeta api.ObjectMeta
+	Claim      *mode.ServicePlanClaim
 }
 
 func servicePlanClaimWrapperFromConfigMap(cm *api.ConfigMap) (*ServicePlanClaimWrapper, error) {
@@ -21,26 +19,25 @@ func servicePlanClaimWrapperFromConfigMap(cm *api.ConfigMap) (*ServicePlanClaimW
 		return nil, err
 	}
 	return &ServicePlanClaimWrapper{
-		Claim:           claim,
-		ResourceVersion: cm.ResourceVersion,
-		OriginalName:    cm.Name,
-		Labels:          cm.Labels,
+		Claim: claim,
+		ObjectMeta: api.ObjectMeta{
+			ResourceVersion: cm.ResourceVersion,
+			Name:            cm.Name,
+			Namespace:       cm.Namespace,
+			Labels:          cm.Labels,
+		},
 	}, nil
 }
 
 // String is the fmt.Stringer implementation
 func (spc ServicePlanClaimWrapper) String() string {
-	return fmt.Sprintf("%s (resource %s)", *spc.Claim, spc.ResourceVersion)
+	return fmt.Sprintf("%s (resource %s)", *spc.Claim, spc.ObjectMeta.ResourceVersion)
 }
 
 func (spc ServicePlanClaimWrapper) toConfigMap() *api.ConfigMap {
 	return &api.ConfigMap{
-		ObjectMeta: api.ObjectMeta{
-			Name:            spc.OriginalName,
-			Labels:          spc.Labels,
-			ResourceVersion: spc.ResourceVersion,
-		},
-		Data: spc.Claim.ToMap(),
+		ObjectMeta: spc.ObjectMeta,
+		Data:       spc.Claim.ToMap(),
 	}
 }
 

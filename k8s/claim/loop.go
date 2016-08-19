@@ -103,7 +103,9 @@ func receiveEvent(
 	claimUpdateCh := make(chan claimUpdate)
 	wrapper := evt.claim
 
-	go nextAction(ctx, evt, cmNamespacer, lookup, lifecycler, claimUpdateCh)
+	cancelCtx, cancelFn := context.WithCancel(ctx)
+	defer cancelFn()
+	go nextAction(cancelCtx, evt, cmNamespacer, lookup, lifecycler, claimUpdateCh)
 
 	for {
 		select {
@@ -112,15 +114,18 @@ func receiveEvent(
 			if claimUpdate.err != nil {
 				logger.Errorf("error in claim processing (%s)", err)
 				return
-			} else if claimUpdate.stop {
-				return
 			}
 
 			// update the claim in k8s
-			wrapper.Claim = claimUpdate.newClaim
+			wrapper.Claim = &claimUpdate.newClaim
 			w, err := iface.Update(wrapper)
 			if err != nil {
 				logger.Errorf("error updating claim %s (%s), stopping", claimUpdate.newClaim.ClaimID, err)
+				return
+			}
+
+			// if stop is true, then the claim was to be updated a final time, and then the loop was to stop listening
+			if claimUpdate.stop {
 				return
 			}
 			wrapper = w
