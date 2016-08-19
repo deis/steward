@@ -32,11 +32,17 @@ This object is submitted by the application as JSON in a [`ConfigMap`][configMap
 - `service-provider` - the name of the `ServiceProvider` the application wants
 - `service-plan` - the name of the `ServicePlan` the application wants
 - `claim-id` - an application-generated [UUID][uuid]
-- `action` - the application-specified action to take. Valid values are `create` and `delete`. Steward will never modify this value. Applications must submit a new `ServicePlanClaim` with `create` in this field. It is an error for this field to be empty
-- `status` - the current status of the claim. Steward will modify this value, but will ignore any modifications by the application. Valid values are listed below:
-  - For claiming a new service (in order): `creating`, `provisioning`, `binding`, `created`
-  - For unclaiming a new service (in order): `deleting`, `unbinding`, `deprovisioning`, `deleted`
-  - Any failure will result in a status of `failed`
+- `action` - the application-specified action to take. Valid values are `provision` and `bind`, `unbind` and `deprovision`. Steward will never modify this value. Applications must submit a new `ServicePlanClaim` with `provision` in this field. It is an error for this field to be empty
+- `status` - the current status of the claim. Steward will modify this value, but will ignore any modifications by the application. Valid values and short descriptions are listed below:
+  - `provisioning` - immediately after `action` is set to `provision`
+  - `provisioned` - after `action` is set to `provision` and the provisioning process succeeded
+  - `binding` - immediately after `action` is set to `bind`
+  - `bound` - after `action` is set to `bind` and the binding process succeeded
+  - `unbinding` - immediately after `action` is set to `unbind`
+  - `unbound` - after `action` is set to `unbind` and the unbinding process succeeded
+  - `deprovisioning` - immediately after `action` is set to `deprovision`
+  - `deprovisioned` - after `action` is set to `deprovision` and the deprovisioning process succeeded
+  - `failed` - after any `action` failed
 - `status-description` - a human-readable explanation of the current `status`. Steward will modify this value, but will ignore any modifications by the application
 - `instance-id` - for internal use only. The application should not modify this field
 - `bind-id` - for internal use only. The application should not modify this field

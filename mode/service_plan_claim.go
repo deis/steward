@@ -4,6 +4,32 @@ import (
 	"fmt"
 )
 
+// Action is the type representing the current action a consumer has requested on a claim. It implements fmt.Stringer
+type Action string
+
+// StringIsAction returns true if s == a.String()
+func StringIsAction(s string, a Action) bool {
+	return s == a.String()
+}
+
+// String is the fmt.Stringer implementation
+func (a Action) String() string {
+	return string(a)
+}
+
+// Status is the type representing the current status of a claim. It implements fmt.Stringer
+type Status string
+
+// StringIsStatus returns true if s == st.String()
+func StringIsStatus(s string, st Status) bool {
+	return s == st.String()
+}
+
+// String is the fmt.Stringer interface implementation
+func (s Status) String() string {
+	return string(s)
+}
+
 const (
 	serviceIDKey            = "service-id"
 	planIDKey               = "plan-id"
@@ -15,28 +41,34 @@ const (
 	targetNamespaceMapKey   = "target-namespace"
 	instanceIDMapKey        = "instance-id"
 	bindIDMapKey            = "bind-id"
-	// ActionCreate is the status indicating that a service is being created
-	ActionCreate = "create"
-	// ActionDelete is the status indicating that a service is being deleted
-	ActionDelete = "delete"
-	// StatusCreating is the status indicating that a service is creating
-	StatusCreating = "creating"
-	// StatusProvisioning is the status indicating that a service is provisioning
-	StatusProvisioning = "provisioning"
-	// StatusBinding is the status indicating that a service is binding
-	StatusBinding = "binding"
-	// StatusCreated is the status indicating that a service has been successfully created
-	StatusCreated = "created"
-	// StatusDeleting is the status indicating that a service is deleting
-	StatusDeleting = "deleting"
-	// StatusUnbinding is the status indicating that a service is unbinding
-	StatusUnbinding = "unbinding"
-	// StatusDeprovisioning is the status indicating that a service is deprovisioning
-	StatusDeprovisioning = "deprovisioning"
-	// StatusDeleted is the status indicating that a service has been successfully deleted
-	StatusDeleted = "deleted"
+
+	// ActionProvision is the action indicating that a service should be provision
+	ActionProvision Action = "provision"
+	// ActionBind is the action indicating that a service is should be bound
+	ActionBind Action = "bind"
+	// ActionUnbind is the action indicating that a servie should be unbound
+	ActionUnbind Action = "unbind"
+	// ActionDeprovision is the action indicating that a service should be deprovisioned
+	ActionDeprovision Action = "deprovision"
+
+	// StatusProvisioning is the status indicating that the provisioning process has started
+	StatusProvisioning Status = "provisioning"
+	// StatusProvisioned is the status indicating that the provisioning process has succeeded
+	StatusProvisioned Status = "provisioned"
+	// StatusBinding is the status indicating that the binding process has started
+	StatusBinding Status = "binding"
+	// StatusBound is the status indicating that the binding process has succeeded
+	StatusBound Status = "bound"
+	// StatusUnbinding is the status indicating that the unbinding process has started
+	StatusUnbinding Status = "unbinding"
+	// StatusUnbound is the status indicating that the unbinding process has succeeded
+	StatusUnbound Status = "unbound"
+	// StatusDeprovisioning is the status indicating that the deprovisioning process has started
+	StatusDeprovisioning Status = "deprovisioning"
+	// StatusDeprovisioned is the status indicating that the deprovisioning process has succeeded
+	StatusDeprovisioned Status = "deprovisioned"
 	// StatusFailed is the status indicating that a service's creation or deletion operation has failed for some reason. The human-readable explanation of the failure will be written to the status description
-	StatusFailed = "failed"
+	StatusFailed Status = "failed"
 )
 
 type errServicePlanClaimMapMissingKey struct {

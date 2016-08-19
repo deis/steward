@@ -2,6 +2,7 @@ package claim
 
 import (
 	"errors"
+	"time"
 
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
@@ -54,9 +55,23 @@ func StartControlLoop(
 
 	for {
 		select {
-		case evt := <-ch:
-			if evt == nil {
-				return nil
+		case evt, open := <-ch:
+			// if the watch channel was closed, do the following in order:
+			//
+			// 1. check to see if the loop should be shut down. if so, return immediately
+			// 2. otherwise, re-open the watch and continue to the next iteration of the loop
+			if !open {
+				// this if statement is this is semantically equivalent to if evt == nil {...}
+				select {
+				case <-ctx.Done():
+					logger.Debugf("loop has been stopped")
+					return errLoopStopped
+				default:
+				}
+				logger.Debugf("watch channel was closed, pausing then re-opening the watch and continuing")
+				time.Sleep(1 * time.Second)
+				ch = watcher.ResultChan()
+				continue
 			}
 			logger.Debugf("received event %s", *evt.claim.Claim)
 			receiveEvent(ctx, evt, iface, cmNamespacer, lookup, lifecycler)
@@ -65,24 +80,6 @@ func StartControlLoop(
 			return errLoopStopped
 		}
 	}
-}
-
-// determine whether we should process evt (returns true) or skip it (returns false). a few notes:
-//
-// - consuming MODIFIED events will result in an infinite loop (we'll keep consuming our own events)
-// - DELETED events do not indicate that the service should be deleted. transitioning from (evt.claim.Status=="created",evt.claim.Action="create") --> (evt.claim.Status==X,evt.claim.Action=="delete") indicates that
-func shouldProcessEvent(evt *Event) bool {
-	// process if the event was just added
-	if evt.operation == watch.Added {
-		return true
-	}
-	// process if the event has been created but is now being requested to be deleted
-	if evt.operation == watch.Modified &&
-		evt.claim.Claim.Status == mode.StatusCreated &&
-		evt.claim.Claim.Action == mode.ActionDelete {
-		return true
-	}
-	return false
 }
 
 func receiveEvent(
@@ -94,37 +91,41 @@ func receiveEvent(
 	lifecycler mode.Lifecycler,
 ) {
 
-	if !shouldProcessEvent(evt) {
-		logger.Debugf("received operation %s for claim %s, skipping", evt.operation, *evt.claim)
+	nextAction, err := evt.nextAction()
+	if isNoNextActionErr(err) {
+		logger.Debugf("received event that has no next action (%s), skipping", err)
+		return
+	} else if err != nil {
+		logger.Debugf("unknown error when determining the next action to make on the claim (%s)", err)
 		return
 	}
 
-	claimCh := make(chan mode.ServicePlanClaim)
+	claimUpdateCh := make(chan claimUpdate)
 	wrapper := evt.claim
-	go processEvent(ctx, evt, cmNamespacer, lookup, lifecycler, claimCh)
-	stopLoop := false
+
+	go nextAction(ctx, evt, cmNamespacer, lookup, lifecycler, claimUpdateCh)
+
 	for {
 		select {
-		case claim := <-claimCh:
-			wrapper.Claim = &claim
+		case claimUpdate := <-claimUpdateCh:
+			// stop watching the processor if it failed
+			if claimUpdate.err != nil {
+				logger.Errorf("error in claim processing (%s)", err)
+				return
+			} else if claimUpdate.stop {
+				return
+			}
+
+			// update the claim in k8s
+			wrapper.Claim = claimUpdate.newClaim
 			w, err := iface.Update(wrapper)
 			if err != nil {
-				logger.Errorf("error updating claim %s (%s), stopping", claim.ClaimID, err)
-				stopLoop = true
-				break
-			}
-			if claim.Status == mode.StatusFailed ||
-				claim.Status == mode.StatusCreated ||
-				claim.Status == mode.StatusDeleted {
-				stopLoop = true
-				break
+				logger.Errorf("error updating claim %s (%s), stopping", claimUpdate.newClaim.ClaimID, err)
+				return
 			}
 			wrapper = w
 		case <-ctx.Done():
 			return
-		}
-		if stopLoop {
-			break
 		}
 	}
 }

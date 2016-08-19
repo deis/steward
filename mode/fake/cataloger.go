@@ -4,7 +4,7 @@ import (
 	"github.com/deis/steward/mode"
 )
 
-// Cataloger is a fake mode.Cataloger implementation, suitable for use in unit tests
+// Cataloger is a fake (github.com/deis/steward/mode).Cataloger implementation, suitable for use in unit tests
 type Cataloger struct {
 	Services []*mode.Service
 }

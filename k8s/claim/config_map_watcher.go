@@ -23,7 +23,7 @@ func newConfigMapWatcher(watchIface watch.Interface) Watcher {
 	}
 }
 
-// ResultChan is the (k8s.io/kubernetes/pkg/watch).Interface interface implementation. It returns a channel that will be closed when Stop() is called
+// ResultChan is the (k8s.io/kubernetes/pkg/watch).Interface interface implementation. It returns a channel that will be closed either when Stop() is called, or when the server severs the connection, which may happen intermittently.
 func (c *configMapWatcher) ResultChan() <-chan *Event {
 	retCh := make(chan *Event)
 	go func() {
@@ -32,7 +32,12 @@ func (c *configMapWatcher) ResultChan() <-chan *Event {
 			select {
 			case <-c.closeCh:
 				return
-			case rawEvt := <-c.watchIface.ResultChan():
+			case rawEvt, open := <-c.watchIface.ResultChan():
+				// bail out of the goroutine if the internal result channel was closed
+				if !open {
+					logger.Debugf("internal watch channel was closed. closing down watch goroutine")
+					return
+				}
 				evt, err := eventFromConfigMapEvent(rawEvt)
 				if err != nil {
 					logger.Debugf("error converting raw event to service plan claim event (%s). continuing", err)
