@@ -1,0 +1,62 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: #cf_broker_name#-steward
+  namespace: steward
+  labels:
+    app: #cf_broker_name#-steward
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: #cf_broker_name#-steward
+    spec:
+      containers:
+      - name: #cf_broker_name#-steward
+        image: quay.io/deisci/steward:devel
+        env:
+        - name: CF_BROKER_SCHEME
+          value: "#cf_broker_scheme#"
+        - name: CF_BROKER_HOSTNAME
+          value: "#cf_broker_hostname#"
+        - name: CF_BROKER_PORT
+          value: "#cf_broker_port#"
+        - name: CF_BROKER_USERNAME
+          value: "#cf_broker_username#"
+        - name: CF_BROKER_PASSWORD
+          value: "#cf_broker_password#"
+        livenessProbe:
+          exec:
+            command:
+            - /bin/pidof
+            - steward
+          failureThreshold: 3
+          initialDelaySeconds: 50
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 50
+        readinessProbe:
+          exec:
+            command:
+            - /bin/pidof
+            - steward
+          failureThreshold: 3
+          initialDelaySeconds: 50
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 50
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: #cf_broker_name#-steward
+  namespace: steward
+  labels:
+    app: #cf_broker_name#-steward
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: #cf_broker_name#-steward

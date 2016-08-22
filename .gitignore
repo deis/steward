@@ -29,3 +29,6 @@ vendor
 /coverage.txt
 integration/integration
 rootfs/bin/steward.000
+
+manifests/*-steward.yaml
+manifests/*-steward.yaml.bak
