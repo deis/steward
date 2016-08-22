@@ -1,4 +1,4 @@
-MUTABLE_VERSION ?= canary
+MUTABLE_VERSION ?= devel
 VERSION ?= git-$(shell git rev-parse --short HEAD)
 IMAGE_PREFIX ?= deis
 
