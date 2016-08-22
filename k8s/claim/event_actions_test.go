@@ -8,10 +8,7 @@ import (
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/mode/fake"
-	"github.com/pborman/uuid"
 	"golang.org/x/net/context"
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/watch"
 )
 
 const (
@@ -31,31 +28,6 @@ func getCatalogFromEvents(evts ...*Event) k8s.ServiceCatalogLookup {
 		})
 	}
 	return ret
-}
-
-func getEvent(claim mode.ServicePlanClaim) *Event {
-	return &Event{
-		claim: &ServicePlanClaimWrapper{
-			Claim: &claim,
-			ObjectMeta: api.ObjectMeta{
-				ResourceVersion: "1",
-				Name:            "testclaim",
-				Namespace:       "testns",
-				Labels:          map[string]string{"label-1": "label1"},
-			},
-		},
-		operation: watch.Added,
-	}
-}
-
-func getClaim(action mode.Action) mode.ServicePlanClaim {
-	return mode.ServicePlanClaim{
-		TargetName: "target1",
-		ServiceID:  "svc1",
-		PlanID:     "plan1",
-		ClaimID:    uuid.New(),
-		Action:     action.String(),
-	}
 }
 
 func TestGetService(t *testing.T) {
