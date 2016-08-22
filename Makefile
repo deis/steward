@@ -34,3 +34,37 @@ docker-build: build
 	${DEV_ENV_CMD} upx -9 ${BINARY_DEST_DIR}/steward
 	docker build --rm -t ${IMAGE} rootfs
 	docker tag ${IMAGE} ${MUTABLE_IMAGE}
+
+install-namespace:
+	kubectl create -f manifests/steward-namespace.yaml
+
+install-3prs:
+	kubectl create -f manifests/service-catalog-entry.yaml
+
+install-steward:
+ifndef CF_BROKER_NAME
+	$(error CF_BROKER_NAME is undefined)
+endif
+ifndef CF_BROKER_SCHEME
+	$(error CF_BROKER_SCHEME is undefined)
+endif
+ifndef CF_BROKER_HOSTNAME
+	$(error CF_BROKER_HOSTNAME is undefined)
+endif
+ifndef CF_BROKER_PORT
+	$(error CF_BROKER_PORT is undefined)
+endif
+ifndef CF_BROKER_USERNAME
+	$(error CF_BROKER_USERNAME is undefined)
+endif
+ifndef CF_BROKER_PASSWORD
+	$(error CF_BROKER_PASSWORD is undefined)
+endif
+	sed "s/#cf_broker_name#/${CF_BROKER_NAME}/g" manifests/steward-template.yaml > manifests/${CF_BROKER_NAME}-steward.yaml
+	sed -i.bak "s/#cf_broker_scheme#/${CF_BROKER_SCHEME}/g" manifests/${CF_BROKER_NAME}-steward.yaml
+	sed -i.bak "s/#cf_broker_hostname#/${CF_BROKER_HOSTNAME}/g" manifests/${CF_BROKER_NAME}-steward.yaml
+	sed -i.bak "s/#cf_broker_port#/${CF_BROKER_PORT}/g" manifests/${CF_BROKER_NAME}-steward.yaml
+	sed -i.bak "s/#cf_broker_username#/${CF_BROKER_USERNAME}/g" manifests/${CF_BROKER_NAME}-steward.yaml
+	sed -i.bak "s/#cf_broker_password#/${CF_BROKER_PASSWORD}/g" manifests/${CF_BROKER_NAME}-steward.yaml
+	rm manifests/${CF_BROKER_NAME}-steward.yaml.bak
+	kubectl create -f manifests/${CF_BROKER_NAME}-steward.yaml
