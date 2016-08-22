@@ -1,0 +1,62 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: cf-sample-steward
+  namespace: steward
+  labels:
+    app: cf-sample-steward
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: cf-sample-steward
+    spec:
+      containers:
+      - name: cf-sample-steward
+        image: quay.io/krancour/steward:git-74d938e
+        env:
+        - name: CF_BROKER_SCHEME
+          value: "http"
+        - name: CF_BROKER_HOSTNAME
+          value: "10.0.0.153"
+        - name: CF_BROKER_PORT
+          value: "80"
+        - name: CF_BROKER_USERNAME
+          value: "admin"
+        - name: CF_BROKER_PASSWORD
+          value: "password"
+        livenessProbe:
+          exec:
+            command:
+            - /bin/pidof
+            - steward
+          failureThreshold: 3
+          initialDelaySeconds: 50
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 50
+        readinessProbe:
+          exec:
+            command:
+            - /bin/pidof
+            - steward
+          failureThreshold: 3
+          initialDelaySeconds: 50
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 50
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cf-sample-steward
+  namespace: steward
+  labels:
+    app: cf-sample-steward
+spec:
+  ports:
+  - port: 80
+    targetPort: 8080
+  selector:
+    app: cf-sample-steward

@@ -1,20 +1,20 @@
 language: generic
 branches:
   only:
-    - master
+  - master
 cache:
   directories:
-    - vendor
+  - vendor
 services:
-  - docker
+- docker
 sudo: required
 install:
-  - make bootstrap
+- make bootstrap
 script:
-  - make test-cover docker-build
+- make test-cover docker-build
 deploy:
   provider: script
-  script: deploy.sh
+  script: _scripts/deploy.sh
   on:
     branch: master
 
