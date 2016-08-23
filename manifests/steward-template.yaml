@@ -14,7 +14,8 @@ spec:
     spec:
       containers:
       - name: #cf_broker_name#-steward
-        image: quay.io/deisci/steward:devel
+        image: #steward_image#
+        imagePullPolicy: Always
         env:
         - name: CF_BROKER_SCHEME
           value: "#cf_broker_scheme#"

@@ -36,10 +36,13 @@ docker-build: build
 	docker tag ${IMAGE} ${MUTABLE_IMAGE}
 
 install-namespace:
-	kubectl create -f manifests/steward-namespace.yaml
+	kubectl get ns steward || kubectl create -f manifests/steward-namespace.yaml
 
 install-3prs:
+	kubectl get thirdpartyresource service-catalog-entry.steward.deis.io || \
 	kubectl create -f manifests/service-catalog-entry.yaml
+
+STEWARD_IMAGE ?= quay.io/deisci/steward:devel
 
 install-steward:
 ifndef CF_BROKER_NAME
@@ -66,5 +69,13 @@ endif
 	sed -i.bak "s/#cf_broker_port#/${CF_BROKER_PORT}/g" manifests/${CF_BROKER_NAME}-steward.yaml
 	sed -i.bak "s/#cf_broker_username#/${CF_BROKER_USERNAME}/g" manifests/${CF_BROKER_NAME}-steward.yaml
 	sed -i.bak "s/#cf_broker_password#/${CF_BROKER_PASSWORD}/g" manifests/${CF_BROKER_NAME}-steward.yaml
+	sed -i.bak "s#\#steward_image\##${STEWARD_IMAGE}#g" manifests/${CF_BROKER_NAME}-steward.yaml
 	rm manifests/${CF_BROKER_NAME}-steward.yaml.bak
+	kubectl get deployment ${CF_BROKER_NAME}-steward --namespace=steward && \
+	kubectl apply -f manifests/${CF_BROKER_NAME}-steward.yaml || \
 	kubectl create -f manifests/${CF_BROKER_NAME}-steward.yaml
+
+deploy: install-namespace install-3prs install-steward
+
+dev-deploy: docker-build docker-push
+	STEWARD_IMAGE=${IMAGE} $(MAKE) deploy

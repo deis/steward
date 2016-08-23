@@ -1,6 +1,6 @@
 # Installing Steward
 
-Installation of Steward into a running Kubernetes cluster is facilitated through a series of Make targets. Users wishing to familiarize themselves with the particulars of the deployment will want to examine artifacts in this repository's `manifests/` directory.
+Installation of Steward into a running Kubernetes cluster is facilitated through a Make target. Users wishing to familiarize themselves with the particulars of the deployment will want to examine this repository's `Makefile` and artifacts in the `manifests/` directory.
 
 All subsequent sections of this document assume that you have a running Kubernetes cluster and that your `kubectl` client is properly configured to interact with that cluster.
 
@@ -13,22 +13,6 @@ Since Steward acts as a _service broker gateway_, a Steward instance is of no us
 Before proceeding further, be sure that the service broker you wish to expose via Steward is available. Whether it runs on-or-off-cluster is inconsequential.
 
 If you are trying Steward for the first time or are hacking on Steward, the Steward team has provided a trivial Cloud Foundry [sample broker][cf-sample-broker]. See that project's [README.md](https://github.com/deis/cf-sample-broker/blob/master/README.md) for installation instructions.
-
-### The Namespace
-
-Steward will be installed into the `steward` namespace. As such, it is important to first ensure the existence of this namespace. If it does not exist, it is easily create like so:
-
-```
-$ make install-namespace
-```
-
-### The ServiceCatalogEntry Third Party Resource
-
-Steward requires a [ThirdPartyResource](https://github.com/kubernetes/kubernetes/blob/master/docs/design/extending-api.md) called `ServiceCatalogEntry` to be pre-defined within your Kubernetes cluster. This can be achieved easily as follows:
-
-```
-$ make install-3prs
-```
 
 ## Installation Steps
 
@@ -52,7 +36,7 @@ If using Steward to expose the [cf-sample-broker], that broker's connection deta
 With all configuration now set, Steward can be deployed as follows:
 
 ```
-$ make install-steward
+$ make deploy
 ```
 
 For details on Steward's pure Kubernetes-based workflow, please refer to [README.md](./README.md).
