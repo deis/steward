@@ -76,6 +76,10 @@ func (e *Event) nextAction() (nextFunc, error) {
 	if e.operation == watch.Added && mode.StringIsAction(claim.Action, mode.ActionProvision) {
 		return nextFunc(processProvision), nil
 	}
+	// if event was ADDED and action is bind, next action is processBind
+	if e.operation == watch.Added && mode.StringIsAction(claim.Action, mode.ActionBind) {
+		return nextFunc(processBind), nil
+	}
 	// if event was MODIFIED, status is provisioned and action is deprovision, next action is processDeprovision
 	if e.operation == watch.Modified &&
 		mode.StringIsStatus(claim.Status, mode.StatusProvisioned) &&

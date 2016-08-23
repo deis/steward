@@ -36,3 +36,9 @@ func getClaim(action mode.Action) mode.ServicePlanClaim {
 		Action:     action.String(),
 	}
 }
+
+func getClaimWithStatus(action mode.Action, status mode.Status) mode.ServicePlanClaim {
+	cl := getClaim(action)
+	cl.Status = status.String()
+	return cl
+}

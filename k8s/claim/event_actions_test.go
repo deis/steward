@@ -1,6 +1,8 @@
 package claim
 
 import (
+	"errors"
+	"net/http"
 	"testing"
 	"time"
 
@@ -8,6 +10,7 @@ import (
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/mode/fake"
+	"github.com/pborman/uuid"
 	"golang.org/x/net/context"
 )
 
@@ -18,6 +21,41 @@ const (
 var (
 	ctx = context.Background()
 )
+
+func TestNewClaimUpdate(t *testing.T) {
+	// claims that should be marked stop
+	stopClaims := []mode.ServicePlanClaim{
+		getClaimWithStatus(mode.ActionProvision, mode.StatusFailed),
+		getClaimWithStatus(mode.ActionProvision, mode.StatusProvisioned),
+		getClaimWithStatus(mode.ActionProvision, mode.StatusBound),
+		getClaimWithStatus(mode.ActionProvision, mode.StatusUnbound),
+		getClaimWithStatus(mode.ActionProvision, mode.StatusDeprovisioned),
+	}
+	for i, claim := range stopClaims {
+		update := newClaimUpdate(claim)
+		if !update.stop {
+			t.Fatalf("update %d for claim %s was not marked stop", i, claim)
+		}
+		if update.newClaim.ClaimID != claim.ClaimID {
+			t.Fatalf("update %d has claim ID %s, original had %s", i, update.newClaim.ClaimID, claim.ClaimID)
+		}
+	}
+
+	// normal claim
+	claim := getClaimWithStatus(mode.ActionProvision, mode.StatusBinding)
+	update := newClaimUpdate(claim)
+	assert.False(t, update.stop, "claim was marked stop when it shouldn't have been")
+	assert.Equal(t, update.newClaim.ClaimID, claim.ClaimID, "claim ID")
+}
+
+func TestNewErrClaimUpdate(t *testing.T) {
+	err := errors.New("test error")
+	claim := getClaim(mode.ActionBind)
+	update := newErrClaimUpdate(claim, err)
+	assert.True(t, update.stop, "new claim wasn't marked stop")
+	assert.Err(t, err, update.err)
+	assert.Equal(t, update.newClaim.ClaimID, claim.ClaimID, "new claim")
+}
 
 func getCatalogFromEvents(evts ...*Event) k8s.ServiceCatalogLookup {
 	ret := k8s.NewServiceCatalogLookup(nil)
@@ -151,7 +189,57 @@ func TestProcessBindServiceFound(t *testing.T) {
 }
 
 func TestProcessBindInstanceIDFound(t *testing.T) {
-	t.Skip("TODO")
+	evt := getEvent(getClaim(mode.ActionBind))
+	evt.claim.Claim.InstanceID = uuid.New()
+	catalogLookup := getCatalogFromEvents(evt)
+	lifecycler := fake.Lifecycler{
+		Binder: &fake.Binder{
+			Res: &mode.BindResponse{
+				Status: http.StatusOK,
+				Creds: mode.JSONObject(map[string]string{
+					"cred1": uuid.New(),
+					"cred2": uuid.New(),
+				}),
+			},
+		},
+	}
+	cmNamespacer := k8s.NewFakeConfigMapsNamespacer()
+	ch := make(chan claimUpdate)
+	cancelCtx, cancelFn := context.WithCancel(ctx)
+	defer cancelFn()
+	go processBind(cancelCtx, evt, cmNamespacer, catalogLookup, lifecycler, ch)
+
+	// binding status
+	select {
+	case claimUpdate := <-ch:
+		assert.NoErr(t, claimUpdate.err)
+		assert.False(t, claimUpdate.stop, "stop boolean in claim update")
+		assert.NotNil(t, claimUpdate.newClaim, "new claim")
+		assert.Equal(t, claimUpdate.newClaim.Status, mode.StatusBinding.String(), "status")
+	case <-time.After(waitDur):
+		t.Fatalf("didn't receive a claim update within %s", waitDur)
+	}
+
+	// bound status
+	select {
+	case claimUpdate := <-ch:
+		assert.NoErr(t, claimUpdate.err)
+		assert.True(t, claimUpdate.stop, "stop boolean in claim update")
+		assert.NotNil(t, claimUpdate.newClaim, "new claim")
+		assert.Equal(t, claimUpdate.newClaim.Status, mode.StatusBound.String(), "status")
+	case <-time.After(waitDur):
+		t.Fatalf("didn't receive a claim update within %s", waitDur)
+	}
+
+	// check the lifecycler
+	assert.Equal(t, len(lifecycler.Binder.Binds), 1, "number of bind calls")
+	bindCall := lifecycler.Binder.Binds[0]
+	assert.Equal(t, bindCall.InstanceID, evt.claim.Claim.InstanceID, "instance ID")
+	assert.Equal(t, bindCall.Req.ServiceID, evt.claim.Claim.ServiceID, "service ID")
+	assert.Equal(t, bindCall.Req.PlanID, evt.claim.Claim.PlanID, "plan ID")
+
+	// TODO: check the config maps namespacer
+
 }
 
 func TestProcessUnbindServiceNotFound(t *testing.T) {

@@ -40,6 +40,9 @@ func TestNextAction(t *testing.T) {
 	_, err := evt.nextAction()
 	assert.NoErr(t, err)
 
-	// test the state machine here
-	t.Skip("TODO")
+	// ADDED an event to bind
+	evt = getEvent(getClaim(mode.ActionBind))
+	evt.operation = watch.Added
+	_, err = evt.nextAction()
+	assert.NoErr(t, err)
 }

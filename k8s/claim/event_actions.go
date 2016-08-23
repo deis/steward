@@ -166,7 +166,11 @@ func processBind(
 
 	bindID := uuid.New()
 	claim.BindID = bindID
-	bindRes, err := lifecycler.Bind(instanceID, bindID, &mode.BindRequest{})
+	bindRes, err := lifecycler.Bind(instanceID, bindID, &mode.BindRequest{
+		ServiceID:  claim.ServiceID,
+		PlanID:     claim.PlanID,
+		Parameters: mode.JSONObject(map[string]string{}),
+	})
 	if err != nil {
 		select {
 		case claimCh <- newErrClaimUpdate(claim, err):
