@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/deis/steward/k8s"
@@ -85,7 +86,8 @@ func publishCatalog(
 	// write all entries from cf catalog to 3pr
 	for _, service := range services {
 		for _, plan := range service.Plans {
-			entry := k8s.NewServiceCatalogEntry(api.ObjectMeta{}, service.ServiceInfo, plan)
+			descr := fmt.Sprintf("%s (%s)", service.Description, plan.Description)
+			entry := k8s.NewServiceCatalogEntry(descr, api.ObjectMeta{}, service.ServiceInfo, plan)
 			if _, err := catalogEntries.Create(entry); err != nil {
 				logger.Errorf(
 					"error publishing catalog entry (svc_name, plan_name) = (%s, %s) (%s), continuing",

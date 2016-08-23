@@ -19,10 +19,12 @@ type ServiceCatalogEntry struct {
 	api.ObjectMeta       `json:"metadata,omitempty"`
 	Info                 mode.ServiceInfo `json:"service_info"`
 	Plan                 mode.ServicePlan `json:"service_plan"`
+	Description          string           `json:"description"`
 }
 
 // NewServiceCatalogEntry creates a new ServiceCatalogEntry suitable for writing to the Kubernetes API
 func NewServiceCatalogEntry(
+	description string,
 	objectMeta api.ObjectMeta,
 	info mode.ServiceInfo,
 	plan mode.ServicePlan) *ServiceCatalogEntry {
@@ -33,10 +35,11 @@ func NewServiceCatalogEntry(
 	objectMeta.Name = fmt.Sprintf("%s-%s", info.ID, plan.ID)
 
 	return &ServiceCatalogEntry{
-		TypeMeta:   typeMeta,
-		ObjectMeta: objectMeta,
-		Info:       info,
-		Plan:       plan,
+		TypeMeta:    typeMeta,
+		ObjectMeta:  objectMeta,
+		Info:        info,
+		Plan:        plan,
+		Description: description,
 	}
 
 }
