@@ -28,20 +28,18 @@ spec:
         - name: CF_BROKER_PASSWORD
           value: "#cf_broker_password#"
         livenessProbe:
-          exec:
-            command:
-            - /bin/pidof
-            - steward
+          httpGet:
+            path: /healthz
+            port: 8080
           failureThreshold: 3
           initialDelaySeconds: 5
           periodSeconds: 10
           successThreshold: 1
           timeoutSeconds: 2
         readinessProbe:
-          exec:
-            command:
-            - /bin/pidof
-            - steward
+          httpGet:
+            path: /healthz
+            port: 8080
           failureThreshold: 1
           initialDelaySeconds: 5
           periodSeconds: 10

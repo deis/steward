@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 
+	"github.com/deis/steward/web/api"
+
 	"github.com/juju/loggo"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
@@ -58,6 +60,9 @@ func main() {
 	// go func() {
 	// 	k8s.StartLoops(k8sClient.RESTClient, namespaces, stopCh, errCh)
 	// }()
+
+	// Start the API server
+	go api.Serve(errCh)
 
 	// TODO: listen for signal and delete all service catalog entries before quitting
 	select {
