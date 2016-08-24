@@ -39,6 +39,27 @@ type nextFunc func(
 	chan<- claimUpdate,
 )
 
+// composes a bunch of nextFuncs together to make one
+func compoundNextFunc(funcs ...nextFunc) nextFunc {
+	return func(
+		ctx context.Context,
+		evt *Event,
+		cmns kcl.ConfigMapsNamespacer,
+		scl k8s.ServiceCatalogLookup,
+		lc mode.Lifecycler,
+		ch chan<- claimUpdate) {
+		for _, fn := range funcs {
+			// before calling the next function, check to see if we're done
+			select {
+			case <-ctx.Done():
+				return
+			default:
+			}
+			fn(ctx, evt, cmns, scl, lc, ch)
+		}
+	}
+}
+
 // Event represents the event that a service plan claim has changed in kubernetes. It implements fmt.Stringer
 type Event struct {
 	claim     *ServicePlanClaimWrapper
@@ -80,6 +101,10 @@ func (e *Event) nextAction() (nextFunc, error) {
 	if e.operation == watch.Added && mode.StringIsAction(claim.Action, mode.ActionBind) {
 		return nextFunc(processBind), nil
 	}
+	// if event was ADDED and action is create, next action is processProvision+processBind
+	if e.operation == watch.Added && mode.StringIsAction(claim.Action, mode.ActionCreate) {
+		return compoundNextFunc(processProvision, processBind), nil
+	}
 	// if event was MODIFIED, status is provisioned and action is deprovision, next action is processDeprovision
 	if e.operation == watch.Modified &&
 		mode.StringIsStatus(claim.Status, mode.StatusProvisioned) &&
@@ -91,6 +116,12 @@ func (e *Event) nextAction() (nextFunc, error) {
 		mode.StringIsStatus(claim.Status, mode.StatusProvisioned) &&
 		mode.StringIsAction(claim.Action, mode.ActionBind) {
 		return nextFunc(processBind), nil
+	}
+	// if event was MODIFIED, status is bound and action is delete, next action is processUnbind+processDeprovision
+	if e.operation == watch.Modified &&
+		mode.StringIsStatus(claim.Status, mode.StatusBound) &&
+		mode.StringIsAction(claim.Action, mode.ActionDelete) {
+		return compoundNextFunc(processUnbind, processDeprovision), nil
 	}
 	// if event was MODIFIED, status is bound and action is unbind, next action is processUnbind
 	if e.operation == watch.Modified &&

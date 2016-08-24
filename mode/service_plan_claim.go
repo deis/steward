@@ -49,6 +49,10 @@ const (
 	ActionUnbind Action = "unbind"
 	// ActionDeprovision is the action indicating that a service should be deprovisioned
 	ActionDeprovision Action = "deprovision"
+	// ActionCreate is the action indicating that a service should be provisioned and bound, in that order, in the same operation
+	ActionCreate Action = "create"
+	// ActionDelete is the actions indicating that a service should be unbound and deprovisioned, in that order in the same operation
+	ActionDelete Action = "delete"
 
 	// StatusProvisioning is the status indicating that the provisioning process has started
 	StatusProvisioning Status = "provisioning"
