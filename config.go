@@ -7,10 +7,6 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-const (
-	cfMode = "cf"
-)
-
 type errModeUnsupported struct {
 	mode string
 }
@@ -22,15 +18,6 @@ func (e errModeUnsupported) Error() string {
 type config struct {
 	Mode     string `envconfig:"MODE" default:"cf"`
 	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
-}
-
-func (c config) validate() error {
-	switch c.Mode {
-	case cfMode:
-	default:
-		return errModeUnsupported{mode: c.Mode}
-	}
-	return nil
 }
 
 func (c config) logLevel() loggo.Level {

@@ -1,72 +1,67 @@
-package main
+package utils
 
 import (
 	"fmt"
-	"net/http"
 
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/k8s/claim"
 	"github.com/deis/steward/mode"
-	"github.com/deis/steward/mode/cf"
 	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/api"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
-func runCFMode(
-	cl *kcl.Client,
-	errCh chan<- error,
-	namespaces []string,
-) error {
+const (
+	cfMode = "cf"
+)
 
-	cfCfg, err := cf.GetConfig()
-	if err != nil {
-		logger.Criticalf("error getting CloudFoundry broker config (%s)", err)
-		return err
+// Run publishes the underlying broker's service offerings to the catalog, then starts Steward's
+// control loop in the specified mode.
+func Run(modeStr string, errCh chan<- error, namespaces []string) error {
+	var cataloger mode.Cataloger
+	var lifecycler *mode.Lifecycler
+	// Get the right implementations of mode.Cataloger and mode.Lifecycler
+	switch modeStr {
+	case cfMode:
+		var err error
+		cataloger, lifecycler, err = getCfModeComponents()
+		if err != nil {
+			return err
+		}
+	default:
+		return errUnrecognizedMode{mode: modeStr}
 	}
-	logger.Infof(
-		"starting in CloudFoundry mode with hostname %s, port %d and username %s",
-		cfCfg.Hostname,
-		cfCfg.Port,
-		cfCfg.Username,
-	)
-	cfClient := cf.NewRESTClient(
-		http.DefaultClient,
-		cfCfg.Scheme,
-		cfCfg.Hostname,
-		cfCfg.Port,
-		cfCfg.Username,
-		cfCfg.Password,
-	)
 
-	catalogInteractor := k8s.NewK8sServiceCatalogInteractor(cl.RESTClient)
-	cataloger := cf.NewCataloger(cfClient)
-	lifecycler := cf.NewLifecycler(cfClient)
+	// Everything else does not vary by mode...
 
+	k8sClient, err := kcl.NewInCluster()
+	if err != nil {
+		return errGettingK8sClient{Original: err}
+	}
+
+	catalogInteractor := k8s.NewK8sServiceCatalogInteractor(k8sClient.RESTClient)
 	published, err := publishCatalog(cataloger, catalogInteractor)
 	if err != nil {
-		logger.Criticalf("error publishing the cloud foundry service catalog (%s)", err)
-		return err
+		return errPublishingServiceCatalog{Original: err}
 	}
+	logger.Infof("published %d entries into the service catalog", len(published))
 
-	logger.Infof("published %d entries into the catalog", len(published))
-
-	evtNamespacer := claim.NewConfigMapsInteractorNamespacer(cl)
+	evtNamespacer := claim.NewConfigMapsInteractorNamespacer(k8sClient)
 	lookup, err := k8s.FetchServiceCatalogLookup(catalogInteractor)
 	if err != nil {
-		logger.Criticalf("error fetching the service catalog lookup table (%s)", err)
-		return err
+		return errGettingServiceCatalogLookupTable{Original: err}
 	}
 	logger.Infof("created service catalog lookup with %d items", lookup.Len())
+
 	ctx := context.Background()
-	go claim.StartControlLoops(ctx, evtNamespacer, cl, *lookup, lifecycler, namespaces, errCh)
+	claim.StartControlLoops(ctx, evtNamespacer, k8sClient, *lookup, lifecycler, namespaces, errCh)
 
 	return nil
 }
 
-// does the following:
+// Does the following:
 //
-//	1. fetches the service catalog from cloud foundry
+//	1. fetches the service catalog from the backing broker
 //	2. checks the 3pr for already-existing entries, and errors if one already exists
 //	3. if none error-ed in #2, publishes 3prs for all of the catalog entries
 //
@@ -78,12 +73,11 @@ func publishCatalog(
 
 	services, err := cataloger.List()
 	if err != nil {
-		logger.Debugf("error getting CF catalog (%s)", err)
-		return nil, err
+		return nil, errGettingServiceCatalog{Original: err}
 	}
 
 	published := []*k8s.ServiceCatalogEntry{}
-	// write all entries from cf catalog to 3pr
+	// Write all entries from cf catalog to 3prs
 	for _, service := range services {
 		for _, plan := range service.Plans {
 			descr := fmt.Sprintf("%s (%s)", service.Description, plan.Description)

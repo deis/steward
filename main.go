@@ -3,10 +3,9 @@ package main
 import (
 	"os"
 
+	modeutils "github.com/deis/steward/mode/utils"
 	"github.com/deis/steward/web/api"
-
 	"github.com/juju/loggo"
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
 const (
@@ -27,31 +26,11 @@ func main() {
 		os.Exit(1)
 	}
 	logger.SetLogLevel(cfg.logLevel())
-	if err := cfg.validate(); err != nil {
-		logger.Criticalf("error with config (%s)", err)
-		os.Exit(1)
-	}
-
-	k8sClient, err := kcl.NewInCluster()
-	if err != nil {
-		logger.Criticalf("error creating new k8s client (%s)", err)
-		os.Exit(1)
-	}
 
 	errCh := make(chan error)
 
-	switch cfg.Mode {
-	case cfMode:
-		if err := runCFMode(
-			k8sClient,
-			errCh,
-			namespaces,
-		); err != nil {
-			logger.Criticalf("error executing in CloudFoundry mode (%s)", err)
-			os.Exit(1)
-		}
-	default:
-		logger.Criticalf("no catalog to publish for mode %s", cfg.Mode)
+	if err := modeutils.Run(cfg.Mode, errCh, namespaces); err != nil {
+		logger.Criticalf("Error starting %s mode: %s", cfg.Mode, err)
 		os.Exit(1)
 	}
 
