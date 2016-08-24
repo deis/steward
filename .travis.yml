@@ -17,7 +17,5 @@ deploy:
   script: _scripts/deploy.sh
   on:
     branch: master
-
-# TODO: uncomment this. see https://github.com/deis/steward/issues/58
-#after_success:
-# - bash <(curl -s https://codecov.io/bash)
+after_success:
+- bash <(curl -s https://codecov.io/bash)
