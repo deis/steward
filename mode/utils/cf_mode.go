@@ -10,7 +10,7 @@ import (
 func getCfModeComponents() (mode.Cataloger, *mode.Lifecycler, error) {
 	cfCfg, err := getCfConfig()
 	if err != nil {
-		return nil, nil, errGettingCFBrokerConfig{Original: err}
+		return nil, nil, errGettingBrokerConfig{Original: err}
 	}
 	logger.Infof(
 		"starting in Cloud Foundry mode with hostname %s, port %d, and username %s",
