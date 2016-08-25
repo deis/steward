@@ -15,7 +15,7 @@ func StartControlLoops(
 	evtNamespacer InteractorNamespacer,
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	lookup k8s.ServiceCatalogLookup,
-	lifecycler mode.Lifecycler,
+	lifecycler *mode.Lifecycler,
 	namespaces []string,
 	errCh chan<- error,
 ) {

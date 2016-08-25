@@ -111,8 +111,9 @@ func TestProcessProvisionServiceFound(t *testing.T) {
 	ch := make(chan claimUpdate)
 	cancelCtx, cancelFn := context.WithCancel(ctx)
 	defer cancelFn()
-	lifecycler := fake.Lifecycler{
-		Provisioner: &fake.Provisioner{},
+	provisioner := &fake.Provisioner{}
+	lifecycler := &mode.Lifecycler{
+		Provisioner: provisioner,
 	}
 	go processProvision(cancelCtx, evt, nil, catalogLookup, lifecycler, ch)
 
@@ -134,8 +135,8 @@ func TestProcessProvisionServiceFound(t *testing.T) {
 		assert.True(t, claimUpdate.stop, "stop boolean in claim update")
 		assert.NotNil(t, claimUpdate.newClaim, "new claim")
 		assert.Equal(t, claimUpdate.newClaim.Status, mode.StatusProvisioned.String(), "status")
-		assert.Equal(t, len(lifecycler.Provisioner.Provisioned), 1, "number of provision calls")
-		provCall := lifecycler.Provisioner.Provisioned[0]
+		assert.Equal(t, len(provisioner.Provisioned), 1, "number of provision calls")
+		provCall := provisioner.Provisioned[0]
 		assert.Equal(t, provCall.Req.ServiceID, evt.claim.Claim.ServiceID, "service ID")
 		assert.Equal(t, provCall.Req.PlanID, evt.claim.Claim.PlanID, "plan ID")
 	case <-time.After(waitDur):
@@ -192,16 +193,17 @@ func TestProcessBindInstanceIDFound(t *testing.T) {
 	evt := getEvent(getClaim(mode.ActionBind))
 	evt.claim.Claim.InstanceID = uuid.New()
 	catalogLookup := getCatalogFromEvents(evt)
-	lifecycler := fake.Lifecycler{
-		Binder: &fake.Binder{
-			Res: &mode.BindResponse{
-				Status: http.StatusOK,
-				Creds: mode.JSONObject(map[string]string{
-					"cred1": uuid.New(),
-					"cred2": uuid.New(),
-				}),
-			},
+	binder := &fake.Binder{
+		Res: &mode.BindResponse{
+			Status: http.StatusOK,
+			Creds: mode.JSONObject(map[string]string{
+				"cred1": uuid.New(),
+				"cred2": uuid.New(),
+			}),
 		},
+	}
+	lifecycler := &mode.Lifecycler{
+		Binder: binder,
 	}
 	cmNamespacer := k8s.NewFakeConfigMapsNamespacer()
 	ch := make(chan claimUpdate)
@@ -232,8 +234,8 @@ func TestProcessBindInstanceIDFound(t *testing.T) {
 	}
 
 	// check the lifecycler
-	assert.Equal(t, len(lifecycler.Binder.Binds), 1, "number of bind calls")
-	bindCall := lifecycler.Binder.Binds[0]
+	assert.Equal(t, len(binder.Binds), 1, "number of bind calls")
+	bindCall := binder.Binds[0]
 	assert.Equal(t, bindCall.InstanceID, evt.claim.Claim.InstanceID, "instance ID")
 	assert.Equal(t, bindCall.Req.ServiceID, evt.claim.Claim.ServiceID, "service ID")
 	assert.Equal(t, bindCall.Req.PlanID, evt.claim.Claim.PlanID, "plan ID")
@@ -308,8 +310,9 @@ func TestProcessDeprovisionServiceNotFound(t *testing.T) {
 func TestProcessDeprovisionServiceFound(t *testing.T) {
 	evt := getEvent(getClaim(mode.ActionDeprovision))
 	catalogLookup := getCatalogFromEvents(evt)
-	lifecycler := fake.Lifecycler{
-		Deprovisioner: &fake.Deprovisioner{},
+	deprovisioner := &fake.Deprovisioner{}
+	lifecycler := &mode.Lifecycler{
+		Deprovisioner: deprovisioner,
 	}
 	ch := make(chan claimUpdate)
 	cancelCtx, cancelFn := context.WithCancel(ctx)
@@ -323,7 +326,7 @@ func TestProcessDeprovisionServiceFound(t *testing.T) {
 		assert.False(t, claimUpdate.stop, "stop boolean in claim update")
 		assert.NotNil(t, claimUpdate.newClaim, "new claim")
 		assert.Equal(t, claimUpdate.newClaim.Status, mode.StatusDeprovisioning.String(), "status")
-		assert.Equal(t, len(lifecycler.Deprovisioner.Deprovisions), 0, "number of deprovision calls")
+		assert.Equal(t, len(deprovisioner.Deprovisions), 0, "number of deprovision calls")
 	case <-time.After(waitDur):
 		t.Fatalf("didn't receive a claim update within %s", waitDur)
 	}

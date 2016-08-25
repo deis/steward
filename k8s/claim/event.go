@@ -35,7 +35,7 @@ type nextFunc func(
 	*Event,
 	kcl.ConfigMapsNamespacer,
 	k8s.ServiceCatalogLookup,
-	mode.Lifecycler,
+	*mode.Lifecycler,
 	chan<- claimUpdate,
 )
 
@@ -46,7 +46,7 @@ func compoundNextFunc(funcs ...nextFunc) nextFunc {
 		evt *Event,
 		cmns kcl.ConfigMapsNamespacer,
 		scl k8s.ServiceCatalogLookup,
-		lc mode.Lifecycler,
+		lc *mode.Lifecycler,
 		ch chan<- claimUpdate) {
 		for _, fn := range funcs {
 			// before calling the next function, check to see if we're done

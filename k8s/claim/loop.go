@@ -31,7 +31,7 @@ func StartControlLoop(
 	iface Interactor,
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	lookup k8s.ServiceCatalogLookup,
-	lifecycler mode.Lifecycler,
+	lifecycler *mode.Lifecycler,
 ) error {
 
 	// start up the watcher so that events build up on the channel while we're listing events (which happens below)
@@ -88,7 +88,7 @@ func receiveEvent(
 	iface Interactor,
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	lookup k8s.ServiceCatalogLookup,
-	lifecycler mode.Lifecycler,
+	lifecycler *mode.Lifecycler,
 ) {
 
 	nextAction, err := evt.nextAction()

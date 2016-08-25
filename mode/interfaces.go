@@ -1,13 +1,5 @@
 package mode
 
-// Lifecycler is a composition of the provisioner, deprovisioner, binder and unbinder. It's intended for use in passing to functions that require all functionality
-type Lifecycler interface {
-	Provisioner
-	Deprovisioner
-	Binder
-	Unbinder
-}
-
 // Cataloger lists all the available services
 type Cataloger interface {
 	List() ([]*Service, error)
