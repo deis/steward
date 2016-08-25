@@ -8,6 +8,7 @@ import (
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/k8s/claim"
 	"github.com/deis/steward/mode"
+	"github.com/deis/steward/mode/jobs"
 	"k8s.io/kubernetes/pkg/api"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
@@ -15,6 +16,7 @@ import (
 const (
 	cfMode   = "cf"
 	helmMode = "helm"
+	jobsMode = "jobs"
 )
 
 // Run publishes the underlying broker's service offerings to the catalog, then starts Steward's
@@ -35,7 +37,6 @@ func Run(
 	// Get the right implementations of mode.Cataloger and mode.Lifecycler
 	switch modeStr {
 	case cfMode:
-		var err error
 		cataloger, lifecycler, err = getCfModeComponents(ctx, httpCl)
 		if err != nil {
 			return err
@@ -43,6 +44,11 @@ func Run(
 	case helmMode:
 		var err error
 		cataloger, lifecycler, err = getHelmModeComponents(ctx, httpCl, k8sClient)
+		if err != nil {
+			return err
+		}
+	case jobsMode:
+		cataloger, lifecycler, err = jobs.GetComponents(k8sClient)
 		if err != nil {
 			return err
 		}
