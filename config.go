@@ -16,8 +16,9 @@ func (e errModeUnsupported) Error() string {
 }
 
 type config struct {
-	Mode     string `envconfig:"MODE" default:"cf"`
-	LogLevel string `envconfig:"LOG_LEVEL" default:"info"`
+	Mode            string   `envconfig:"MODE" default:"cf"`
+	LogLevel        string   `envconfig:"LOG_LEVEL" default:"info"`
+	WatchNamespaces []string `envconfig:"WATCH_NAMESPACES" default:"default"`
 }
 
 func (c config) logLevel() loggo.Level {
