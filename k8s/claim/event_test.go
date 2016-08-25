@@ -107,7 +107,7 @@ func TestCompoundNextFunc(t *testing.T) {
 		evt *Event,
 		cmns kcl.ConfigMapsNamespacer,
 		scl k8s.ServiceCatalogLookup,
-		lc mode.Lifecycler,
+		lc *mode.Lifecycler,
 		ch chan<- claimUpdate) {
 		select {
 		case <-ctx.Done():
@@ -120,7 +120,7 @@ func TestCompoundNextFunc(t *testing.T) {
 		evt *Event,
 		cmns kcl.ConfigMapsNamespacer,
 		scl k8s.ServiceCatalogLookup,
-		lc mode.Lifecycler,
+		lc *mode.Lifecycler,
 		ch chan<- claimUpdate) {
 		select {
 		case <-ctx.Done():

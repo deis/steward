@@ -81,7 +81,7 @@ func processProvision(
 	evt *Event,
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	catalogLookup k8s.ServiceCatalogLookup,
-	lifecycler mode.Lifecycler,
+	lifecycler *mode.Lifecycler,
 	claimCh chan<- claimUpdate,
 ) {
 
@@ -133,7 +133,7 @@ func processBind(
 	evt *Event,
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	catalogLookup k8s.ServiceCatalogLookup,
-	lifecycler mode.Lifecycler,
+	lifecycler *mode.Lifecycler,
 	claimCh chan<- claimUpdate,
 ) {
 
@@ -206,7 +206,7 @@ func processUnbind(
 	evt *Event,
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	catalogLookup k8s.ServiceCatalogLookup,
-	lifecycler mode.Lifecycler,
+	lifecycler *mode.Lifecycler,
 	claimCh chan<- claimUpdate,
 ) {
 
@@ -274,7 +274,7 @@ func processDeprovision(
 	evt *Event,
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	catalogLookup k8s.ServiceCatalogLookup,
-	lifecycler mode.Lifecycler,
+	lifecycler *mode.Lifecycler,
 	claimCh chan<- claimUpdate,
 ) {
 
