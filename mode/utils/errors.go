@@ -41,3 +41,11 @@ type errGettingServiceCatalog struct {
 func (e errGettingServiceCatalog) Error() string {
 	return fmt.Sprintf("error getting service catalog: %s", e.Original)
 }
+
+type errGettingBrokerConfig struct {
+	Original error
+}
+
+func (e errGettingBrokerConfig) Error() string {
+	return fmt.Sprintf("error getting broker config: %s", e.Original)
+}
