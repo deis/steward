@@ -9,10 +9,6 @@ import (
 	"github.com/juju/loggo"
 )
 
-const (
-	appName = "steward"
-)
-
 var (
 	logger  = loggo.GetLogger("")
 	version = "dev"
@@ -25,7 +21,7 @@ func exitWithCode(cancelFn func(), exitCode int) {
 
 func main() {
 	logger.Infof("steward version %s started", version)
-	cfg, err := getConfig(appName)
+	cfg, err := getRootConfig()
 	if err != nil {
 		logger.Criticalf("error getting config (%s)", err)
 		os.Exit(1)

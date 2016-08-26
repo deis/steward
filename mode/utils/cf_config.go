@@ -1,8 +1,8 @@
 package utils
 
 import (
+	"github.com/deis/steward/config"
 	"github.com/deis/steward/web"
-	"github.com/kelseyhightower/envconfig"
 )
 
 type cfConfig struct {
@@ -15,7 +15,7 @@ type cfConfig struct {
 
 func getCfConfig() (*cfConfig, error) {
 	ret := new(cfConfig)
-	if err := envconfig.Process(appName, ret); err != nil {
+	if err := config.Load(ret); err != nil {
 		return nil, err
 	}
 	return ret, nil

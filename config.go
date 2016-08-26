@@ -1,27 +1,25 @@
 package main
 
 import (
-	"fmt"
-
+	"github.com/deis/steward/config"
 	"github.com/juju/loggo"
-	"github.com/kelseyhightower/envconfig"
 )
 
-type errModeUnsupported struct {
-	mode string
-}
-
-func (e errModeUnsupported) Error() string {
-	return fmt.Sprintf("mode '%s' is unsupported", e.mode)
-}
-
-type config struct {
+type rootConfig struct {
 	Mode            string   `envconfig:"MODE" default:"cf"`
 	LogLevel        string   `envconfig:"LOG_LEVEL" default:"info"`
 	WatchNamespaces []string `envconfig:"WATCH_NAMESPACES" default:"default"`
 }
 
-func (c config) logLevel() loggo.Level {
+func getRootConfig() (*rootConfig, error) {
+	ret := new(rootConfig)
+	if err := config.Load(ret); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func (c rootConfig) logLevel() loggo.Level {
 	switch c.LogLevel {
 	case "trace":
 		return loggo.TRACE
@@ -38,12 +36,4 @@ func (c config) logLevel() loggo.Level {
 	default:
 		return loggo.INFO
 	}
-}
-
-func getConfig(appName string) (*config, error) {
-	spec := new(config)
-	if err := envconfig.Process(appName, spec); err != nil {
-		return nil, err
-	}
-	return spec, nil
 }
