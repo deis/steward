@@ -1,6 +1,7 @@
 package claim
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"testing"
@@ -11,7 +12,6 @@ import (
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/mode/fake"
 	"github.com/pborman/uuid"
-	"golang.org/x/net/context"
 )
 
 const (

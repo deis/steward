@@ -1,11 +1,11 @@
 package claim
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
-	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/api"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/watch"

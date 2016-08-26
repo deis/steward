@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 
 	modeutils "github.com/deis/steward/mode/utils"
@@ -17,6 +18,11 @@ var (
 	version = "dev"
 )
 
+func exitWithCode(cancelFn func(), exitCode int) {
+	cancelFn()
+	os.Exit(exitCode)
+}
+
 func main() {
 	logger.Infof("steward version %s started", version)
 	cfg, err := getConfig(appName)
@@ -27,10 +33,13 @@ func main() {
 	logger.SetLogLevel(cfg.logLevel())
 
 	errCh := make(chan error)
+	rootCtx := context.Background()
+	ctx, cancelFn := context.WithCancel(rootCtx)
+	defer cancelFn()
 
-	if err := modeutils.Run(cfg.Mode, errCh, cfg.WatchNamespaces); err != nil {
+	if err := modeutils.Run(ctx, cfg.Mode, errCh, cfg.WatchNamespaces); err != nil {
 		logger.Criticalf("Error starting %s mode: %s", cfg.Mode, err)
-		os.Exit(1)
+		exitWithCode(cancelFn, 1)
 	}
 
 	// Start the API server
@@ -41,10 +50,10 @@ func main() {
 	case err := <-errCh:
 		if err != nil {
 			logger.Criticalf("%s", err)
-			os.Exit(1)
+			exitWithCode(cancelFn, 1)
 		} else {
 			logger.Criticalf("unknown error, crashing")
-			os.Exit(1)
+			exitWithCode(cancelFn, 1)
 		}
 	}
 }

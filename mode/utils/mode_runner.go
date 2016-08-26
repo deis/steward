@@ -1,12 +1,12 @@
 package utils
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/k8s/claim"
 	"github.com/deis/steward/mode"
-	"golang.org/x/net/context"
 	"k8s.io/kubernetes/pkg/api"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
@@ -17,7 +17,7 @@ const (
 
 // Run publishes the underlying broker's service offerings to the catalog, then starts Steward's
 // control loop in the specified mode.
-func Run(modeStr string, errCh chan<- error, namespaces []string) error {
+func Run(ctx context.Context, modeStr string, errCh chan<- error, namespaces []string) error {
 	var cataloger mode.Cataloger
 	var lifecycler *mode.Lifecycler
 	// Get the right implementations of mode.Cataloger and mode.Lifecycler
@@ -52,8 +52,7 @@ func Run(modeStr string, errCh chan<- error, namespaces []string) error {
 		return errGettingServiceCatalogLookupTable{Original: err}
 	}
 	logger.Infof("created service catalog lookup with %d items", lookup.Len())
-
-	ctx := context.Background()
+	claim.StartControlLoops(ctx, evtNamespacer, k8sClient, *lookup, lifecycler, namespaces, errCh)
 	claim.StartControlLoops(ctx, evtNamespacer, k8sClient, *lookup, lifecycler, namespaces, errCh)
 
 	return nil

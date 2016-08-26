@@ -1,6 +1,7 @@
 package claim
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -8,7 +9,6 @@ import (
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
 	"github.com/pborman/uuid"
-	"golang.org/x/net/context"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/watch"
 )
