@@ -12,7 +12,7 @@ type Provisioner interface {
 
 // Deprovisioner deprovisions services, according to the mode implementation
 type Deprovisioner interface {
-	Deprovision(instanceID, serviceID, planID string) (*DeprovisionResponse, error)
+	Deprovision(instanceID string, req *DeprovisionRequest) (*DeprovisionResponse, error)
 }
 
 // Binder binds services to apps, according to the mode implementation
@@ -22,5 +22,5 @@ type Binder interface {
 
 // Unbinder unbinds services from apps, according to the mode implementation
 type Unbinder interface {
-	Unbind(serviceID, planID, instanceID, bindingID string) error
+	Unbind(instanceID, bindingID string, unbindRequest *UnbindRequest) error
 }

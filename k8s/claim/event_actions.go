@@ -244,7 +244,10 @@ func processUnbind(
 		}
 	}
 
-	if err := lifecycler.Unbind(claim.ServiceID, claim.PlanID, instanceID, bindID); err != nil {
+	if err := lifecycler.Unbind(instanceID, bindID, &mode.UnbindRequest{
+		ServiceID: claim.ServiceID,
+		PlanID:    claim.PlanID,
+	}); err != nil {
 		select {
 		case claimCh <- newErrClaimUpdate(claim, err):
 		case <-ctx.Done():
@@ -304,7 +307,10 @@ func processDeprovision(
 	}
 
 	// deprovision
-	if _, err := lifecycler.Deprovision(instanceID, claim.ServiceID, claim.PlanID); err != nil {
+	if _, err := lifecycler.Deprovision(instanceID, &mode.DeprovisionRequest{
+		ServiceID: claim.ServiceID,
+		PlanID:    claim.PlanID,
+	}); err != nil {
 		select {
 		case claimCh <- newErrClaimUpdate(claim, err):
 		case <-ctx.Done():

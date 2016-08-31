@@ -17,10 +17,10 @@ type deprovisioner struct {
 	cl *RESTClient
 }
 
-func (d deprovisioner) Deprovision(instanceID, serviceID, planID string) (*mode.DeprovisionResponse, error) {
+func (d deprovisioner) Deprovision(instanceID string, dReq *mode.DeprovisionRequest) (*mode.DeprovisionResponse, error) {
 	query := url.Values(map[string][]string{})
-	query.Add(serviceIDQueryKey, serviceID)
-	query.Add(planIDQueryKey, planID)
+	query.Add(serviceIDQueryKey, dReq.ServiceID)
+	query.Add(planIDQueryKey, dReq.PlanID)
 	req, err := d.cl.Delete(query, "v2", "service_instances", instanceID)
 	if err != nil {
 		return nil, err
