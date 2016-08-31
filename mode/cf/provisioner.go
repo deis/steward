@@ -41,7 +41,7 @@ func (p provisioner) Provision(instanceID string, pReq *mode.ProvisionRequest) (
 	if err := json.NewDecoder(res.Body).Decode(resp); err != nil {
 		return nil, err
 	}
-	return &mode.ProvisionResponse{Status: res.StatusCode, Operation: resp.Operation}, nil
+	return &mode.ProvisionResponse{Operation: resp.Operation}, nil
 }
 
 // NewProvisioner creates a new CloudFoundry-broker-backed provisioner implementation

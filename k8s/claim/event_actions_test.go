@@ -3,7 +3,6 @@ package claim
 import (
 	"context"
 	"errors"
-	"net/http"
 	"testing"
 	"time"
 
@@ -195,7 +194,6 @@ func TestProcessBindInstanceIDFound(t *testing.T) {
 	catalogLookup := getCatalogFromEvents(evt)
 	binder := &fake.Binder{
 		Res: &mode.BindResponse{
-			Status: http.StatusOK,
 			Creds: mode.JSONObject(map[string]string{
 				"cred1": uuid.New(),
 				"cred2": uuid.New(),

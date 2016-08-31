@@ -48,10 +48,7 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 		return nil, err
 	}
 	logger.Debugf("got response %+v from backing broker", *resp)
-	return &mode.BindResponse{
-		Status: res.StatusCode,
-		Creds:  resp.Credentials,
-	}, nil
+	return &mode.BindResponse{Creds: resp.Credentials}, nil
 }
 
 // NewBinder creates a new CloudFoundry-broker-backed binder implementation
