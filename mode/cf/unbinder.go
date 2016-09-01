@@ -17,10 +17,10 @@ type unbinder struct {
 	cl *RESTClient
 }
 
-func (u unbinder) Unbind(serviceID, planID, instanceID, bindingID string) error {
+func (u unbinder) Unbind(instanceID, bindingID string, uReq *mode.UnbindRequest) error {
 	query := url.Values(map[string][]string{})
-	query.Add(serviceIDQueryKey, serviceID)
-	query.Add(planIDQueryKey, planID)
+	query.Add(serviceIDQueryKey, uReq.ServiceID)
+	query.Add(planIDQueryKey, uReq.PlanID)
 	req, err := u.cl.Delete(query, "v2", "service_instances", instanceID, "service_bindings", bindingID)
 	if err != nil {
 		return err

@@ -16,11 +16,11 @@ type Deprovisioner struct {
 }
 
 // Deprovision is the Deprovisioner interface implementation. It packages the function parameters into a DeprovisionCall, appends it to d.Deprovisons, and returns nil, nil. This function is not concurrency safe
-func (d *Deprovisioner) Deprovision(instanceID, serviceID, planID string) (*mode.DeprovisionResponse, error) {
+func (d *Deprovisioner) Deprovision(instanceID string, dReq *mode.DeprovisionRequest) (*mode.DeprovisionResponse, error) {
 	d.Deprovisions = append(d.Deprovisions, DeprovisionCall{
 		InstanceID: instanceID,
-		ServiceID:  serviceID,
-		PlanID:     planID,
+		ServiceID:  dReq.ServiceID,
+		PlanID:     dReq.PlanID,
 	})
 	return nil, nil
 }
