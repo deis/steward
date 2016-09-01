@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/deis/steward/k8s"
+	"github.com/deis/steward/k8s/claim/state"
 	"github.com/deis/steward/mode"
 	"k8s.io/kubernetes/pkg/api"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
@@ -92,48 +93,19 @@ func (e Event) String() string {
 
 func (e *Event) nextAction() (nextFunc, error) {
 	claim := e.claim.Claim
+	action := mode.Action(claim.Action)
+	status := mode.Status(claim.Status)
 
-	// if event was ADDED and action is provison, next action is processProvision
-	if e.operation == watch.Added && mode.StringIsAction(claim.Action, mode.ActionProvision) {
-		return nextFunc(processProvision), nil
+	stateNoStatus := state.NewCurrentNoStatus(action, e.operation)
+	stateWithStatus := state.NewCurrent(status, action, e.operation)
+
+	nextFuncNoStatus, okNoStatus := transitionTable[stateNoStatus]
+	nextFuncWithStatus, okWithStatus := transitionTable[stateWithStatus]
+	if !okNoStatus && !okWithStatus {
+		return nil, errNoNextAction{evt: e}
+	} else if !okNoStatus {
+		return nextFuncWithStatus, nil
+	} else {
+		return nextFuncNoStatus, nil
 	}
-	// if event was ADDED and action is bind, next action is processBind
-	if e.operation == watch.Added && mode.StringIsAction(claim.Action, mode.ActionBind) {
-		return nextFunc(processBind), nil
-	}
-	// if event was ADDED and action is create, next action is processProvision+processBind
-	if e.operation == watch.Added && mode.StringIsAction(claim.Action, mode.ActionCreate) {
-		return compoundNextFunc(processProvision, processBind), nil
-	}
-	// if event was MODIFIED, status is provisioned and action is deprovision, next action is processDeprovision
-	if e.operation == watch.Modified &&
-		mode.StringIsStatus(claim.Status, mode.StatusProvisioned) &&
-		mode.StringIsAction(claim.Action, mode.ActionDeprovision) {
-		return nextFunc(processDeprovision), nil
-	}
-	// if event was MODIFIED, status is provisioned and action is bind, next action is processBind
-	if e.operation == watch.Modified &&
-		mode.StringIsStatus(claim.Status, mode.StatusProvisioned) &&
-		mode.StringIsAction(claim.Action, mode.ActionBind) {
-		return nextFunc(processBind), nil
-	}
-	// if event was MODIFIED, status is bound and action is delete, next action is processUnbind+processDeprovision
-	if e.operation == watch.Modified &&
-		mode.StringIsStatus(claim.Status, mode.StatusBound) &&
-		mode.StringIsAction(claim.Action, mode.ActionDelete) {
-		return compoundNextFunc(processUnbind, processDeprovision), nil
-	}
-	// if event was MODIFIED, status is bound and action is unbind, next action is processUnbind
-	if e.operation == watch.Modified &&
-		mode.StringIsStatus(claim.Status, mode.StatusBound) &&
-		mode.StringIsAction(claim.Action, mode.ActionUnbind) {
-		return nextFunc(processUnbind), nil
-	}
-	// if event was MODIFIED, status is unbound and action is deprovision, next action is processDeprovision
-	if e.operation == watch.Modified &&
-		mode.StringIsStatus(claim.Status, mode.StatusUnbound) &&
-		mode.StringIsAction(claim.Action, mode.ActionDeprovision) {
-		return nextFunc(processDeprovision), nil
-	}
-	return nil, errNoNextAction{evt: e}
 }
