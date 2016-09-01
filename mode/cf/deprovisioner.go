@@ -41,7 +41,7 @@ func (d deprovisioner) Deprovision(instanceID, serviceID, planID string) (*mode.
 	if err := json.NewDecoder(res.Body).Decode(deproResp); err != nil {
 		return nil, err
 	}
-	return &mode.DeprovisionResponse{Status: res.StatusCode, Operation: deproResp.Operation}, nil
+	return &mode.DeprovisionResponse{Operation: deproResp.Operation}, nil
 }
 
 // NewDeprovisioner creates a new CloudFoundry-broker-backed deprovisioner implementation
