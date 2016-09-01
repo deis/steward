@@ -9,10 +9,6 @@ import (
 	"github.com/deis/steward/web"
 )
 
-type backendDeprovisionResp struct {
-	Operation string `json:"operation"`
-}
-
 type deprovisioner struct {
 	cl *RESTClient
 }
@@ -37,11 +33,11 @@ func (d deprovisioner) Deprovision(instanceID string, dReq *mode.DeprovisionRequ
 			Actual:   res.StatusCode,
 		}
 	}
-	deproResp := new(backendDeprovisionResp)
-	if err := json.NewDecoder(res.Body).Decode(deproResp); err != nil {
+	resp := new(mode.DeprovisionResponse)
+	if err := json.NewDecoder(res.Body).Decode(resp); err != nil {
 		return nil, err
 	}
-	return &mode.DeprovisionResponse{Operation: deproResp.Operation}, nil
+	return resp, nil
 }
 
 // NewDeprovisioner creates a new CloudFoundry-broker-backed deprovisioner implementation
