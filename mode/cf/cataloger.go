@@ -8,11 +8,6 @@ import (
 	"github.com/deis/steward/web"
 )
 
-// wrapper for a list of services, returned by the backend broker
-type serviceList struct {
-	Services []*mode.Service `json:"services"`
-}
-
 type cataloger struct {
 	cl *RESTClient
 }
@@ -27,7 +22,7 @@ func (c cataloger) List() ([]*mode.Service, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
-	serviceList := new(serviceList)
+	serviceList := new(mode.ServiceList)
 	// TODO: drain the response body to avoid a connection leak
 	if err := json.NewDecoder(res.Body).Decode(serviceList); err != nil {
 		logger.Debugf("error decoding JSON response body from backend CF broker (%s)", err)

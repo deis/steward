@@ -9,10 +9,6 @@ import (
 	"github.com/deis/steward/web"
 )
 
-type backendProvisionResp struct {
-	Operation string `json:"operation"`
-}
-
 type provisioner struct {
 	cl *RESTClient
 }
@@ -37,11 +33,11 @@ func (p provisioner) Provision(instanceID string, pReq *mode.ProvisionRequest) (
 			Actual:   res.StatusCode,
 		}
 	}
-	resp := new(backendProvisionResp)
+	resp := new(mode.ProvisionResponse)
 	if err := json.NewDecoder(res.Body).Decode(resp); err != nil {
 		return nil, err
 	}
-	return &mode.ProvisionResponse{Operation: resp.Operation}, nil
+	return resp, nil
 }
 
 // NewProvisioner creates a new CloudFoundry-broker-backed provisioner implementation

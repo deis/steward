@@ -9,16 +9,6 @@ import (
 	"github.com/deis/steward/web"
 )
 
-type bindRequest struct {
-	ServiceID  string          `json:"service_id"`
-	PlanID     string          `json:"plan_id"`
-	Parameters mode.JSONObject `json:"parameters"`
-}
-
-type bindResponse struct {
-	Credentials mode.JSONObject `json:"credentials"`
-}
-
 type binder struct {
 	cl *RESTClient
 }
@@ -43,12 +33,12 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 		return nil, web.ErrUnexpectedResponseCode{URL: req.URL.String(), Expected: http.StatusOK, Actual: res.StatusCode}
 	}
 
-	resp := new(bindResponse)
+	resp := new(mode.BindResponse)
 	if err := json.NewDecoder(res.Body).Decode(resp); err != nil {
 		return nil, err
 	}
 	logger.Debugf("got response %+v from backing broker", *resp)
-	return &mode.BindResponse{Creds: resp.Credentials}, nil
+	return resp, nil
 }
 
 // NewBinder creates a new CloudFoundry-broker-backed binder implementation
