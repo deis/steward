@@ -40,27 +40,6 @@ type nextFunc func(
 	chan<- claimUpdate,
 )
 
-// composes a bunch of nextFuncs together to make one
-func compoundNextFunc(funcs ...nextFunc) nextFunc {
-	return func(
-		ctx context.Context,
-		evt *Event,
-		cmns kcl.ConfigMapsNamespacer,
-		scl k8s.ServiceCatalogLookup,
-		lc *mode.Lifecycler,
-		ch chan<- claimUpdate) {
-		for _, fn := range funcs {
-			// before calling the next function, check to see if we're done
-			select {
-			case <-ctx.Done():
-				return
-			default:
-			}
-			fn(ctx, evt, cmns, scl, lc, ch)
-		}
-	}
-}
-
 // Event represents the event that a service plan claim has changed in kubernetes. It implements fmt.Stringer
 type Event struct {
 	claim     *ServicePlanClaimWrapper
