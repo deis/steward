@@ -1,11 +1,11 @@
-package utils
+package helm
 
 import (
 	"github.com/deis/steward/config"
 )
 
 // Config is the envconfig-compatible struct for a backing Tiller server
-type helmConfig struct {
+type Config struct {
 	TillerIP           string `envconfig:"HELM_TILLER_IP" required:"true"`
 	TillerPort         int    `envconfig:"HELM_TILLER_PORT" required:"true"`
 	ChartURL           string `envconfig:"HELM_CHART_URL" required:"true"`
@@ -20,8 +20,8 @@ type helmConfig struct {
 }
 
 // GetConfig gets the configuration for helm mode
-func getHelmConfig() (*helmConfig, error) {
-	ret := new(helmConfig)
+func GetConfig() (*Config, error) {
+	ret := new(Config)
 	if err := config.Load(ret); err != nil {
 		return nil, err
 	}

@@ -13,19 +13,19 @@ func (c cataloger) List() ([]*mode.Service, error) {
 }
 
 // NewCataloger creates a new Tiller-backed mode.Cataloger
-func NewCataloger(serviceID, serviceName, serviceDescription, planID, planName, planDescription string) mode.Cataloger {
+func NewCataloger(cfg *Config) mode.Cataloger {
 	return cataloger{
 		svc: &mode.Service{
 			ServiceInfo: mode.ServiceInfo{
-				ID:          serviceID,
-				Name:        serviceName,
-				Description: serviceDescription,
+				ID:          cfg.ServiceID,
+				Name:        cfg.ServiceName,
+				Description: cfg.ServiceDescription,
 			},
 			Plans: []mode.ServicePlan{
 				mode.ServicePlan{
-					ID:          planID,
-					Name:        planName,
-					Description: planDescription,
+					ID:          cfg.PlanID,
+					Name:        cfg.PlanName,
+					Description: cfg.PlanDescription,
 				},
 			},
 		},

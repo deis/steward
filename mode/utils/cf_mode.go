@@ -8,7 +8,7 @@ import (
 )
 
 func getCfModeComponents() (mode.Cataloger, *mode.Lifecycler, error) {
-	cfCfg, err := getCfConfig()
+	cfCfg, err := cf.GetConfig()
 	if err != nil {
 		return nil, nil, errGettingBrokerConfig{Original: err}
 	}

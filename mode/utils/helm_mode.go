@@ -15,7 +15,7 @@ func getHelmModeComponents(
 	httpCl *http.Client,
 	cmNamespacer kcl.ConfigMapsNamespacer,
 ) (mode.Cataloger, *mode.Lifecycler, error) {
-	helmCfg, err := getHelmConfig()
+	helmCfg, err := helm.GetConfig()
 	if err != nil {
 		logger.Errorf("getting helm config (%s)", err)
 		return nil, nil, errGettingBrokerConfig{Original: err}
@@ -37,14 +37,7 @@ func getHelmModeComponents(
 	tillerHost := fmt.Sprintf("%s:%d", helmCfg.TillerIP, helmCfg.TillerPort)
 	creatorDeleter := helm.NewTillerReleaseCreatorDeleter(tillerHost)
 
-	cataloger := helm.NewCataloger(
-		helmCfg.ServiceID,
-		helmCfg.ServiceName,
-		helmCfg.ServiceDescription,
-		helmCfg.PlanID,
-		helmCfg.PlanName,
-		helmCfg.PlanDescription,
-	)
+	cataloger := helm.NewCataloger(helmCfg)
 	lifecycler, err := helm.NewLifecycler(ctx, chart, helmCfg.ChartInstallNS, provBehavior, creatorDeleter, cmNamespacer)
 	if err != nil {
 		logger.Errorf("creating a new helm mode lifecycler (%s)", err)
