@@ -21,6 +21,7 @@ func StartControlLoops(
 	errCh chan<- error,
 ) {
 	for _, ns := range namespaces {
+		logger.Debugf("starting claims control loop for namespace %s", ns)
 		go func(ns string) {
 			evtIface := evtNamespacer.Interactor(ns)
 			if err := StartControlLoop(ctx, evtIface, cmNamespacer, lookup, lifecycler); err != nil {

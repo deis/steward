@@ -110,7 +110,13 @@ func TestProcessProvisionServiceFound(t *testing.T) {
 	ch := make(chan claimUpdate)
 	cancelCtx, cancelFn := context.WithCancel(ctx)
 	defer cancelFn()
-	provisioner := &fake.Provisioner{}
+	provisioner := &fake.Provisioner{
+		Resp: &mode.ProvisionResponse{
+			Extra: mode.JSONObject(map[string]string{
+				uuid.New(): uuid.New(),
+			}),
+		},
+	}
 	lifecycler := &mode.Lifecycler{
 		Provisioner: provisioner,
 	}
@@ -134,6 +140,7 @@ func TestProcessProvisionServiceFound(t *testing.T) {
 		assert.True(t, claimUpdate.stop, "stop boolean in claim update")
 		assert.NotNil(t, claimUpdate.newClaim, "new claim")
 		assert.Equal(t, claimUpdate.newClaim.Status, mode.StatusProvisioned.String(), "status")
+		assert.Equal(t, claimUpdate.newClaim.Extra, provisioner.Resp.Extra, "extra")
 		assert.Equal(t, len(provisioner.Provisioned), 1, "number of provision calls")
 		provCall := provisioner.Provisioned[0]
 		assert.Equal(t, provCall.Req.ServiceID, evt.claim.Claim.ServiceID, "service ID")

@@ -90,7 +90,6 @@ func receiveEvent(
 	lookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 ) {
-
 	nextAction, err := evt.nextAction()
 	if isNoNextActionErr(err) {
 		logger.Debugf("received event that has no next action (%s), skipping", err)
@@ -112,7 +111,7 @@ func receiveEvent(
 		case claimUpdate := <-claimUpdateCh:
 			// stop watching the processor if it failed
 			if claimUpdate.err != nil {
-				logger.Errorf("error in claim processing (%s)", err)
+				logger.Errorf("error in claim processing (%s)", claimUpdate.err)
 				return
 			}
 

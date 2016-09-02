@@ -85,6 +85,8 @@ func processProvision(
 	claimCh chan<- claimUpdate,
 ) {
 
+	logger.Debugf("processProvision for event %s", evt.claim.Claim.ToMap())
+
 	claim := *evt.claim.Claim
 
 	svc, err := getService(claim, catalogLookup)
@@ -106,13 +108,14 @@ func processProvision(
 	spaceGUID := uuid.New()
 	instanceID := uuid.New()
 	claim.InstanceID = instanceID
-	if _, err := lifecycler.Provision(instanceID, &mode.ProvisionRequest{
+	provisionResp, err := lifecycler.Provision(instanceID, &mode.ProvisionRequest{
 		OrganizationGUID: orgGUID,
 		PlanID:           svc.Plan.ID,
 		ServiceID:        svc.Info.ID,
 		SpaceGUID:        spaceGUID,
 		Parameters:       mode.JSONObject(map[string]string{}),
-	}); err != nil {
+	})
+	if err != nil {
 		select {
 		case claimCh <- newErrClaimUpdate(claim, err):
 		case <-ctx.Done():
@@ -121,6 +124,7 @@ func processProvision(
 	}
 
 	claim.Status = mode.StatusProvisioned.String()
+	claim.Extra = provisionResp.Extra
 	select {
 	case claimCh <- newClaimUpdate(claim):
 	case <-ctx.Done():
@@ -136,6 +140,8 @@ func processBind(
 	lifecycler *mode.Lifecycler,
 	claimCh chan<- claimUpdate,
 ) {
+
+	logger.Debugf("processBind for event %s", evt.claim.Claim.ToMap())
 
 	claim := *evt.claim.Claim
 	claimWrapper := *evt.claim
@@ -210,6 +216,8 @@ func processUnbind(
 	claimCh chan<- claimUpdate,
 ) {
 
+	logger.Debugf("processUnbind for event %s", evt.claim.Claim.ToMap())
+
 	claimWrapper := evt.claim
 	claim := *evt.claim.Claim
 	if _, err := getService(claim, catalogLookup); err != nil {
@@ -281,6 +289,8 @@ func processDeprovision(
 	claimCh chan<- claimUpdate,
 ) {
 
+	logger.Debugf("processDeprovision for event %s", evt.claim.Claim.ToMap())
+
 	claim := *evt.claim.Claim
 	if _, err := getService(claim, catalogLookup); err != nil {
 		select {
@@ -307,10 +317,12 @@ func processDeprovision(
 	}
 
 	// deprovision
-	if _, err := lifecycler.Deprovision(instanceID, &mode.DeprovisionRequest{
-		ServiceID: claim.ServiceID,
-		PlanID:    claim.PlanID,
-	}); err != nil {
+	deprovisionReq := &mode.DeprovisionRequest{
+		ServiceID:  claim.ServiceID,
+		PlanID:     claim.PlanID,
+		Parameters: evt.claim.Claim.Extra,
+	}
+	if _, err := lifecycler.Deprovision(instanceID, deprovisionReq); err != nil {
 		select {
 		case claimCh <- newErrClaimUpdate(claim, err):
 		case <-ctx.Done():

@@ -17,6 +17,10 @@ spec:
         image: #steward_image#
         imagePullPolicy: Always
         env:
+        - name: LOG_LEVEL
+          value: trace
+        - name: STEWARD_MODE
+          value: cf
         - name: CF_BROKER_SCHEME
           value: "#cf_broker_scheme#"
         - name: CF_BROKER_HOSTNAME

@@ -40,6 +40,7 @@ const (
 	targetNameMapKey        = "target-name"
 	instanceIDMapKey        = "instance-id"
 	bindIDMapKey            = "bind-id"
+	extraMapKey             = "extra"
 
 	// ActionProvision is the action indicating that a service should be provision
 	ActionProvision Action = "provision"
@@ -84,15 +85,16 @@ func (e errServicePlanClaimMapMissingKey) Error() string {
 
 // ServicePlanClaim is the json-encodable struct that represents a service plan claim. See https://github.com/deis/steward/blob/master/DATA_STRUCTURES.md#serviceplanclaim for more detail. This struct implements fmt.Stringer
 type ServicePlanClaim struct {
-	TargetName        string `json:"target-name"`
-	ServiceID         string `json:"service-id"`
-	PlanID            string `json:"plan-id"`
-	ClaimID           string `json:"claim-id"`
-	Action            string `json:"action"`
-	Status            string `json:"status"`
-	StatusDescription string `json:"status-description"`
-	InstanceID        string `json:"instance-id"`
-	BindID            string `json:"bind-id"`
+	TargetName        string     `json:"target-name"`
+	ServiceID         string     `json:"service-id"`
+	PlanID            string     `json:"plan-id"`
+	ClaimID           string     `json:"claim-id"`
+	Action            string     `json:"action"`
+	Status            string     `json:"status"`
+	StatusDescription string     `json:"status-description"`
+	InstanceID        string     `json:"instance-id"`
+	BindID            string     `json:"bind-id"`
+	Extra             JSONObject `json:"extra"`
 }
 
 // ServicePlanClaimFromMap attempts to convert m to a ServicePlanClaim. If the map was malformed or missing any keys, returns nil and an appropriate error
@@ -122,6 +124,11 @@ func ServicePlanClaimFromMap(m map[string]string) (*ServicePlanClaim, error) {
 	statusDescription := m[statusDescriptionMapKey]
 	instanceID := m[instanceIDMapKey]
 	bindID := m[bindIDMapKey]
+	extraStr := m[extraMapKey]
+	extra, err := JSONObjectFromString(extraStr)
+	if err != nil {
+		return nil, err
+	}
 
 	return &ServicePlanClaim{
 		TargetName:        targetName,
@@ -133,6 +140,7 @@ func ServicePlanClaimFromMap(m map[string]string) (*ServicePlanClaim, error) {
 		StatusDescription: statusDescription,
 		InstanceID:        instanceID,
 		BindID:            bindID,
+		Extra:             extra,
 	}, nil
 }
 
@@ -148,6 +156,7 @@ func (s ServicePlanClaim) ToMap() map[string]string {
 		statusDescriptionMapKey: s.StatusDescription,
 		instanceIDMapKey:        s.InstanceID,
 		bindIDMapKey:            s.BindID,
+		extraMapKey:             s.Extra.EncodeToString(),
 	}
 }
 

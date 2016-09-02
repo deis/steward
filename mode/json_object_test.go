@@ -33,3 +33,25 @@ func TestJSONObjectBase64EncodedVals(t *testing.T) {
 		assert.Equal(t, decodedMap[k], v, "value of key "+k)
 	}
 }
+
+func TestJSONObjectToFromStringRoundTrip(t *testing.T) {
+	t.Run("full JSONObject", func(t *testing.T) {
+		jso := JSONObject(map[string]string{
+			"key1":     "val1",
+			"key2":     "val2",
+			"key3":     "val3",
+			uuid.New(): uuid.New(),
+		})
+		jsoStr := jso.EncodeToString()
+		jsoDecoded, err := JSONObjectFromString(jsoStr)
+		assert.NoErr(t, err)
+		assert.Equal(t, len(jsoDecoded), len(jso), "decoded json object length")
+	})
+	t.Run("empty JSONObject", func(t *testing.T) {
+		jso := JSONObject(map[string]string{})
+		jsoStr := jso.EncodeToString()
+		jsoDecoded, err := JSONObjectFromString(jsoStr)
+		assert.NoErr(t, err)
+		assert.Equal(t, len(jsoDecoded), len(jso), "decoded json object length")
+	})
+}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"net/http"
 	"os"
 
 	modeutils "github.com/deis/steward/mode/utils"
@@ -30,10 +31,11 @@ func main() {
 
 	errCh := make(chan error)
 	rootCtx := context.Background()
+	httpCl := http.DefaultClient
 	ctx, cancelFn := context.WithCancel(rootCtx)
 	defer cancelFn()
 
-	if err := modeutils.Run(ctx, cfg.Mode, errCh, cfg.WatchNamespaces); err != nil {
+	if err := modeutils.Run(ctx, httpCl, cfg.Mode, errCh, cfg.WatchNamespaces); err != nil {
 		logger.Criticalf("Error starting %s mode: %s", cfg.Mode, err)
 		exitWithCode(cancelFn, 1)
 	}

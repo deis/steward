@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/k8s/claim"
@@ -12,12 +13,23 @@ import (
 )
 
 const (
-	cfMode = "cf"
+	cfMode   = "cf"
+	helmMode = "helm"
 )
 
 // Run publishes the underlying broker's service offerings to the catalog, then starts Steward's
 // control loop in the specified mode.
-func Run(ctx context.Context, modeStr string, errCh chan<- error, namespaces []string) error {
+func Run(
+	ctx context.Context,
+	httpCl *http.Client,
+	modeStr string,
+	errCh chan<- error, namespaces []string) error {
+
+	k8sClient, err := kcl.NewInCluster()
+	if err != nil {
+		return errGettingK8sClient{Original: err}
+	}
+
 	var cataloger mode.Cataloger
 	var lifecycler *mode.Lifecycler
 	// Get the right implementations of mode.Cataloger and mode.Lifecycler
@@ -28,16 +40,17 @@ func Run(ctx context.Context, modeStr string, errCh chan<- error, namespaces []s
 		if err != nil {
 			return err
 		}
+	case helmMode:
+		var err error
+		cataloger, lifecycler, err = getHelmModeComponents(ctx, httpCl, k8sClient)
+		if err != nil {
+			return err
+		}
 	default:
 		return errUnrecognizedMode{mode: modeStr}
 	}
 
 	// Everything else does not vary by mode...
-
-	k8sClient, err := kcl.NewInCluster()
-	if err != nil {
-		return errGettingK8sClient{Original: err}
-	}
 
 	catalogInteractor := k8s.NewK8sServiceCatalogInteractor(k8sClient.RESTClient)
 	published, err := publishCatalog(cataloger, catalogInteractor)
@@ -52,7 +65,6 @@ func Run(ctx context.Context, modeStr string, errCh chan<- error, namespaces []s
 		return errGettingServiceCatalogLookupTable{Original: err}
 	}
 	logger.Infof("created service catalog lookup with %d items", lookup.Len())
-	claim.StartControlLoops(ctx, evtNamespacer, k8sClient, *lookup, lifecycler, namespaces, errCh)
 	claim.StartControlLoops(ctx, evtNamespacer, k8sClient, *lookup, lifecycler, namespaces, errCh)
 
 	return nil

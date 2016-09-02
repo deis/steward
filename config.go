@@ -6,7 +6,7 @@ import (
 )
 
 type rootConfig struct {
-	Mode            string   `envconfig:"MODE" default:"cf"`
+	Mode            string   `envconfig:"MODE" required:"true"`
 	LogLevel        string   `envconfig:"LOG_LEVEL" default:"info"`
 	WatchNamespaces []string `envconfig:"WATCH_NAMESPACES" default:"default"`
 }

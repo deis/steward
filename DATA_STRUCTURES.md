@@ -46,6 +46,7 @@ This object is submitted by the application as JSON in a [`ConfigMap`][configMap
 - `status-description` - a human-readable explanation of the current `status`. Steward will modify this value, but will ignore any modifications by the application
 - `instance-id` - for internal use only. The application should not modify this field
 - `bind-id` - for internal use only. The application should not modify this field
+- `extra` - for internal use only. The application should not modify this field
 
 # `ServicePlanCreation`
 
