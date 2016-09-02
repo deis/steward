@@ -36,7 +36,7 @@ func Run(
 	switch modeStr {
 	case cfMode:
 		var err error
-		cataloger, lifecycler, err = getCfModeComponents()
+		cataloger, lifecycler, err = getCfModeComponents(ctx)
 		if err != nil {
 			return err
 		}

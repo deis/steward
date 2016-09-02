@@ -1,8 +1,10 @@
 package cf
 
 import (
+	"context"
 	"net/http"
 	"net/url"
+	"time"
 
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
@@ -14,7 +16,9 @@ const (
 )
 
 type unbinder struct {
-	cl *RESTClient
+	cl          *RESTClient
+	baseCtx     context.Context
+	callTimeout time.Duration
 }
 
 func (u unbinder) Unbind(instanceID, bindingID string, uReq *mode.UnbindRequest) error {
@@ -25,7 +29,9 @@ func (u unbinder) Unbind(instanceID, bindingID string, uReq *mode.UnbindRequest)
 	if err != nil {
 		return err
 	}
-	resp, err := u.cl.Do(req)
+	ctx, cancelFn := context.WithTimeout(u.baseCtx, u.callTimeout)
+	defer cancelFn()
+	resp, err := u.cl.Do(ctx, req)
 	if err != nil {
 		return err
 	}
@@ -36,6 +42,6 @@ func (u unbinder) Unbind(instanceID, bindingID string, uReq *mode.UnbindRequest)
 }
 
 // NewUnbinder returns a CloudFoundry implementation of a mode.Unbinder
-func NewUnbinder(cl *RESTClient) mode.Unbinder {
-	return unbinder{cl: cl}
+func NewUnbinder(baseCtx context.Context, cl *RESTClient, callTimeout time.Duration) mode.Unbinder {
+	return unbinder{cl: cl, baseCtx: baseCtx, callTimeout: callTimeout}
 }

@@ -2,15 +2,19 @@ package cf
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
 )
 
 type provisioner struct {
-	cl *RESTClient
+	cl          *RESTClient
+	baseCtx     context.Context
+	callTimeout time.Duration
 }
 
 func (p provisioner) Provision(instanceID string, pReq *mode.ProvisionRequest) (*mode.ProvisionResponse, error) {
@@ -22,7 +26,9 @@ func (p provisioner) Provision(instanceID string, pReq *mode.ProvisionRequest) (
 	if err != nil {
 		return nil, err
 	}
-	res, err := p.cl.Client.Do(req)
+	ctx, cancelFn := context.WithTimeout(p.baseCtx, p.callTimeout)
+	defer cancelFn()
+	res, err := p.cl.Do(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -41,6 +47,6 @@ func (p provisioner) Provision(instanceID string, pReq *mode.ProvisionRequest) (
 }
 
 // NewProvisioner creates a new CloudFoundry-broker-backed provisioner implementation
-func NewProvisioner(cl *RESTClient) mode.Provisioner {
-	return provisioner{cl: cl}
+func NewProvisioner(baseCtx context.Context, cl *RESTClient, callTimeout time.Duration) mode.Provisioner {
+	return provisioner{cl: cl, baseCtx: baseCtx, callTimeout: callTimeout}
 }

@@ -1,11 +1,14 @@
 package cf
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/deis/steward/web/ctxhttp"
 )
 
 const (
@@ -83,6 +86,6 @@ func (c *RESTClient) Delete(query url.Values, pathElts ...string) (*http.Request
 }
 
 // Do is a convenience function for c.Client.Do(req)
-func (c *RESTClient) Do(req *http.Request) (*http.Response, error) {
-	return c.Client.Do(req)
+func (c *RESTClient) Do(ctx context.Context, req *http.Request) (*http.Response, error) {
+	return ctxhttp.Do(ctx, c.Client, req)
 }

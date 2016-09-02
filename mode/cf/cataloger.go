@@ -1,15 +1,19 @@
 package cf
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
 )
 
 type cataloger struct {
-	cl *RESTClient
+	cl          *RESTClient
+	baseCtx     context.Context
+	callTimeout time.Duration
 }
 
 func (c cataloger) List() ([]*mode.Service, error) {
@@ -17,7 +21,9 @@ func (c cataloger) List() ([]*mode.Service, error) {
 	if err != nil {
 		return nil, err
 	}
-	res, err := c.cl.Do(req)
+	ctx, cancelFn := context.WithTimeout(c.baseCtx, c.callTimeout)
+	defer cancelFn()
+	res, err := c.cl.Do(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -35,6 +41,6 @@ func (c cataloger) List() ([]*mode.Service, error) {
 }
 
 // NewCataloger returns a new Cataloger implementation, backed by a CF service broker
-func NewCataloger(cl *RESTClient) mode.Cataloger {
-	return cataloger{cl: cl}
+func NewCataloger(baseCtx context.Context, cl *RESTClient, callTimeout time.Duration) mode.Cataloger {
+	return cataloger{cl: cl, baseCtx: baseCtx, callTimeout: callTimeout}
 }

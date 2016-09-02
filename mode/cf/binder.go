@@ -2,15 +2,19 @@ package cf
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/web"
 )
 
 type binder struct {
-	cl *RESTClient
+	cl          *RESTClient
+	callTimeout time.Duration
+	baseCtx     context.Context
 }
 
 func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest) (*mode.BindResponse, error) {
@@ -24,7 +28,9 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 		return nil, err
 	}
 
-	res, err := b.cl.Do(req)
+	ctx, cancelFn := context.WithTimeout(b.baseCtx, b.callTimeout)
+	defer cancelFn()
+	res, err := b.cl.Do(ctx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -42,6 +48,6 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 }
 
 // NewBinder creates a new CloudFoundry-broker-backed binder implementation
-func NewBinder(cl *RESTClient) mode.Binder {
-	return binder{cl: cl}
+func NewBinder(baseCtx context.Context, cl *RESTClient, callTimeout time.Duration) mode.Binder {
+	return binder{cl: cl, callTimeout: callTimeout, baseCtx: baseCtx}
 }

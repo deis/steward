@@ -1,13 +1,15 @@
 package utils
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/mode/cf"
 )
 
-func getCfModeComponents() (mode.Cataloger, *mode.Lifecycler, error) {
+func getCfModeComponents(ctx context.Context) (mode.Cataloger, *mode.Lifecycler, error) {
+	httpCl := &http.Client{}
 	cfCfg, err := cf.GetConfig()
 	if err != nil {
 		return nil, nil, errGettingBrokerConfig{Original: err}
@@ -19,14 +21,15 @@ func getCfModeComponents() (mode.Cataloger, *mode.Lifecycler, error) {
 		cfCfg.Username,
 	)
 	cfClient := cf.NewRESTClient(
-		http.DefaultClient,
+		httpCl,
 		cfCfg.Scheme,
 		cfCfg.Hostname,
 		cfCfg.Port,
 		cfCfg.Username,
 		cfCfg.Password,
 	)
-	cataloger := cf.NewCataloger(cfClient)
-	lifecycler := cf.NewLifecycler(cfClient)
+	callTimeout := cfCfg.HttpRequestTimeoutSec()
+	cataloger := cf.NewCataloger(ctx, cfClient, callTimeout)
+	lifecycler := cf.NewLifecycler(ctx, cfClient, callTimeout)
 	return cataloger, lifecycler, nil
 }
