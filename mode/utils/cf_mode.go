@@ -8,8 +8,7 @@ import (
 	"github.com/deis/steward/mode/cf"
 )
 
-func getCfModeComponents(ctx context.Context) (mode.Cataloger, *mode.Lifecycler, error) {
-	httpCl := &http.Client{}
+func getCfModeComponents(ctx context.Context, httpCl *http.Client) (mode.Cataloger, *mode.Lifecycler, error) {
 	cfCfg, err := cf.GetConfig()
 	if err != nil {
 		return nil, nil, errGettingBrokerConfig{Original: err}
