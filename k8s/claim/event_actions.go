@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/deis/steward/k8s"
+	"github.com/deis/steward/k8s/claim/state"
 	"github.com/deis/steward/mode"
 	"github.com/pborman/uuid"
 	"k8s.io/kubernetes/pkg/api"
@@ -17,38 +18,6 @@ var (
 	errMissingInstanceID = errors.New("missing instance ID")
 	errMissingBindID     = errors.New("missing bind ID")
 )
-
-type claimUpdate struct {
-	newClaim mode.ServicePlanClaim
-	err      error
-	stop     bool
-}
-
-func (c claimUpdate) String() string {
-	return fmt.Sprintf("new claim = %s. error = %s, stop = %t", c.newClaim, c.err, c.stop)
-}
-
-func newErrClaimUpdate(claim mode.ServicePlanClaim, err error) claimUpdate {
-	claim.Status = mode.StatusFailed.String()
-	claim.StatusDescription = fmt.Sprintf("error: %s", err)
-	return claimUpdate{
-		newClaim: claim,
-		err:      err,
-		stop:     true,
-	}
-}
-
-func newClaimUpdate(claim mode.ServicePlanClaim) claimUpdate {
-	stop := false
-	if mode.StringIsStatus(claim.Status, mode.StatusFailed) ||
-		mode.StringIsStatus(claim.Status, mode.StatusBound) ||
-		mode.StringIsStatus(claim.Status, mode.StatusProvisioned) ||
-		mode.StringIsStatus(claim.Status, mode.StatusUnbound) ||
-		mode.StringIsStatus(claim.Status, mode.StatusDeprovisioned) {
-		stop = true
-	}
-	return claimUpdate{newClaim: claim, stop: stop}
-}
 
 type errNoSuchServiceAndPlan struct {
 	svcID  string
@@ -82,7 +51,7 @@ func processProvision(
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	catalogLookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
-	claimCh chan<- claimUpdate,
+	claimCh chan<- state.Update,
 ) {
 
 	logger.Debugf("processProvision for event %s", evt.claim.Claim.ToMap())
@@ -92,15 +61,14 @@ func processProvision(
 	svc, err := getService(claim, catalogLookup)
 	if err != nil {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, err):
+		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 		}
 		return
 	}
 
-	claim.Status = mode.StatusProvisioning.String()
 	select {
-	case claimCh <- newClaimUpdate(claim):
+	case claimCh <- state.NewUpdate(mode.StatusProvisioning, "", mode.EmptyJSONObject()):
 	case <-ctx.Done():
 		return
 	}
@@ -117,16 +85,14 @@ func processProvision(
 	})
 	if err != nil {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, err):
+		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 		}
 		return
 	}
 
-	claim.Status = mode.StatusProvisioned.String()
-	claim.Extra = provisionResp.Extra
 	select {
-	case claimCh <- newClaimUpdate(claim):
+	case claimCh <- state.NewUpdate(mode.StatusProvisioned, "", provisionResp.Extra):
 	case <-ctx.Done():
 		return
 	}
@@ -138,7 +104,7 @@ func processBind(
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	catalogLookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
-	claimCh chan<- claimUpdate,
+	claimCh chan<- state.Update,
 ) {
 
 	logger.Debugf("processBind for event %s", evt.claim.Claim.ToMap())
@@ -147,16 +113,14 @@ func processBind(
 	claimWrapper := *evt.claim
 	if _, err := getService(claim, catalogLookup); err != nil {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, err):
+		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 		}
 		return
 	}
 
-	claim.Status = mode.StatusBinding.String()
-	claimUpdate := newClaimUpdate(claim)
 	select {
-	case claimCh <- claimUpdate:
+	case claimCh <- state.NewUpdate(mode.StatusBinding, "", mode.EmptyJSONObject()):
 	case <-ctx.Done():
 		return
 	}
@@ -164,7 +128,7 @@ func processBind(
 	instanceID := claim.InstanceID
 	if instanceID == "" {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, errMissingInstanceID):
+		case claimCh <- state.ErrUpdate(errMissingInstanceID, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 		}
 		return
@@ -179,7 +143,7 @@ func processBind(
 	})
 	if err != nil {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, err):
+		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 		}
 		return
@@ -194,14 +158,14 @@ func processBind(
 		Data: bindRes.Creds,
 	}); err != nil {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, err):
+		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 		}
 		return
 	}
 	claim.Status = mode.StatusBound.String()
 	select {
-	case claimCh <- newClaimUpdate(claim):
+	case claimCh <- state.NewUpdate(mode.StatusBound, "", mode.EmptyJSONObject()):
 	case <-ctx.Done():
 		return
 	}
@@ -213,7 +177,7 @@ func processUnbind(
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	catalogLookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
-	claimCh chan<- claimUpdate,
+	claimCh chan<- state.Update,
 ) {
 
 	logger.Debugf("processUnbind for event %s", evt.claim.Claim.ToMap())
@@ -222,15 +186,14 @@ func processUnbind(
 	claim := *evt.claim.Claim
 	if _, err := getService(claim, catalogLookup); err != nil {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, err):
+		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 		}
 		return
 	}
 
-	claim.Status = mode.StatusUnbinding.String()
 	select {
-	case claimCh <- newClaimUpdate(claim):
+	case claimCh <- state.NewUpdate(mode.StatusUnbinding, "", mode.EmptyJSONObject()):
 	case <-ctx.Done():
 		return
 	}
@@ -239,14 +202,14 @@ func processUnbind(
 	bindID := claim.BindID
 	if instanceID == "" {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, errMissingInstanceID):
+		case claimCh <- state.ErrUpdate(errMissingInstanceID, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 			return
 		}
 	}
 	if bindID == "" {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, errMissingBindID):
+		case claimCh <- state.ErrUpdate(errMissingBindID, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 			return
 		}
@@ -257,7 +220,7 @@ func processUnbind(
 		PlanID:    claim.PlanID,
 	}); err != nil {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, err):
+		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 		}
 		return
@@ -266,15 +229,14 @@ func processUnbind(
 	// delete configmap
 	if err := cmNamespacer.ConfigMaps(claimWrapper.ObjectMeta.Namespace).Delete(claim.TargetName); err != nil {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, err):
+		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 		}
 		return
 	}
 
-	claim.Status = mode.StatusUnbound.String()
 	select {
-	case claimCh <- newClaimUpdate(claim):
+	case claimCh <- state.NewUpdate(mode.StatusUnbound, "", mode.EmptyJSONObject()):
 	case <-ctx.Done():
 		return
 	}
@@ -286,7 +248,7 @@ func processDeprovision(
 	cmNamespacer kcl.ConfigMapsNamespacer,
 	catalogLookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
-	claimCh chan<- claimUpdate,
+	claimCh chan<- state.Update,
 ) {
 
 	logger.Debugf("processDeprovision for event %s", evt.claim.Claim.ToMap())
@@ -294,15 +256,14 @@ func processDeprovision(
 	claim := *evt.claim.Claim
 	if _, err := getService(claim, catalogLookup); err != nil {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, err):
+		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 		}
 		return
 	}
 
-	claim.Status = mode.StatusDeprovisioning.String()
 	select {
-	case claimCh <- newClaimUpdate(claim):
+	case claimCh <- state.NewUpdate(mode.StatusDeprovisioning, "", mode.EmptyJSONObject()):
 	case <-ctx.Done():
 		return
 	}
@@ -310,7 +271,7 @@ func processDeprovision(
 	instanceID := claim.InstanceID
 	if instanceID == "" {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, errMissingInstanceID):
+		case claimCh <- state.ErrUpdate(errMissingInstanceID, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 		}
 		return
@@ -324,14 +285,14 @@ func processDeprovision(
 	}
 	if _, err := lifecycler.Deprovision(instanceID, deprovisionReq); err != nil {
 		select {
-		case claimCh <- newErrClaimUpdate(claim, err):
+		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
 		case <-ctx.Done():
 		}
 		return
 	}
 	claim.Status = mode.StatusDeprovisioned.String()
 	select {
-	case claimCh <- newClaimUpdate(claim):
+	case claimCh <- state.NewUpdate(mode.StatusDeprovisioned, "", mode.EmptyJSONObject()):
 	case <-ctx.Done():
 		return
 	}

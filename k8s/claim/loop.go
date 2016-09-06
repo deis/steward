@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/deis/steward/k8s"
+	"github.com/deis/steward/k8s/claim/state"
 	"github.com/deis/steward/mode"
 	"k8s.io/kubernetes/pkg/api"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
@@ -99,7 +100,7 @@ func receiveEvent(
 		return
 	}
 
-	claimUpdateCh := make(chan claimUpdate)
+	claimUpdateCh := make(chan state.Update)
 	wrapper := evt.claim
 
 	cancelCtx, cancelFn := context.WithCancel(ctx)
@@ -109,22 +110,16 @@ func receiveEvent(
 	for {
 		select {
 		case claimUpdate := <-claimUpdateCh:
-			// stop watching the processor if it failed
-			if claimUpdate.err != nil {
-				logger.Errorf("error in claim processing (%s)", claimUpdate.err)
-				return
-			}
+			state.UpdateClaim(wrapper.Claim, claimUpdate)
 
-			// update the claim in k8s
-			wrapper.Claim = &claimUpdate.newClaim
 			w, err := iface.Update(wrapper)
 			if err != nil {
-				logger.Errorf("error updating claim %s (%s), stopping", claimUpdate.newClaim.ClaimID, err)
+				logger.Errorf("error updating claim %s (%s), stopping", wrapper.Claim.ClaimID, err)
 				return
 			}
 
-			// if stop is true, then the claim was to be updated a final time, and then the loop was to stop listening
-			if claimUpdate.stop {
+			// if the claim update represents a terminal state, the loop should terminate
+			if claimUpdate.IsTerminal() {
 				return
 			}
 			wrapper = w

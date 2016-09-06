@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	errMissing = errors.New("key is missing")
+	errMissing      = errors.New("key is missing")
+	emptyJSONObject = JSONObject(map[string]string{})
 )
 
 type errMalformedKV struct {
@@ -21,6 +22,11 @@ func (e errMalformedKV) Error() string {
 
 // JSONObject is a convenience wrapper around a Go type that represents a JSON object
 type JSONObject map[string]string
+
+// EmptyJSONObject returns an empty JSONObject
+func EmptyJSONObject() JSONObject {
+	return emptyJSONObject
+}
 
 func (j JSONObject) String(key string) (string, error) {
 	i, ok := j[key]

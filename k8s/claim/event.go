@@ -37,7 +37,7 @@ type nextFunc func(
 	kcl.ConfigMapsNamespacer,
 	k8s.ServiceCatalogLookup,
 	*mode.Lifecycler,
-	chan<- claimUpdate,
+	chan<- state.Update,
 )
 
 // Event represents the event that a service plan claim has changed in kubernetes. It implements fmt.Stringer
