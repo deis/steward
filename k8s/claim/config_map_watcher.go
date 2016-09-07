@@ -8,18 +8,46 @@ import (
 
 var (
 	errNotAConfigMap = errors.New("not a config map")
+	errStopped       = errors.New("stopped")
 )
 
 type configMapWatcher struct {
-	watchIface watch.Interface
-	closeCh    chan struct{}
+	ifaceFn func() (watch.Interface, error)
+	closeCh chan struct{}
 }
 
 // NewWatcher returns a watcher that uses watchIface to get and return events
-func newConfigMapWatcher(watchIface watch.Interface) Watcher {
+func newConfigMapWatcher(ifaceFn func() (watch.Interface, error)) Watcher {
 	return &configMapWatcher{
-		watchIface: watchIface,
-		closeCh:    make(chan struct{}),
+		ifaceFn: ifaceFn,
+		closeCh: make(chan struct{}),
+	}
+}
+
+// receives on iface.ResultChan() until either that channel or closeCh was closed. returned errWatchClosed in the former case, errStopped in the latter
+func watchLoop(iface watch.Interface, retCh chan<- *Event, closeCh <-chan struct{}) error {
+	defer iface.Stop()
+	resCh := iface.ResultChan()
+	for {
+		select {
+		case <-closeCh:
+			return errStopped
+		case rawEvt, open := <-resCh:
+			if !open {
+				return errWatchClosed
+			}
+			evt, err := eventFromConfigMapEvent(rawEvt)
+			if err != nil {
+				logger.Debugf("error converting raw event to service plan claim event (%s). continuing", err)
+			} else {
+				select {
+				case retCh <- evt:
+				case <-closeCh:
+					logger.Debugf("loop was stopped while trying to send a new event, returning")
+					return errStopped
+				}
+			}
+		}
 	}
 }
 
@@ -32,23 +60,19 @@ func (c *configMapWatcher) ResultChan() <-chan *Event {
 			select {
 			case <-c.closeCh:
 				return
-			case rawEvt, open := <-c.watchIface.ResultChan():
-				// bail out of the goroutine if the internal result channel was closed
-				if !open {
-					logger.Debugf("internal watch channel was closed. closing down watch goroutine")
-					return
-				}
-				evt, err := eventFromConfigMapEvent(rawEvt)
-				if err != nil {
-					logger.Debugf("error converting raw event to service plan claim event (%s). continuing", err)
-				} else {
-					select {
-					case retCh <- evt:
-					case <-c.closeCh:
-						logger.Debugf("loop was stopped while trying to send a new event, returning")
-						return
-					}
-				}
+			default:
+			}
+			iface, err := c.ifaceFn()
+			if err != nil {
+				logger.Errorf("error getting a new watch interface (%s)", err)
+				return
+			}
+			watchErr := watchLoop(iface, retCh, c.closeCh)
+			if watchErr == errWatchClosed {
+				logger.Debugf("Kubernetes watch API closed connection. Re-opening")
+				continue
+			} else {
+				return
 			}
 		}
 	}()
@@ -56,6 +80,5 @@ func (c *configMapWatcher) ResultChan() <-chan *Event {
 }
 
 func (c *configMapWatcher) Stop() {
-	c.watchIface.Stop()
 	close(c.closeCh)
 }

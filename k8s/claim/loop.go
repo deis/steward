@@ -3,7 +3,6 @@ package claim
 import (
 	"context"
 	"errors"
-	"time"
 
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/k8s/claim/state"
@@ -24,6 +23,7 @@ var (
 		labelKeyType: labelValServicePlanClaim,
 	}))
 	errLoopStopped = errors.New("loop has been stopped")
+	errWatchClosed = errors.New("watch closed")
 )
 
 // StartControlLoop starts an infinite loop that receives on watcher.ResultChan() and takes action on each change in service plan claims. It's intended to be called in a goroutine. Call watcher.Stop() to stop this loop
@@ -36,10 +36,7 @@ func StartControlLoop(
 ) error {
 
 	// start up the watcher so that events build up on the channel while we're listing events (which happens below)
-	watcher, err := iface.Watch(api.ListOptions{LabelSelector: claimLabelSelector})
-	if err != nil {
-		return err
-	}
+	watcher := iface.Watch(api.ListOptions{LabelSelector: claimLabelSelector})
 	ch := watcher.ResultChan()
 	defer watcher.Stop()
 
@@ -57,22 +54,9 @@ func StartControlLoop(
 	for {
 		select {
 		case evt, open := <-ch:
-			// if the watch channel was closed, do the following in order:
-			//
-			// 1. check to see if the loop should be shut down. if so, return immediately
-			// 2. otherwise, re-open the watch and continue to the next iteration of the loop
+			// if the watch channel was closed, fail. this if statement is this is semantically equivalent to if evt == nil {...}
 			if !open {
-				// this if statement is this is semantically equivalent to if evt == nil {...}
-				select {
-				case <-ctx.Done():
-					logger.Debugf("loop has been stopped")
-					return errLoopStopped
-				default:
-				}
-				logger.Debugf("watch channel was closed, pausing then re-opening the watch and continuing")
-				time.Sleep(1 * time.Second)
-				ch = watcher.ResultChan()
-				continue
+				return errWatchClosed
 			}
 			logger.Debugf("received event %s", *evt.claim.Claim)
 			receiveEvent(ctx, evt, iface, cmNamespacer, lookup, lifecycler)

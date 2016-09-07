@@ -52,39 +52,63 @@ func matchClaimToMap(claim *mode.ServicePlanClaim, data map[string]string) error
 	return nil
 }
 
-func TestConfigMapWatcherStop(t *testing.T) {
-	const waitDur = 100 * time.Millisecond
-	iface := watch.NewFake()
-	watcher := newConfigMapWatcher(iface)
-	watcher.Stop()
-	ch := watcher.ResultChan()
-	select {
-	case evt := <-ch:
-		if evt != nil {
-			t.Fatalf("got event %s within %s, but shouldn't have gotten anything", *evt, waitDur)
-		}
-	case <-time.After(waitDur):
-	}
-}
-
 func TestConfigMapWatcher(t *testing.T) {
 	const waitDur = 100 * time.Millisecond
-	iface := watch.NewFake()
-	watcher := newConfigMapWatcher(iface)
+	ifaces := []*watch.FakeWatcher{
+		watch.NewFake(),
+		watch.NewFake(),
+	}
+	i := 0
+	watcher := newConfigMapWatcher(func() (watch.Interface, error) {
+		ret := ifaces[i]
+		i++
+		return ret, nil
+	})
+
 	defer watcher.Stop()
 	evtCh := watcher.ResultChan()
 
-	iface.Add(&api.Pod{})
+	// add a non-config map and test for it to be ignored
+	ifaces[0].Add(&api.Pod{})
 	select {
-	case evt := <-evtCh:
+	case evt, open := <-evtCh:
+		if !open {
+			t.Fatalf("the event channel was closed")
+		}
 		t.Fatalf("received an event (%s) when not expected", *evt)
 	case <-time.After(waitDur):
 	}
 
+	// add a config map and expect it to be sent on the channel
+	name := uuid.New()
 	data := configMapData()
-	iface.Add(&api.ConfigMap{Data: data})
+	ifaces[0].Add(&api.ConfigMap{
+		ObjectMeta: api.ObjectMeta{Name: name},
+		Data:       data,
+	})
+	select {
+	case evt, open := <-evtCh:
+		if !open {
+			t.Fatalf("the event channel was closed")
+		}
+		assert.Equal(t, evt.claim.ObjectMeta.Name, name, "name")
+		assert.NoErr(t, matchClaimToMap(evt.claim.Claim, data))
+	case <-time.After(waitDur):
+		t.Fatalf("didn't find event after %s", waitDur)
+	}
+
+	// stop the first watch interface interface and test to ensure the second is opened
+	ifaces[0].Stop()
+
+	name = uuid.New()
+	data = configMapData()
+	ifaces[1].Add(&api.ConfigMap{
+		ObjectMeta: api.ObjectMeta{Name: name},
+		Data:       data,
+	})
 	select {
 	case evt := <-evtCh:
+		assert.Equal(t, evt.claim.ObjectMeta.Name, name, "name")
 		assert.NoErr(t, matchClaimToMap(evt.claim.Claim, data))
 	case <-time.After(waitDur):
 		t.Fatalf("didn't find event after %s", waitDur)
@@ -125,4 +149,8 @@ func TestEventFromConfigMapEvent(t *testing.T) {
 	claim := wrapper.Claim
 	assert.NotNil(t, claim, "wrapped claim")
 	assert.NoErr(t, matchClaimToMap(claim, data))
+}
+
+func TestWatchLoop(t *testing.T) {
+
 }

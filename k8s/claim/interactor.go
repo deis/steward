@@ -9,5 +9,5 @@ type Interactor interface {
 	Get(string) (*ServicePlanClaimWrapper, error)
 	List(opts api.ListOptions) (*ServicePlanClaimsListWrapper, error)
 	Update(*ServicePlanClaimWrapper) (*ServicePlanClaimWrapper, error)
-	Watch(api.ListOptions) (Watcher, error)
+	Watch(api.ListOptions) Watcher
 }

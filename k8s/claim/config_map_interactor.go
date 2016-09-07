@@ -3,6 +3,7 @@ package claim
 import (
 	"k8s.io/kubernetes/pkg/api"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
+	"k8s.io/kubernetes/pkg/watch"
 )
 
 type cmInterface struct {
@@ -49,10 +50,8 @@ func (c cmInterface) Update(spc *ServicePlanClaimWrapper) (*ServicePlanClaimWrap
 	return servicePlanClaimWrapperFromConfigMap(newCM)
 }
 
-func (c cmInterface) Watch(opts api.ListOptions) (Watcher, error) {
-	watchIface, err := c.cm.Watch(opts)
-	if err != nil {
-		return nil, err
-	}
-	return newConfigMapWatcher(watchIface), nil
+func (c cmInterface) Watch(opts api.ListOptions) Watcher {
+	return newConfigMapWatcher(func() (watch.Interface, error) {
+		return c.cm.Watch(opts)
+	})
 }
