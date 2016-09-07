@@ -129,12 +129,40 @@ endif
 	kubectl apply -f manifests/${HELM_CHART_NAME}-helm-steward.yaml || \
 	kubectl create -f manifests/${HELM_CHART_NAME}-helm-steward.yaml
 
+install-jobs-steward:
+ifndef JOBS_BROKER_NAME
+	$(error JOBS_BROKER_NAME is undefined)
+endif
+ifndef JOBS_BROKER_IMAGE
+	$(error JOBS_BROKER_IMAGE is undefined)
+endif
+ifndef JOBS_BROKER_CONFIG_MAP
+	$(error JOBS_BROKER_CONFIG_MAP is undefined)
+endif
+ifndef JOBS_BROKER_SECRET
+	$(error JOBS_BROKER_SECRET is undefined)
+endif
+	sed "s/#jobs_broker_name#/${JOBS_BROKER_NAME}/g" manifests/steward-template-jobs.yaml > manifests/${JOBS_BROKER_NAME}-jobs-steward.yaml
+	sed -i.bak "s#\#jobs_broker_image\##${JOBS_BROKER_IMAGE}#g" manifests/${JOBS_BROKER_NAME}-jobs-steward.yaml
+	sed -i.bak "s#\#jobs_broker_config_map\##${JOBS_BROKER_CONFIG_MAP}#g" manifests/${JOBS_BROKER_NAME}-jobs-steward.yaml
+	sed -i.bak "s#\#jobs_broker_secret\##${JOBS_BROKER_SECRET}#g" manifests/${JOBS_BROKER_NAME}-jobs-steward.yaml
+	sed -i.bak "s#\#steward_image\##${STEWARD_IMAGE}#g" manifests/${JOBS_BROKER_NAME}-jobs-steward.yaml
+	rm manifests/${JOBS_BROKER_NAME}-jobs-steward.yaml.bak
+	kubectl get deployment ${JOBS_BROKER_NAME}-steward --namespace=steward && \
+	kubectl apply -f manifests/${JOBS_BROKER_NAME}-jobs-steward.yaml || \
+	kubectl create -f manifests/${JOBS_BROKER_NAME}-jobs-steward.yaml
+
 deploy-cf: install-namespace install-3prs install-cf-steward
 
 deploy-helm: install-namespace install-3prs install-helm-steward
+
+deploy-jobs: install-namespace install-3prs install-jobs-steward
 
 dev-deploy-cf: docker-build docker-push
 	STEWARD_IMAGE=${IMAGE} $(MAKE) deploy-cf
 
 dev-deploy-helm: docker-build docker-push
 	STEWARD_IMAGE=${IMAGE} $(MAKE) deploy-helm
+
+dev-deploy-jobs: docker-build docker-push
+	STEWARD_IMAGE=${IMAGE} $(MAKE) deploy-jobs
