@@ -39,8 +39,8 @@ func (p provisioner) Provision(instanceID string, req *mode.ProvisionRequest) (*
 	return resp, nil
 }
 
-// NewProvisioner returns a new Tiller-backed mode.Provisioner
-func NewProvisioner(
+// newProvisioner returns a new Tiller-backed mode.Provisioner
+func newProvisioner(
 	chart *chart.Chart,
 	targetNS string,
 	provBehavior ProvisionBehavior,

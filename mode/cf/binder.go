@@ -12,7 +12,7 @@ import (
 )
 
 type binder struct {
-	cl          *RESTClient
+	cl          *restClient
 	callTimeout time.Duration
 	baseCtx     context.Context
 }
@@ -47,7 +47,7 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 	return resp, nil
 }
 
-// NewBinder creates a new CloudFoundry-broker-backed binder implementation
-func NewBinder(baseCtx context.Context, cl *RESTClient, callTimeout time.Duration) mode.Binder {
+// newBinder creates a new CloudFoundry-broker-backed binder implementation
+func newBinder(baseCtx context.Context, cl *restClient, callTimeout time.Duration) mode.Binder {
 	return binder{cl: cl, callTimeout: callTimeout, baseCtx: baseCtx}
 }

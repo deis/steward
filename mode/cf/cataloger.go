@@ -11,7 +11,7 @@ import (
 )
 
 type cataloger struct {
-	cl          *RESTClient
+	cl          *restClient
 	baseCtx     context.Context
 	callTimeout time.Duration
 }
@@ -40,7 +40,7 @@ func (c cataloger) List() ([]*mode.Service, error) {
 	return serviceList.Services, nil
 }
 
-// NewCataloger returns a new Cataloger implementation, backed by a CF service broker
-func NewCataloger(baseCtx context.Context, cl *RESTClient, callTimeout time.Duration) mode.Cataloger {
+// newCataloger returns a new Cataloger implementation, backed by a CF service broker
+func newCataloger(baseCtx context.Context, cl *restClient, callTimeout time.Duration) mode.Cataloger {
 	return cataloger{cl: cl, baseCtx: baseCtx, callTimeout: callTimeout}
 }

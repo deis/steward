@@ -15,8 +15,8 @@ func (u unbinder) Unbind(instanceID, bindingID string, unbindRequest *mode.Unbin
 	return nil
 }
 
-// NewUnbinder returns a Tiller-backed mode.Unbinder
-func NewUnbinder(chart *chart.Chart, cmNamespacer kcl.ConfigMapsNamespacer) (mode.Unbinder, error) {
+// newUnbinder returns a Tiller-backed mode.Unbinder
+func newUnbinder(chart *chart.Chart, cmNamespacer kcl.ConfigMapsNamespacer) (mode.Unbinder, error) {
 	cmInfos, err := getStewardConfigMapInfo(chart.Values)
 	if err != nil {
 		return nil, err

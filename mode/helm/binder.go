@@ -41,8 +41,8 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 	return resp, nil
 }
 
-// NewBinder returns a Tiller-backed mode.Binder
-func NewBinder(chart *chart.Chart, cmNamespacer kcl.ConfigMapsNamespacer) (mode.Binder, error) {
+// newBinder returns a Tiller-backed mode.Binder
+func newBinder(chart *chart.Chart, cmNamespacer kcl.ConfigMapsNamespacer) (mode.Binder, error) {
 	cmInfos, err := getStewardConfigMapInfo(chart.Values)
 	if err != nil {
 		logger.Errorf("getting steward config map info (%s)", err)

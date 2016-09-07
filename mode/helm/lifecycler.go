@@ -8,8 +8,8 @@ import (
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
-// NewLifecycler creates a new mode.Lifecycler that's backed by a Tiller instance accessible by iface
-func NewLifecycler(
+// newLifecycler creates a new mode.Lifecycler that's backed by a Tiller instance accessible by iface
+func newLifecycler(
 	ctx context.Context,
 	chart *chart.Chart,
 	installNS string,
@@ -18,15 +18,15 @@ func NewLifecycler(
 	cmNamespacer kcl.ConfigMapsNamespacer,
 ) (*mode.Lifecycler, error) {
 
-	binder, err := NewBinder(chart, cmNamespacer)
+	binder, err := newBinder(chart, cmNamespacer)
 	if err != nil {
 		return nil, err
 	}
-	unbinder, err := NewUnbinder(chart, cmNamespacer)
+	unbinder, err := newUnbinder(chart, cmNamespacer)
 	return &mode.Lifecycler{
-		Provisioner:   NewProvisioner(chart, installNS, provBehavior, creatorDeleter),
+		Provisioner:   newProvisioner(chart, installNS, provBehavior, creatorDeleter),
 		Binder:        binder,
 		Unbinder:      unbinder,
-		Deprovisioner: NewDeprovisioner(chart, provBehavior, creatorDeleter),
+		Deprovisioner: newDeprovisioner(chart, provBehavior, creatorDeleter),
 	}, nil
 }

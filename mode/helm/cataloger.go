@@ -12,8 +12,8 @@ func (c cataloger) List() ([]*mode.Service, error) {
 	return []*mode.Service{c.svc}, nil
 }
 
-// NewCataloger creates a new Tiller-backed mode.Cataloger
-func NewCataloger(cfg *Config) mode.Cataloger {
+// newCataloger creates a new Tiller-backed mode.Cataloger
+func newCataloger(cfg *config) mode.Cataloger {
 	return cataloger{
 		svc: &mode.Service{
 			ServiceInfo: mode.ServiceInfo{

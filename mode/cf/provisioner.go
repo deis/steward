@@ -12,7 +12,7 @@ import (
 )
 
 type provisioner struct {
-	cl          *RESTClient
+	cl          *restClient
 	baseCtx     context.Context
 	callTimeout time.Duration
 }
@@ -46,7 +46,7 @@ func (p provisioner) Provision(instanceID string, pReq *mode.ProvisionRequest) (
 	return resp, nil
 }
 
-// NewProvisioner creates a new CloudFoundry-broker-backed provisioner implementation
-func NewProvisioner(baseCtx context.Context, cl *RESTClient, callTimeout time.Duration) mode.Provisioner {
+// newProvisioner creates a new CloudFoundry-broker-backed provisioner implementation
+func newProvisioner(baseCtx context.Context, cl *restClient, callTimeout time.Duration) mode.Provisioner {
 	return provisioner{cl: cl, baseCtx: baseCtx, callTimeout: callTimeout}
 }

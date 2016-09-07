@@ -13,8 +13,8 @@ import (
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
 
-// GetChart downloads the chart at chartURL to a directory, parses it into a *chart.Chart and returns it along with the root directory of the directory the chart was downloaded to. Returns a non-nil error if the parsing failed. It's the caller's responsibility to delete the chart directory when done with it.
-func GetChart(ctx context.Context, httpCl *http.Client, chartURL string) (*chart.Chart, string, error) {
+// getChart downloads the chart at chartURL to a directory, parses it into a *chart.Chart and returns it along with the root directory of the directory the chart was downloaded to. Returns a non-nil error if the parsing failed. It's the caller's responsibility to delete the chart directory when done with it.
+func getChart(ctx context.Context, httpCl *http.Client, chartURL string) (*chart.Chart, string, error) {
 	logger.Debugf("downloading chart from %s", chartURL)
 	resp, err := ctxhttp.Get(ctx, httpCl, chartURL)
 	if err != nil {

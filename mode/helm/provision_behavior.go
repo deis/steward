@@ -22,8 +22,8 @@ const (
 // ProvisionBehavior is the indication for what steward should do in helm mode when a provision comes in. It implements fmt.Stringer
 type ProvisionBehavior string
 
-// ProvisionBehaviorFromString returns the ProvisionBehavior that corresponds to s. If s is an invalid provision behavior, returns an empty string and a non-nil error
-func ProvisionBehaviorFromString(s string) (ProvisionBehavior, error) {
+// provisionBehaviorFromString returns the ProvisionBehavior that corresponds to s. If s is an invalid provision behavior, returns an empty string and a non-nil error
+func provisionBehaviorFromString(s string) (ProvisionBehavior, error) {
 	switch s {
 	case ProvisionBehaviorActive.String():
 		return ProvisionBehaviorActive, nil
