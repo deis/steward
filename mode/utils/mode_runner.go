@@ -2,7 +2,6 @@ package utils
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/deis/steward/k8s"
@@ -27,6 +26,7 @@ func Run(
 	ctx context.Context,
 	httpCl *http.Client,
 	modeStr string,
+	brokerName string,
 	errCh chan<- error, namespaces []string) error {
 
 	k8sClient, err := kcl.NewInCluster()
@@ -61,7 +61,7 @@ func Run(
 	// Everything else does not vary by mode...
 
 	catalogInteractor := k8s.NewK8sServiceCatalogInteractor(k8sClient.RESTClient)
-	published, err := publishCatalog(cataloger, catalogInteractor)
+	published, err := publishCatalog(brokerName, cataloger, catalogInteractor)
 	if err != nil {
 		return errPublishingServiceCatalog{Original: err}
 	}
@@ -86,6 +86,7 @@ func Run(
 //
 // returns all of the entries it wrote into the catalog, or an error
 func publishCatalog(
+	brokerName string,
 	cataloger mode.Cataloger,
 	catalogEntries k8s.ServiceCatalogInteractor,
 ) ([]*k8s.ServiceCatalogEntry, error) {
@@ -99,8 +100,7 @@ func publishCatalog(
 	// Write all entries from cf catalog to 3prs
 	for _, service := range services {
 		for _, plan := range service.Plans {
-			descr := fmt.Sprintf("%s (%s)", service.Description, plan.Description)
-			entry := k8s.NewServiceCatalogEntry(descr, api.ObjectMeta{}, service.ServiceInfo, plan)
+			entry := k8s.NewServiceCatalogEntry(brokerName, api.ObjectMeta{}, service.ServiceInfo, plan)
 			if _, err := catalogEntries.Create(entry); err != nil {
 				logger.Errorf(
 					"error publishing catalog entry (svc_name, plan_name) = (%s, %s) (%s), continuing",

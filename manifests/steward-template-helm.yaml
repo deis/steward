@@ -4,7 +4,7 @@ metadata:
   name: #helm_name#-steward
   namespace: steward
   labels:
-    app: #helm-name#-steward
+    app: #helm_name#-steward
 spec:
   replicas: 1
   template:
@@ -17,6 +17,8 @@ spec:
           image: #steward_image#
           imagePullPolicy: Always
           env:
+          - name: BROKER_NAME
+            value: #helm_name#
           - name: STEWARD_MODE
             value: helm
           - name: LOG_LEVEL

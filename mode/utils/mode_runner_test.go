@@ -11,6 +11,7 @@ import (
 )
 
 func TestPublishCatalog(t *testing.T) {
+	brokerName := "testBroker"
 	cataloger := fake.Cataloger{
 		Services: []*mode.Service{
 			&mode.Service{
@@ -37,7 +38,7 @@ func TestPublishCatalog(t *testing.T) {
 	catalogEntries := k8s.FakeServiceCatalogInteractor{
 		ListRet: &k8s.ServiceCatalogEntryList{Items: nil},
 	}
-	entries, err := publishCatalog(cataloger, &catalogEntries)
+	entries, err := publishCatalog(brokerName, cataloger, &catalogEntries)
 	assert.NoErr(t, err)
 	expectedNumEntries := 0
 	for _, svc := range cataloger.Services {
@@ -50,7 +51,7 @@ func TestPublishCatalog(t *testing.T) {
 		ListRet:   &k8s.ServiceCatalogEntryList{Items: nil},
 		CreateErr: errors.New("test error"),
 	}
-	entries, err = publishCatalog(cataloger, &catalogEntries)
+	entries, err = publishCatalog(brokerName, cataloger, &catalogEntries)
 	assert.NoErr(t, err)
 	assert.Equal(t, len(entries), 0, "number of entries published")
 	assert.Equal(t, len(catalogEntries.Created), expectedNumEntries, "number of entries created")
