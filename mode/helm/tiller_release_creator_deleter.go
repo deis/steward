@@ -45,7 +45,7 @@ func (t tillerRCD) Delete(relName string) (*rls.UninstallReleaseResponse, error)
 	return rlsCl.UninstallRelease(ctx, req)
 }
 
-// NewTillerReleaseCreatorDeleter returns a new ReleaseCreatorDeleter implemented with a tiller backend
-func NewTillerReleaseCreatorDeleter(tillerHost string) ReleaseCreatorDeleter {
+// newTillerReleaseCreatorDeleter returns a new ReleaseCreatorDeleter implemented with a tiller backend
+func newTillerReleaseCreatorDeleter(tillerHost string) ReleaseCreatorDeleter {
 	return tillerRCD{tillerHost: tillerHost}
 }

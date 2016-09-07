@@ -47,8 +47,8 @@ func (d deprovisioner) Deprovision(instanceID string, dreq *mode.DeprovisionRequ
 	}, nil
 }
 
-// NewDeprovisioner returns a new Tiller-backed mode.Deprovisioner
-func NewDeprovisioner(chart *chart.Chart, provBehavior ProvisionBehavior, deleter ReleaseDeleter) mode.Deprovisioner {
+// newDeprovisioner returns a new Tiller-backed mode.Deprovisioner
+func newDeprovisioner(chart *chart.Chart, provBehavior ProvisionBehavior, deleter ReleaseDeleter) mode.Deprovisioner {
 	return deprovisioner{
 		chart:        chart,
 		provBehavior: provBehavior,

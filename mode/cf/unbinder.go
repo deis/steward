@@ -16,7 +16,7 @@ const (
 )
 
 type unbinder struct {
-	cl          *RESTClient
+	cl          *restClient
 	baseCtx     context.Context
 	callTimeout time.Duration
 }
@@ -41,7 +41,7 @@ func (u unbinder) Unbind(instanceID, bindingID string, uReq *mode.UnbindRequest)
 	return nil
 }
 
-// NewUnbinder returns a CloudFoundry implementation of a mode.Unbinder
-func NewUnbinder(baseCtx context.Context, cl *RESTClient, callTimeout time.Duration) mode.Unbinder {
+// newUnbinder returns a CloudFoundry implementation of a mode.Unbinder
+func newUnbinder(baseCtx context.Context, cl *restClient, callTimeout time.Duration) mode.Unbinder {
 	return unbinder{cl: cl, baseCtx: baseCtx, callTimeout: callTimeout}
 }

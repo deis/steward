@@ -1,17 +1,17 @@
-package utils
+package cf
 
 import (
 	"context"
 	"net/http"
 
 	"github.com/deis/steward/mode"
-	"github.com/deis/steward/mode/cf"
 )
 
-func getCfModeComponents(ctx context.Context, httpCl *http.Client) (mode.Cataloger, *mode.Lifecycler, error) {
-	cfCfg, err := cf.GetConfig()
+// GetComponents returns suitable implementations of the Cataloger and Lifecycler interfaces
+func GetComponents(ctx context.Context, httpCl *http.Client) (mode.Cataloger, *mode.Lifecycler, error) {
+	cfCfg, err := getConfig()
 	if err != nil {
-		return nil, nil, errGettingBrokerConfig{Original: err}
+		return nil, nil, err
 	}
 	logger.Infof(
 		"starting in Cloud Foundry mode with hostname %s, port %d, and username %s",
@@ -19,7 +19,7 @@ func getCfModeComponents(ctx context.Context, httpCl *http.Client) (mode.Catalog
 		cfCfg.Port,
 		cfCfg.Username,
 	)
-	cfClient := cf.NewRESTClient(
+	cfClient := newRESTClient(
 		httpCl,
 		cfCfg.Scheme,
 		cfCfg.Hostname,
@@ -28,7 +28,7 @@ func getCfModeComponents(ctx context.Context, httpCl *http.Client) (mode.Catalog
 		cfCfg.Password,
 	)
 	callTimeout := cfCfg.HttpRequestTimeoutSec()
-	cataloger := cf.NewCataloger(ctx, cfClient, callTimeout)
-	lifecycler := cf.NewLifecycler(ctx, cfClient, callTimeout)
+	cataloger := newCataloger(ctx, cfClient, callTimeout)
+	lifecycler := newLifecycler(ctx, cfClient, callTimeout)
 	return cataloger, lifecycler, nil
 }

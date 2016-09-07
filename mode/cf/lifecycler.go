@@ -7,12 +7,12 @@ import (
 	"github.com/deis/steward/mode"
 )
 
-// NewLifecycler returns a new mode.Lifecycler that's implemented with a backend CF broker
-func NewLifecycler(ctx context.Context, cl *RESTClient, callTimeout time.Duration) *mode.Lifecycler {
+// newLifecycler returns a new mode.Lifecycler that's implemented with a backend CF broker
+func newLifecycler(ctx context.Context, cl *restClient, callTimeout time.Duration) *mode.Lifecycler {
 	return &mode.Lifecycler{
-		Provisioner:   NewProvisioner(ctx, cl, callTimeout),
-		Deprovisioner: NewDeprovisioner(ctx, cl, callTimeout),
-		Binder:        NewBinder(ctx, cl, callTimeout),
-		Unbinder:      NewUnbinder(ctx, cl, callTimeout),
+		Provisioner:   newProvisioner(ctx, cl, callTimeout),
+		Deprovisioner: newDeprovisioner(ctx, cl, callTimeout),
+		Binder:        newBinder(ctx, cl, callTimeout),
+		Unbinder:      newUnbinder(ctx, cl, callTimeout),
 	}
 }

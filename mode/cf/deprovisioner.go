@@ -12,7 +12,7 @@ import (
 )
 
 type deprovisioner struct {
-	cl          *RESTClient
+	cl          *restClient
 	baseCtx     context.Context
 	callTimeout time.Duration
 }
@@ -46,7 +46,7 @@ func (d deprovisioner) Deprovision(instanceID string, dReq *mode.DeprovisionRequ
 	return resp, nil
 }
 
-// NewDeprovisioner creates a new CloudFoundry-broker-backed deprovisioner implementation
-func NewDeprovisioner(baseCtx context.Context, cl *RESTClient, callTimeout time.Duration) mode.Deprovisioner {
+// newDeprovisioner creates a new CloudFoundry-broker-backed deprovisioner implementation
+func newDeprovisioner(baseCtx context.Context, cl *restClient, callTimeout time.Duration) mode.Deprovisioner {
 	return deprovisioner{cl: cl, baseCtx: baseCtx, callTimeout: callTimeout}
 }
