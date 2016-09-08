@@ -6,6 +6,7 @@ import (
 )
 
 type rootConfig struct {
+	BrokerName      string   `envconfig:"BROKER_NAME" required:"true"`
 	Mode            string   `envconfig:"MODE" required:"true"`
 	LogLevel        string   `envconfig:"LOG_LEVEL" default:"info"`
 	WatchNamespaces []string `envconfig:"WATCH_NAMESPACES" default:"default"`
