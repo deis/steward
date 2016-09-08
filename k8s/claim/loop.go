@@ -36,9 +36,10 @@ func StartControlLoop(
 ) error {
 
 	// start up the watcher so that events build up on the channel while we're listing events (which happens below)
-	watcher := iface.Watch(api.ListOptions{LabelSelector: claimLabelSelector})
+	cancelCtx, cancelFn := context.WithCancel(ctx)
+	watcher := iface.Watch(cancelCtx, api.ListOptions{LabelSelector: claimLabelSelector})
 	ch := watcher.ResultChan()
-	defer watcher.Stop()
+	defer cancelFn()
 
 	// iterate through all existing claims before streaming them
 	claimList, err := iface.List(api.ListOptions{LabelSelector: claimLabelSelector})

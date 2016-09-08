@@ -1,6 +1,8 @@
 package claim
 
 import (
+	"context"
+
 	"k8s.io/kubernetes/pkg/api"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 	"k8s.io/kubernetes/pkg/watch"
@@ -50,8 +52,8 @@ func (c cmInterface) Update(spc *ServicePlanClaimWrapper) (*ServicePlanClaimWrap
 	return servicePlanClaimWrapperFromConfigMap(newCM)
 }
 
-func (c cmInterface) Watch(opts api.ListOptions) Watcher {
-	return newConfigMapWatcher(func() (watch.Interface, error) {
+func (c cmInterface) Watch(ctx context.Context, opts api.ListOptions) Watcher {
+	return newConfigMapWatcher(ctx, func() (watch.Interface, error) {
 		return c.cm.Watch(opts)
 	})
 }

@@ -1,6 +1,7 @@
 package claim
 
 import (
+	"context"
 	"errors"
 
 	"k8s.io/kubernetes/pkg/watch"
@@ -12,25 +13,25 @@ var (
 )
 
 type configMapWatcher struct {
+	ctx     context.Context
 	ifaceFn func() (watch.Interface, error)
-	closeCh chan struct{}
 }
 
 // NewWatcher returns a watcher that uses watchIface to get and return events
-func newConfigMapWatcher(ifaceFn func() (watch.Interface, error)) Watcher {
+func newConfigMapWatcher(ctx context.Context, ifaceFn func() (watch.Interface, error)) Watcher {
 	return &configMapWatcher{
+		ctx:     ctx,
 		ifaceFn: ifaceFn,
-		closeCh: make(chan struct{}),
 	}
 }
 
 // receives on iface.ResultChan() until either that channel or closeCh was closed. returned errWatchClosed in the former case, errStopped in the latter
-func watchLoop(iface watch.Interface, retCh chan<- *Event, closeCh <-chan struct{}) error {
+func watchLoop(ctx context.Context, iface watch.Interface, retCh chan<- *Event) error {
 	defer iface.Stop()
 	resCh := iface.ResultChan()
 	for {
 		select {
-		case <-closeCh:
+		case <-ctx.Done():
 			return errStopped
 		case rawEvt, open := <-resCh:
 			if !open {
@@ -42,7 +43,7 @@ func watchLoop(iface watch.Interface, retCh chan<- *Event, closeCh <-chan struct
 			} else {
 				select {
 				case retCh <- evt:
-				case <-closeCh:
+				case <-ctx.Done():
 					logger.Debugf("loop was stopped while trying to send a new event, returning")
 					return errStopped
 				}
@@ -58,7 +59,7 @@ func (c *configMapWatcher) ResultChan() <-chan *Event {
 		defer close(retCh)
 		for {
 			select {
-			case <-c.closeCh:
+			case <-c.ctx.Done():
 				return
 			default:
 			}
@@ -67,7 +68,7 @@ func (c *configMapWatcher) ResultChan() <-chan *Event {
 				logger.Errorf("error getting a new watch interface (%s)", err)
 				return
 			}
-			watchErr := watchLoop(iface, retCh, c.closeCh)
+			watchErr := watchLoop(c.ctx, iface, retCh)
 			if watchErr == errWatchClosed {
 				logger.Debugf("Kubernetes watch API closed connection. Re-opening")
 				continue
@@ -77,8 +78,4 @@ func (c *configMapWatcher) ResultChan() <-chan *Event {
 		}
 	}()
 	return retCh
-}
-
-func (c *configMapWatcher) Stop() {
-	close(c.closeCh)
 }

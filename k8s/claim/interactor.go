@@ -1,6 +1,8 @@
 package claim
 
 import (
+	"context"
+
 	"k8s.io/kubernetes/pkg/api"
 )
 
@@ -9,5 +11,5 @@ type Interactor interface {
 	Get(string) (*ServicePlanClaimWrapper, error)
 	List(opts api.ListOptions) (*ServicePlanClaimsListWrapper, error)
 	Update(*ServicePlanClaimWrapper) (*ServicePlanClaimWrapper, error)
-	Watch(api.ListOptions) Watcher
+	Watch(context.Context, api.ListOptions) Watcher
 }

@@ -1,6 +1,7 @@
 package claim
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -53,19 +54,21 @@ func matchClaimToMap(claim *mode.ServicePlanClaim, data map[string]string) error
 }
 
 func TestConfigMapWatcher(t *testing.T) {
+	ctx := context.Background()
 	const waitDur = 100 * time.Millisecond
 	ifaces := []*watch.FakeWatcher{
 		watch.NewFake(),
 		watch.NewFake(),
 	}
+	cancelCtx, cancelFn := context.WithCancel(ctx)
 	i := 0
-	watcher := newConfigMapWatcher(func() (watch.Interface, error) {
+	watcher := newConfigMapWatcher(cancelCtx, func() (watch.Interface, error) {
 		ret := ifaces[i]
 		i++
 		return ret, nil
 	})
 
-	defer watcher.Stop()
+	defer cancelFn()
 	evtCh := watcher.ResultChan()
 
 	// add a non-config map and test for it to be ignored
