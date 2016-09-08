@@ -8,16 +8,17 @@ import (
 	"github.com/deis/steward/k8s/claim"
 	"github.com/deis/steward/mode"
 	"github.com/deis/steward/mode/cf"
+	"github.com/deis/steward/mode/cmd"
 	"github.com/deis/steward/mode/helm"
-	"github.com/deis/steward/mode/jobs"
 	"k8s.io/kubernetes/pkg/api"
 	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
 const (
-	cfMode   = "cf"
-	helmMode = "helm"
-	jobsMode = "jobs"
+	cfMode      = "cf"
+	helmMode    = "helm"
+	cmdMode     = "cmd"     // Official mode name
+	commandMode = "command" // A config mistake I can see easily being made; should be forgiven
 )
 
 // Run publishes the underlying broker's service offerings to the catalog, then starts Steward's
@@ -49,8 +50,10 @@ func Run(
 		if err != nil {
 			return err
 		}
-	case jobsMode:
-		cataloger, lifecycler, err = jobs.GetComponents(k8sClient)
+	case cmdMode:
+		fallthrough
+	case commandMode:
+		cataloger, lifecycler, err = cmd.GetComponents(k8sClient)
 		if err != nil {
 			return err
 		}

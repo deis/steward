@@ -1,4 +1,4 @@
-package jobs
+package cmd
 
 import (
 	"encoding/json"
@@ -29,7 +29,7 @@ func (d deprovisioner) Deprovision(instanceID string, dReq *mode.DeprovisionRequ
 	return resp, nil
 }
 
-// newDeprovisioner creates a new jobs-broker-backed deprovisioner implementation
+// newDeprovisioner creates a new cmd-broker-backed deprovisioner implementation
 func newDeprovisioner(pr *podRunner) mode.Deprovisioner {
 	return deprovisioner{pr: pr}
 }

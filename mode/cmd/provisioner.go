@@ -1,4 +1,4 @@
-package jobs
+package cmd
 
 import (
 	"encoding/json"
@@ -28,7 +28,7 @@ func (p provisioner) Provision(instanceID string, provisionRequest *mode.Provisi
 	return resp, nil
 }
 
-// newProvisioner creates a new jobs-broker-backed provisioner implementation
+// newProvisioner creates a new cmd-broker-backed provisioner implementation
 func newProvisioner(pr *podRunner) mode.Provisioner {
 	return provisioner{pr: pr}
 }
