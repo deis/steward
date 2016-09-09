@@ -1,4 +1,4 @@
-package jobs
+package cmd
 
 import (
 	"encoding/json"
@@ -29,7 +29,7 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 	return resp, nil
 }
 
-// newBinder creates a new jobs-broker-backed binder implementation
+// newBinder creates a new cmd-broker-backed binder implementation
 func newBinder(pr *podRunner) mode.Binder {
 	return binder{pr: pr}
 }

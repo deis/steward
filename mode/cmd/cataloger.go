@@ -1,4 +1,4 @@
-package jobs
+package cmd
 
 import (
 	"encoding/json"
@@ -25,7 +25,7 @@ func (c cataloger) List() ([]*mode.Service, error) {
 	return resp.Services, nil
 }
 
-// newCataloger returns a new Cataloger implementation, backed by a jobs service broker
+// newCataloger returns a new Cataloger implementation, backed by a cmd service broker
 func newCataloger(pr *podRunner) mode.Cataloger {
 	return cataloger{pr: pr}
 }

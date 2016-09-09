@@ -1,0 +1,21 @@
+apiVersion: steward.deis.io/v1
+description: this is service 1 (this is plan 1)
+kind: ServiceCatalogEntry
+metadata:
+  name: rdsmysql-5-5-medium
+  namespace: steward
+  labels:
+    service: rdsmysql
+    plan: 5.5-medium
+    service-id: ce71b484-d542-40f7-9dd4-5526e38c81ba
+    plan-id: 326b78b0-a8ab-4cc0-8657-79c9c0ac8126
+service_info:
+  description: RDS MySQL service
+  id: ce71b484-d542-40f7-9dd4-5526e38c81ba
+  name: rdsmysql
+  plan_updateable: false
+service_plan:
+  description: this is plan 1
+  free: false
+  id: 326b78b0-a8ab-4cc0-8657-79c9c0ac8126
+  name: 5.5-medium

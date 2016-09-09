@@ -1,38 +1,38 @@
 apiVersion: extensions/v1beta1
 kind: Deployment
 metadata:
-  name: #jobs_broker_name#-steward
+  name: #cmd_broker_name#-steward
   namespace: steward
   labels:
-    app: #jobs_broker_name#-steward
+    app: #cmd_broker_name#-steward
 spec:
   replicas: 1
   template:
     metadata:
       labels:
-        app: #jobs_broker_name#-steward
+        app: #cmd_broker_name#-steward
     spec:
       containers:
-      - name: #jobs_broker_name#-steward
+      - name: #cmd_broker_name#-steward
         image: #steward_image#
         imagePullPolicy: Always
         env:
         - name: BROKER_NAME
-          value: #jobs_broker_name#
+          value: #cmd_broker_name#
         - name: LOG_LEVEL
           value: trace
         - name: STEWARD_MODE
-          value: jobs
+          value: cmd
         - name: POD_NAMESPACE
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
-        - name: JOBS_IMAGE
-          value: #jobs_broker_image#
-        - name: JOBS_CONFIG_MAP
-          value: #jobs_broker_config_map#
-        - name: JOBS_SECRET
-          value: #jobs_broker_secret#
+        - name: CMD_IMAGE
+          value: #cmd_broker_image#
+        - name: CMD_CONFIG_MAP
+          value: #cmd_broker_config_map#
+        - name: CMD_SECRET
+          value: #cmd_broker_secret#
         livenessProbe:
           httpGet:
             path: /healthz
@@ -55,13 +55,13 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: #jobs_broker_name#-steward
+  name: #cmd_broker_name#-steward
   namespace: steward
   labels:
-    app: #jobs_broker_name#-steward
+    app: #cmd_broker_name#-steward
 spec:
   ports:
   - port: 80
     targetPort: 8080
   selector:
-    app: #jobs_broker_name#-steward
+    app: #cmd_broker_name#-steward

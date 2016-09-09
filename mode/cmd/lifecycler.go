@@ -1,10 +1,10 @@
-package jobs
+package cmd
 
 import (
 	"github.com/deis/steward/mode"
 )
 
-// newLifecycler returns a new mode.Lifecycler that's implemented with a backend jobs broker
+// newLifecycler returns a new mode.Lifecycler that's implemented with a backend cmd broker
 func newLifecycler(pr *podRunner) *mode.Lifecycler {
 	return &mode.Lifecycler{
 		Provisioner:   newProvisioner(pr),

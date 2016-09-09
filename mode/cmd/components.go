@@ -1,4 +1,4 @@
-package jobs
+package cmd
 
 import (
 	"github.com/deis/steward/mode"
@@ -12,7 +12,7 @@ func GetComponents(cl *kcl.Client) (mode.Cataloger, *mode.Lifecycler, error) {
 		return nil, nil, err
 	}
 	logger.Infof(
-		"starting in jobs mode with image %s",
+		"starting in cmd mode with image %s",
 		cfg.Image,
 	)
 	pr := newPodRunner(cl, cfg)

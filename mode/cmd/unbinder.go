@@ -1,4 +1,4 @@
-package jobs
+package cmd
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ func (u unbinder) Unbind(instanceID, bindingID string, uReq *mode.UnbindRequest)
 	return nil
 }
 
-// newUnbinder returns a jobs implementation of a mode.Unbinder
+// newUnbinder returns a cmd implementation of a mode.Unbinder
 func newUnbinder(pr *podRunner) mode.Unbinder {
 	return unbinder{pr: pr}
 }

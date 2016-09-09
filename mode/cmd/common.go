@@ -1,4 +1,4 @@
-package jobs
+package cmd
 
 import (
 	"github.com/juju/loggo"
@@ -9,5 +9,5 @@ const (
 )
 
 var (
-	logger = loggo.GetLogger("mode.jobs")
+	logger = loggo.GetLogger("mode.cmd")
 )
