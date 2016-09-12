@@ -1,7 +1,11 @@
 package claim
 
 import (
+	"context"
 	"testing"
+
+	"github.com/deis/steward/k8s"
+	"github.com/deis/steward/mode"
 )
 
 func TestStartLoop(t *testing.T) {
@@ -9,7 +13,13 @@ func TestStartLoop(t *testing.T) {
 }
 
 func TestReceiveEvent(t *testing.T) {
-	t.Skip("TODO")
+	ctx := context.Background()
+	evt := getEvent(getClaim(mode.ActionProvision))
+	iface := &FakeInteractor{}
+	cmNamespacer := &k8s.FakeConfigMapsNamespacer{}
+	lookup := k8s.NewServiceCatalogLookup(nil) // TODO: add service/plan to the catalog
+	lifecycler := &mode.Lifecycler{}
+	receiveEvent(ctx, evt, iface, cmNamespacer, lookup, lifecycler)
 }
 
 func TestStopLoop(t *testing.T) {
@@ -17,5 +27,5 @@ func TestStopLoop(t *testing.T) {
 }
 
 func TestWatchChanClosed(t *testing.T) {
-	// test to make sure the loop can recover when the watcher's ResultChan() was closed
+	t.Skip("TODO")
 }

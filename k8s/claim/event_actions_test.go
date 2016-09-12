@@ -22,34 +22,41 @@ var (
 	ctx = context.Background()
 )
 
-func TestNewClaimUpdate(t *testing.T) {
-	// claims that should be marked stop
-	stopClaims := []mode.ServicePlanClaim{
-		getClaimWithStatus(mode.ActionProvision, mode.StatusFailed),
-		getClaimWithStatus(mode.ActionProvision, mode.StatusProvisioned),
-		getClaimWithStatus(mode.ActionProvision, mode.StatusBound),
-		getClaimWithStatus(mode.ActionProvision, mode.StatusUnbound),
-		getClaimWithStatus(mode.ActionProvision, mode.StatusDeprovisioned),
+func TestUpdateIsTerminal(t *testing.T) {
+	// claims that should be marked terminal
+	terminalUpdates := []state.Update{
+		state.StatusUpdate(mode.StatusFailed),
+		state.StatusUpdate(mode.StatusProvisioned),
+		state.StatusUpdate(mode.StatusBound),
+		state.StatusUpdate(mode.StatusUnbound),
+		state.StatusUpdate(mode.StatusDeprovisioned),
 	}
-	for i, claim := range stopClaims {
-		update := state.NewUpdate(mode.Status(claim.Status), "", mode.EmptyJSONObject())
-		if !update.IsTerminal() {
-			t.Fatalf("update %d for claim %s was not a terminate claim", i, claim)
+	for i, update := range terminalUpdates {
+		if !state.UpdateIsTerminal(update) {
+			t.Fatalf("update %d (%s) was not marked terminal", i, update)
 		}
 	}
 
-	// normal claim
-	claim := getClaimWithStatus(mode.ActionProvision, mode.StatusBinding)
-	update := state.NewUpdate(mode.Status(claim.Status), "", mode.EmptyJSONObject())
-	assert.False(t, update.IsTerminal(), "claim was marked stop when it shouldn't have been")
+	// normal updates that should not be marked terminal
+	normalUpdates := []state.Update{
+		state.StatusUpdate(mode.StatusProvisioning),
+		state.StatusUpdate(mode.StatusBinding),
+		state.StatusUpdate(mode.StatusUnbinding),
+		state.StatusUpdate(mode.StatusDeprovisioning),
+	}
+	for i, update := range normalUpdates {
+		if state.UpdateIsTerminal(update) {
+			t.Fatalf("update %d (%s) was marked terminal", i, update)
+		}
+	}
 }
 
 func TestNewErrClaimUpdate(t *testing.T) {
 	err := errors.New("test error")
-	update := state.ErrUpdate(err, mode.EmptyJSONObject())
-	assert.True(t, update.IsTerminal(), "new claim wasn't marked stop")
-	assert.Equal(t, update.NewStatus, mode.StatusFailed, "resulting status")
-	assert.Equal(t, err.Error(), update.NewStatusDescription, "resulting status description")
+	update := state.ErrUpdate(err)
+	assert.True(t, state.UpdateIsTerminal(update), "new claim wasn't marked stop")
+	assert.Equal(t, update.Status(), mode.StatusFailed, "resulting status")
+	assert.Equal(t, update.Description(), err.Error(), "resulting status description")
 }
 
 func getCatalogFromEvents(evts ...*Event) k8s.ServiceCatalogLookup {
@@ -93,7 +100,7 @@ func TestProcessProvisionServiceNotFound(t *testing.T) {
 	go processProvision(cancelCtx, evt, nil, catalogLookup, nil, ch)
 	select {
 	case claimUpdate := <-ch:
-		assert.True(t, claimUpdate.IsTerminal(), "claim update was not returned as terminal")
+		assert.True(t, state.UpdateIsTerminal(claimUpdate), "claim update was not returned as terminal")
 	case <-time.After(waitDur):
 		t.Fatalf("no claim update given after %s", waitDur)
 	}
@@ -120,8 +127,8 @@ func TestProcessProvisionServiceFound(t *testing.T) {
 	// provisioning status
 	select {
 	case claimUpdate := <-ch:
-		assert.False(t, claimUpdate.IsTerminal(), "update was marked terminal when it shouldn't have been")
-		assert.Equal(t, claimUpdate.NewStatus, mode.StatusProvisioning, "new status")
+		assert.False(t, state.UpdateIsTerminal(claimUpdate), "update was marked terminal when it shouldn't have been")
+		assert.Equal(t, claimUpdate.Status(), mode.StatusProvisioning, "new status")
 	case <-time.After(waitDur):
 		t.Fatalf("didn't receive a claim update within %s", waitDur)
 	}
@@ -129,9 +136,12 @@ func TestProcessProvisionServiceFound(t *testing.T) {
 	// provisioned status
 	select {
 	case claimUpdate := <-ch:
-		assert.True(t, claimUpdate.IsTerminal(), "update was not marked terminal when it should have been")
-		assert.Equal(t, claimUpdate.NewStatus, mode.StatusProvisioned, "new status")
+		assert.True(t, state.UpdateIsTerminal(claimUpdate), "update was not marked terminal when it should have been")
+		assert.Equal(t, claimUpdate.Status(), mode.StatusProvisioned, "new status")
+		assert.True(t, len(claimUpdate.InstanceID()) > 0, "no instance ID written")
+		assert.Equal(t, len(claimUpdate.BindID()), 0, "bind ID written when it shouldn't have been")
 		assert.Equal(t, len(provisioner.Provisioned), 1, "number of provision calls")
+		assert.True(t, state.UpdateIsTerminal(claimUpdate), "provisioned update was not marked terminal")
 		provCall := provisioner.Provisioned[0]
 		assert.Equal(t, provCall.Req.ServiceID, evt.claim.Claim.ServiceID, "service ID")
 		assert.Equal(t, provCall.Req.PlanID, evt.claim.Claim.PlanID, "plan ID")
@@ -149,7 +159,7 @@ func TestProcessBindServiceNotFound(t *testing.T) {
 	go processBind(cancelCtx, evt, nil, catalogLookup, nil, ch)
 	select {
 	case claimUpdate := <-ch:
-		assert.True(t, claimUpdate.IsTerminal(), "claim update was not returned terminal when it should have been")
+		assert.True(t, state.UpdateIsTerminal(claimUpdate), "claim update was not returned terminal when it should have been")
 	case <-time.After(waitDur):
 		t.Fatalf("no claim update given after %s", waitDur)
 	}
@@ -166,8 +176,8 @@ func TestProcessBindServiceFound(t *testing.T) {
 	// binding status
 	select {
 	case claimUpdate := <-ch:
-		assert.False(t, claimUpdate.IsTerminal(), "claim update was returned terminal when it shouldn't have been")
-		assert.Equal(t, claimUpdate.NewStatus, mode.StatusBinding, "new status")
+		assert.False(t, state.UpdateIsTerminal(claimUpdate), "claim update was returned terminal when it shouldn't have been")
+		assert.Equal(t, claimUpdate.Status(), mode.StatusBinding, "new status")
 	case <-time.After(waitDur):
 		t.Fatalf("no claim update given after %s", waitDur)
 	}
@@ -175,9 +185,9 @@ func TestProcessBindServiceFound(t *testing.T) {
 	// missing instance ID status
 	select {
 	case claimUpdate := <-ch:
-		assert.True(t, claimUpdate.IsTerminal(), "claim update was not returned terminal when it should have been")
-		assert.Equal(t, claimUpdate.NewStatus, mode.StatusFailed, "new status")
-		assert.Equal(t, claimUpdate.NewStatusDescription, errMissingInstanceID.Error(), "new status description")
+		assert.True(t, state.UpdateIsTerminal(claimUpdate), "claim update was not returned terminal when it should have been")
+		assert.Equal(t, claimUpdate.Status(), mode.StatusFailed, "new status")
+		assert.Equal(t, claimUpdate.Description(), errMissingInstanceID.Error(), "new status description")
 	case <-time.After(waitDur):
 		t.Fatalf("didn't receive a claim update within %s", waitDur)
 	}
@@ -207,8 +217,8 @@ func TestProcessBindInstanceIDFound(t *testing.T) {
 	// binding status
 	select {
 	case claimUpdate := <-ch:
-		assert.False(t, claimUpdate.IsTerminal(), "claim update was marked terminal when it shouldn't have been")
-		assert.Equal(t, claimUpdate.NewStatus, mode.StatusBinding, "new status")
+		assert.False(t, state.UpdateIsTerminal(claimUpdate), "claim update was marked terminal when it shouldn't have been")
+		assert.Equal(t, claimUpdate.Status(), mode.StatusBinding, "new status")
 	case <-time.After(waitDur):
 		t.Fatalf("didn't receive a claim update within %s", waitDur)
 	}
@@ -216,8 +226,10 @@ func TestProcessBindInstanceIDFound(t *testing.T) {
 	// bound status
 	select {
 	case claimUpdate := <-ch:
-		assert.True(t, claimUpdate.IsTerminal(), "claim update was not marked terminal when it should have been")
-		assert.Equal(t, claimUpdate.NewStatus, mode.StatusBound, "new status")
+		assert.True(t, state.UpdateIsTerminal(claimUpdate), "claim update was not marked terminal when it should have been")
+		assert.Equal(t, claimUpdate.Status(), mode.StatusBound, "new status")
+		assert.True(t, len(claimUpdate.InstanceID()) > 0, "instance ID not found")
+		assert.True(t, len(claimUpdate.BindID()) > 0, "bind ID not found")
 	case <-time.After(waitDur):
 		t.Fatalf("didn't receive a claim update within %s", waitDur)
 	}
@@ -240,7 +252,7 @@ func TestProcessUnbindServiceNotFound(t *testing.T) {
 	go processUnbind(ctx, evt, nil, catalogLookup, nil, ch)
 	select {
 	case claimUpdate := <-ch:
-		assert.True(t, claimUpdate.IsTerminal(), "claim update was not marked terminal when it should have been")
+		assert.True(t, state.UpdateIsTerminal(claimUpdate), "claim update was not marked terminal when it should have been")
 	case <-time.After(waitDur):
 		t.Fatalf("no claim update given after %s", waitDur)
 	}
@@ -257,8 +269,8 @@ func TestProcessUnbindServiceFound(t *testing.T) {
 	// unbinding status
 	select {
 	case claimUpdate := <-ch:
-		assert.False(t, claimUpdate.IsTerminal(), "claim update was marked terminal when it shouldn't have been")
-		assert.Equal(t, claimUpdate.NewStatus, mode.StatusUnbinding, "new status")
+		assert.False(t, state.UpdateIsTerminal(claimUpdate), "claim update was marked terminal when it shouldn't have been")
+		assert.Equal(t, claimUpdate.Status(), mode.StatusUnbinding, "new status")
 	case <-time.After(waitDur):
 		t.Fatalf("no claim update given after %s", waitDur)
 	}
@@ -266,8 +278,8 @@ func TestProcessUnbindServiceFound(t *testing.T) {
 	// missing instance ID status
 	select {
 	case claimUpdate := <-ch:
-		assert.True(t, claimUpdate.IsTerminal(), "claim update was not marked terminal when it should have been")
-		assert.Equal(t, claimUpdate.NewStatusDescription, errMissingInstanceID.Error(), "new status description")
+		assert.True(t, state.UpdateIsTerminal(claimUpdate), "claim update was not marked terminal when it should have been")
+		assert.Equal(t, claimUpdate.Description(), errMissingInstanceID.Error(), "new status description")
 	case <-time.After(waitDur):
 		t.Fatalf("didn't receive a claim update within %s", waitDur)
 	}
@@ -286,7 +298,7 @@ func TestProcessDeprovisionServiceNotFound(t *testing.T) {
 	go processDeprovision(cancelCtx, evt, nil, catalogLookup, nil, ch)
 	select {
 	case claimUpdate := <-ch:
-		assert.True(t, claimUpdate.IsTerminal(), "claim update was not marked terminal when it should have been")
+		assert.True(t, state.UpdateIsTerminal(claimUpdate), "claim update was not marked terminal when it should have been")
 	case <-time.After(waitDur):
 		t.Fatalf("no claim update given after %s", waitDur)
 	}
@@ -307,8 +319,8 @@ func TestProcessDeprovisionServiceFound(t *testing.T) {
 	// deprovisioning status
 	select {
 	case claimUpdate := <-ch:
-		assert.False(t, claimUpdate.IsTerminal(), "claim update was marked terminal when it should have been")
-		assert.Equal(t, claimUpdate.NewStatus, mode.StatusDeprovisioning, "new status")
+		assert.False(t, state.UpdateIsTerminal(claimUpdate), "claim update was marked terminal when it should have been")
+		assert.Equal(t, claimUpdate.Status(), mode.StatusDeprovisioning, "new status")
 		assert.Equal(t, len(deprovisioner.Deprovisions), 0, "number of deprovision calls")
 	case <-time.After(waitDur):
 		t.Fatalf("didn't receive a claim update within %s", waitDur)
@@ -317,8 +329,9 @@ func TestProcessDeprovisionServiceFound(t *testing.T) {
 	// missing instance ID status
 	select {
 	case claimUpdate := <-ch:
-		assert.True(t, claimUpdate.IsTerminal(), "claim update was not marked terminal when it should have been")
-		assert.Equal(t, claimUpdate.NewStatusDescription, errMissingInstanceID.Error(), "new status description")
+		assert.True(t, state.UpdateIsTerminal(claimUpdate), "claim update was not marked terminal when it should have been")
+		assert.Equal(t, claimUpdate.Status(), mode.StatusFailed, "new status")
+		assert.Equal(t, claimUpdate.Description(), errMissingInstanceID.Error(), "new status description")
 	case <-time.After(waitDur):
 		t.Fatalf("didn't receive a claim update within %s", waitDur)
 	}

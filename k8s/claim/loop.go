@@ -95,7 +95,9 @@ func receiveEvent(
 	for {
 		select {
 		case claimUpdate := <-claimUpdateCh:
+			logger.Debugf("wrapper before update: %s", *wrapper)
 			state.UpdateClaim(wrapper.Claim, claimUpdate)
+			logger.Debugf("wrapper after update: %s", *wrapper)
 
 			w, err := iface.Update(wrapper)
 			if err != nil {
@@ -104,7 +106,7 @@ func receiveEvent(
 			}
 
 			// if the claim update represents a terminal state, the loop should terminate
-			if claimUpdate.IsTerminal() {
+			if state.UpdateIsTerminal(claimUpdate) {
 				return
 			}
 			wrapper = w

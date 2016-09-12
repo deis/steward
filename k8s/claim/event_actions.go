@@ -61,21 +61,20 @@ func processProvision(
 	svc, err := getService(claim, catalogLookup)
 	if err != nil {
 		select {
-		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
 		}
 		return
 	}
 
 	select {
-	case claimCh <- state.NewUpdate(mode.StatusProvisioning, "", mode.EmptyJSONObject()):
+	case claimCh <- state.StatusUpdate(mode.StatusProvisioning):
 	case <-ctx.Done():
 		return
 	}
 	orgGUID := uuid.New()
 	spaceGUID := uuid.New()
 	instanceID := uuid.New()
-	claim.InstanceID = instanceID
 	provisionResp, err := lifecycler.Provision(instanceID, &mode.ProvisionRequest{
 		OrganizationGUID: orgGUID,
 		PlanID:           svc.Plan.ID,
@@ -85,14 +84,13 @@ func processProvision(
 	})
 	if err != nil {
 		select {
-		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
 		}
 		return
 	}
-
 	select {
-	case claimCh <- state.NewUpdate(mode.StatusProvisioned, "", provisionResp.Extra):
+	case claimCh <- state.FullUpdate(mode.StatusProvisioned, "", instanceID, "", provisionResp.Extra):
 	case <-ctx.Done():
 		return
 	}
@@ -113,14 +111,14 @@ func processBind(
 	claimWrapper := *evt.claim
 	if _, err := getService(claim, catalogLookup); err != nil {
 		select {
-		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
 		}
 		return
 	}
 
 	select {
-	case claimCh <- state.NewUpdate(mode.StatusBinding, "", mode.EmptyJSONObject()):
+	case claimCh <- state.StatusUpdate(mode.StatusBinding):
 	case <-ctx.Done():
 		return
 	}
@@ -128,14 +126,13 @@ func processBind(
 	instanceID := claim.InstanceID
 	if instanceID == "" {
 		select {
-		case claimCh <- state.ErrUpdate(errMissingInstanceID, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(errMissingInstanceID):
 		case <-ctx.Done():
 		}
 		return
 	}
 
 	bindID := uuid.New()
-	claim.BindID = bindID
 	bindRes, err := lifecycler.Bind(instanceID, bindID, &mode.BindRequest{
 		ServiceID:  claim.ServiceID,
 		PlanID:     claim.PlanID,
@@ -143,7 +140,7 @@ func processBind(
 	})
 	if err != nil {
 		select {
-		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
 		}
 		return
@@ -158,14 +155,13 @@ func processBind(
 		Data: bindRes.Creds,
 	}); err != nil {
 		select {
-		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
 		}
 		return
 	}
-	claim.Status = mode.StatusBound.String()
 	select {
-	case claimCh <- state.NewUpdate(mode.StatusBound, "", mode.EmptyJSONObject()):
+	case claimCh <- state.FullUpdate(mode.StatusBound, "", instanceID, bindID, mode.EmptyJSONObject()):
 	case <-ctx.Done():
 		return
 	}
@@ -186,14 +182,14 @@ func processUnbind(
 	claim := *evt.claim.Claim
 	if _, err := getService(claim, catalogLookup); err != nil {
 		select {
-		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
 		}
 		return
 	}
 
 	select {
-	case claimCh <- state.NewUpdate(mode.StatusUnbinding, "", mode.EmptyJSONObject()):
+	case claimCh <- state.StatusUpdate(mode.StatusUnbinding):
 	case <-ctx.Done():
 		return
 	}
@@ -202,14 +198,14 @@ func processUnbind(
 	bindID := claim.BindID
 	if instanceID == "" {
 		select {
-		case claimCh <- state.ErrUpdate(errMissingInstanceID, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(errMissingInstanceID):
 		case <-ctx.Done():
 			return
 		}
 	}
 	if bindID == "" {
 		select {
-		case claimCh <- state.ErrUpdate(errMissingBindID, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(errMissingBindID):
 		case <-ctx.Done():
 			return
 		}
@@ -220,7 +216,7 @@ func processUnbind(
 		PlanID:    claim.PlanID,
 	}); err != nil {
 		select {
-		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
 		}
 		return
@@ -229,14 +225,14 @@ func processUnbind(
 	// delete configmap
 	if err := cmNamespacer.ConfigMaps(claimWrapper.ObjectMeta.Namespace).Delete(claim.TargetName); err != nil {
 		select {
-		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
 		}
 		return
 	}
 
 	select {
-	case claimCh <- state.NewUpdate(mode.StatusUnbound, "", mode.EmptyJSONObject()):
+	case claimCh <- state.StatusUpdate(mode.StatusUnbound):
 	case <-ctx.Done():
 		return
 	}
@@ -256,14 +252,14 @@ func processDeprovision(
 	claim := *evt.claim.Claim
 	if _, err := getService(claim, catalogLookup); err != nil {
 		select {
-		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
 		}
 		return
 	}
 
 	select {
-	case claimCh <- state.NewUpdate(mode.StatusDeprovisioning, "", mode.EmptyJSONObject()):
+	case claimCh <- state.StatusUpdate(mode.StatusDeprovisioning):
 	case <-ctx.Done():
 		return
 	}
@@ -271,7 +267,7 @@ func processDeprovision(
 	instanceID := claim.InstanceID
 	if instanceID == "" {
 		select {
-		case claimCh <- state.ErrUpdate(errMissingInstanceID, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(errMissingInstanceID):
 		case <-ctx.Done():
 		}
 		return
@@ -285,14 +281,14 @@ func processDeprovision(
 	}
 	if _, err := lifecycler.Deprovision(instanceID, deprovisionReq); err != nil {
 		select {
-		case claimCh <- state.ErrUpdate(err, mode.EmptyJSONObject()):
+		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
 		}
 		return
 	}
 	claim.Status = mode.StatusDeprovisioned.String()
 	select {
-	case claimCh <- state.NewUpdate(mode.StatusDeprovisioned, "", mode.EmptyJSONObject()):
+	case claimCh <- state.StatusUpdate(mode.StatusDeprovisioned):
 	case <-ctx.Done():
 		return
 	}
