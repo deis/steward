@@ -30,7 +30,7 @@ var (
 func StartControlLoop(
 	ctx context.Context,
 	iface Interactor,
-	cmNamespacer kcl.ConfigMapsNamespacer,
+	secretsNamespacer kcl.SecretsNamespacer,
 	lookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 ) error {
@@ -49,7 +49,7 @@ func StartControlLoop(
 
 	for _, wrapper := range claimList.Claims {
 		evt := &Event{claim: wrapper, operation: watch.Added}
-		receiveEvent(ctx, evt, iface, cmNamespacer, lookup, lifecycler)
+		receiveEvent(ctx, evt, iface, secretsNamespacer, lookup, lifecycler)
 	}
 
 	for {
@@ -60,7 +60,7 @@ func StartControlLoop(
 				return errWatchClosed
 			}
 			logger.Debugf("received event %s", *evt.claim.Claim)
-			receiveEvent(ctx, evt, iface, cmNamespacer, lookup, lifecycler)
+			receiveEvent(ctx, evt, iface, secretsNamespacer, lookup, lifecycler)
 		case <-ctx.Done():
 			logger.Debugf("loop has been stopped")
 			return errLoopStopped
@@ -72,7 +72,7 @@ func receiveEvent(
 	ctx context.Context,
 	evt *Event,
 	iface Interactor,
-	cmNamespacer kcl.ConfigMapsNamespacer,
+	secretsNamespacer kcl.SecretsNamespacer,
 	lookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 ) {
@@ -90,7 +90,7 @@ func receiveEvent(
 
 	cancelCtx, cancelFn := context.WithCancel(ctx)
 	defer cancelFn()
-	go nextAction(cancelCtx, evt, cmNamespacer, lookup, lifecycler, claimUpdateCh)
+	go nextAction(cancelCtx, evt, secretsNamespacer, lookup, lifecycler, claimUpdateCh)
 
 	for {
 		select {

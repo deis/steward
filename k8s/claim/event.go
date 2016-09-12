@@ -34,7 +34,7 @@ func isNoNextActionErr(e error) bool {
 type nextFunc func(
 	context.Context,
 	*Event,
-	kcl.ConfigMapsNamespacer,
+	kcl.SecretsNamespacer,
 	k8s.ServiceCatalogLookup,
 	*mode.Lifecycler,
 	chan<- state.Update,

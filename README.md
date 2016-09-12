@@ -57,7 +57,7 @@ Please see [DATA_STRUCTURES.md](./doc/DATA_STRUCTURES.md) for a complete example
 
 ## Requesting a Service from the Catalog
 
-Once an operator has found a service and plan they would like to use, they should submit a ConfigMap containing
+Once an operator has found a service and plan they would like to use, they should submit a [ConfigMap][configMap] containing
 a [`ServicePlanClaim`](./doc/DATA_STRUCTURES.md) data structure (just called `ServicePlanClaim`s hereafter).
 
 Steward constantly watches for `ServicePlanClaim`s in its control loop. Upon finding a new `ServicePlanClaim`,
@@ -78,11 +78,11 @@ it executes the following algorithm:
 ### `bind`
 - `status: bound`
 - `bind-id: $UUID` (where `$UUID` is the bind ID returned by the bind operation)
-- Also creates a [ConfigMap][configMap] with the credentials data for the service. The ConfigMap's name and namespace will be created according to the `target-name` and `target-namespace` fields passed in the `ServicePlanClaim`. See [`ServicePlanClaim` documentation](./doc/DATA_STRUCTURES.md#serviceplanclaim) for more information
+- Also creates a [Secret][secrets] with the credentials data for the service. The Secret's name and namespace will be created according to the `target-name` and `target-namespace` fields passed in the `ServicePlanClaim`. See [`ServicePlanClaim` documentation](./doc/DATA_STRUCTURES.md#serviceplanclaim) for more information
 
 ### `unbind`
 - `status: unbound`
-- Removes the ConfigMap created as a result of the `bind` action
+- Removes the Secret created as a result of the `bind` action
 
 ### `deprovision`
 - `status: deprovisioned`
@@ -114,4 +114,5 @@ If you'd like to contribute to this project, simply fork the repository, make yo
 [3pr]: https://github.com/kubernetes/kubernetes/blob/master/docs/design/extending-api.md
 [rds]: https://aws.amazon.com/rds
 [configMap]: http://kubernetes.io/docs/user-guide/configmap/
+[secrets]: http://kubernetes.io/docs/user-guide/secrets/
 [servicePlanCreation]: ./DATA_STRUCTURES.md#serviceplancreation

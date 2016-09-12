@@ -48,7 +48,7 @@ func getService(claim mode.ServicePlanClaim, catalog k8s.ServiceCatalogLookup) (
 func processProvision(
 	ctx context.Context,
 	evt *Event,
-	cmNamespacer kcl.ConfigMapsNamespacer,
+	secretsNamespacer kcl.SecretsNamespacer,
 	catalogLookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 	claimCh chan<- state.Update,
@@ -99,7 +99,7 @@ func processProvision(
 func processBind(
 	ctx context.Context,
 	evt *Event,
-	cmNamespacer kcl.ConfigMapsNamespacer,
+	secretsNamespacer kcl.SecretsNamespacer,
 	catalogLookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 	claimCh chan<- state.Update,
@@ -146,13 +146,18 @@ func processBind(
 		return
 	}
 
-	if _, err := cmNamespacer.ConfigMaps(claimWrapper.ObjectMeta.Namespace).Create(&api.ConfigMap{
+	credBytes := make(map[string][]byte, len(bindRes.Creds))
+	for k, v := range bindRes.Creds {
+		credBytes[k] = []byte(v)
+	}
+
+	if _, err := secretsNamespacer.Secrets(claimWrapper.ObjectMeta.Namespace).Create(&api.Secret{
 		TypeMeta: unversioned.TypeMeta{},
 		ObjectMeta: api.ObjectMeta{
 			Name:      claim.TargetName,
 			Namespace: claimWrapper.ObjectMeta.Namespace,
 		},
-		Data: bindRes.Creds,
+		Data: credBytes,
 	}); err != nil {
 		select {
 		case claimCh <- state.ErrUpdate(err):
@@ -170,7 +175,7 @@ func processBind(
 func processUnbind(
 	ctx context.Context,
 	evt *Event,
-	cmNamespacer kcl.ConfigMapsNamespacer,
+	secretsNamespacer kcl.SecretsNamespacer,
 	catalogLookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 	claimCh chan<- state.Update,
@@ -222,8 +227,8 @@ func processUnbind(
 		return
 	}
 
-	// delete configmap
-	if err := cmNamespacer.ConfigMaps(claimWrapper.ObjectMeta.Namespace).Delete(claim.TargetName); err != nil {
+	// delete secret
+	if err := secretsNamespacer.Secrets(claimWrapper.ObjectMeta.Namespace).Delete(claim.TargetName); err != nil {
 		select {
 		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
@@ -241,7 +246,7 @@ func processUnbind(
 func processDeprovision(
 	ctx context.Context,
 	evt *Event,
-	cmNamespacer kcl.ConfigMapsNamespacer,
+	secretsNamespacer kcl.SecretsNamespacer,
 	catalogLookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 	claimCh chan<- state.Update,
