@@ -119,7 +119,7 @@ While steward provides the same consumer-facing interface (`ServiceCatalogEntry`
 
 - [CloudFoundry Service Broker](./doc/CF_BROKER_MODE.md)
 - [Helm](./doc/HELM_MODE.md) (see https://github.com/kubernetes/helm for more information on Helm)
-- [Custom Docker Image](./doc/JOBS_MODE.md). This mode is also called _jobs mode_
+- [Custom Docker Image](./doc/CMD_MODE.md). This mode is also called _cmd mode_
 
 # Development & Testing
 

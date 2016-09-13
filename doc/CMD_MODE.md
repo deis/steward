@@ -1,19 +1,19 @@
-# Jobs Mode
+# CMD Mode
 
-In jobs mode, Steward is capable of being configured to delegate all discreet operations such as `provision`, `bind`, `unbind`, and `deprovision` to a containerized binary or executable script.
+In cmd (command) mode, Steward is capable of being configured to delegate all discreet operations such as `provision`, `bind`, `unbind`, and `deprovision` to a containerized binary or executable script.
 
-In jobs mode, containerized brokers are not long lived. They run only for as long as is required to complete a discrete operation, then exit.
+In cmd mode, containerized brokers are not long lived. They run only for as long as is required to complete a discrete operation, then exit.
 
 ### Configuration
 
 #### Environment Variables
 
-Configure Steward to run in jobs mode by setting the `STEWARD_MODE` environment variable to `jobs`. Then configure its behavior with the following environment variables:
+Configure Steward to run in cmd mode by setting the `STEWARD_MODE` environment variable to `cmd`. Then configure its behavior with the following environment variables:
 
 * `POD_NAMESPACE`, the namespace within which this Steward instance exists. It's best to configure this using Kubernetes [downward API](http://kubernetes.io/docs/user-guide/downward-api/).
-* `JOBS_IMAGE`, the URL for a Docker image containing the binary or script to which discrete operations will be delegated.
-* `JOBS_CONFIG_MAP`, the _optional_ name of a configmap within the same namespace as the Steward instance. This configmap may include (non-sensitive) configuration for the containers in which discrete operations will be executed.
-* `JOBS_SECRET`, the _optional_ name of a secret within the same namespace as the Steward instance. This secret may include (sensitive) configuration for the containers in which discrete operations will be executed.
+* `CMD_IMAGE`, the URL for a Docker image containing the binary or script to which discrete operations will be delegated.
+* `CMD_CONFIG_MAP`, the _optional_ name of a configmap within the same namespace as the Steward instance. This configmap may include (non-sensitive) configuration for the containers in which discrete operations will be executed.
+* `CMD_SECRET`, the _optional_ name of a secret within the same namespace as the Steward instance. This secret may include (sensitive) configuration for the containers in which discrete operations will be executed.
 
 #### Configmap and/or Secret (optional)
 
@@ -21,19 +21,19 @@ If a broker requires specific configuration (e.g. RDBMS connection details or cl
 
 ##### Volume Mounts
 
-1. An optional configmap referenced via Steward's `JOBS_CONFIG_MAP` environment variable is mounted to the location `/config` within the broker container. As per the usual case when mounting configmaps as volumes, the value of each key is written to a flat file at `/config/<key name>`.
+1. An optional configmap referenced via Steward's `CMD_CONFIG_MAP` environment variable is mounted to the location `/config` within the broker container. As per the usual case when mounting configmaps as volumes, the value of each key is written to a flat file at `/config/<key name>`.
 
-1. An optional secret referenced via Steward's `JOBS_SECRET` environment variable is mounted to the location `/secret` within the broker container. As per the usual case when mounting secrets as volumes, the value of each key is written to a flat file at `/secret/<key name>`.
+1. An optional secret referenced via Steward's `CMD_SECRET` environment variable is mounted to the location `/secret` within the broker container. As per the usual case when mounting secrets as volumes, the value of each key is written to a flat file at `/secret/<key name>`.
 
 ##### Downward API
 
 Before continuing, make note that keys in Kubernetes configmaps and secrets are constrained by regular expressions that don't permit uppercase letters or underscores.
 
-For each key in an optional configmap referenced via Steward's `JOBS_CONFIG_MAP` environment variable _and_ for each key in an optional secret referenced via Steward's `JOBS_SECRET` environment variable, Steward utilizes the Kubernetes downward API to expose an environment variable within the broker's container. In doing so, it upcases the key and replaces all `.` with `_`. For example, a key of `aws.key` within a configmap becomes the environment variable `AWS_KEY` and a key of `aws.secret.key` within a secret becomes the environment variable `AWS_SECRET_KEY`.
+For each key in an optional configmap referenced via Steward's `CMD_CONFIG_MAP` environment variable _and_ for each key in an optional secret referenced via Steward's `CMD_SECRET` environment variable, Steward utilizes the Kubernetes downward API to expose an environment variable within the broker's container. In doing so, it converts the key to uppercase and replaces all `.` with `_`. For example, a key of `aws.key` within a configmap becomes the environment variable `AWS_KEY` and a key of `aws.secret.key` within a secret becomes the environment variable `AWS_SECRET_KEY`.
 
 ### Interface
 
-Jobs mode brokers may be implemented in any compiled language or scripting language. To ensure interoperability with Steward, however, certain contractual requirements must be met.
+Cmd mode brokers may be implemented in any compiled language or scripting language. To ensure interoperability with Steward, however, certain contractual requirements must be met.
 
 #### Executable
 
