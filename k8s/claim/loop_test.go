@@ -16,10 +16,10 @@ func TestReceiveEvent(t *testing.T) {
 	ctx := context.Background()
 	evt := getEvent(getClaim(mode.ActionProvision))
 	iface := &FakeInteractor{}
-	cmNamespacer := &k8s.FakeConfigMapsNamespacer{}
+	secretsNamespacer := &k8s.FakeSecretsNamespacer{}
 	lookup := k8s.NewServiceCatalogLookup(nil) // TODO: add service/plan to the catalog
 	lifecycler := &mode.Lifecycler{}
-	receiveEvent(ctx, evt, iface, cmNamespacer, lookup, lifecycler)
+	receiveEvent(ctx, evt, iface, secretsNamespacer, lookup, lifecycler)
 }
 
 func TestStopLoop(t *testing.T) {

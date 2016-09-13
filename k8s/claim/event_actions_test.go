@@ -208,11 +208,11 @@ func TestProcessBindInstanceIDFound(t *testing.T) {
 	lifecycler := &mode.Lifecycler{
 		Binder: binder,
 	}
-	cmNamespacer := k8s.NewFakeConfigMapsNamespacer()
+	secretsNamespacer := k8s.NewFakeSecretsNamespacer()
 	ch := make(chan state.Update)
 	cancelCtx, cancelFn := context.WithCancel(ctx)
 	defer cancelFn()
-	go processBind(cancelCtx, evt, cmNamespacer, catalogLookup, lifecycler, ch)
+	go processBind(cancelCtx, evt, secretsNamespacer, catalogLookup, lifecycler, ch)
 
 	// binding status
 	select {

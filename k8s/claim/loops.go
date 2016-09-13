@@ -14,7 +14,7 @@ import (
 func StartControlLoops(
 	ctx context.Context,
 	evtNamespacer InteractorNamespacer,
-	cmNamespacer kcl.ConfigMapsNamespacer,
+	secretsNamespacer kcl.SecretsNamespacer,
 	lookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 	namespaces []string,
@@ -24,7 +24,7 @@ func StartControlLoops(
 		logger.Debugf("starting claims control loop for namespace %s", ns)
 		go func(ns string) {
 			evtIface := evtNamespacer.Interactor(ns)
-			if err := StartControlLoop(ctx, evtIface, cmNamespacer, lookup, lifecycler); err != nil {
+			if err := StartControlLoop(ctx, evtIface, secretsNamespacer, lookup, lifecycler); err != nil {
 				logger.Errorf("failed to start control loop for namespace %s, skipping (%s)", ns, err)
 				errCh <- err
 				return
