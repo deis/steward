@@ -22,11 +22,10 @@ func newLifecycler(
 	if err != nil {
 		return nil, err
 	}
-	unbinder, err := newUnbinder(chart, cmNamespacer)
 	return &mode.Lifecycler{
 		Provisioner:   newProvisioner(chart, installNS, provBehavior, creatorDeleter),
 		Binder:        binder,
-		Unbinder:      unbinder,
+		Unbinder:      newUnbinder(),
 		Deprovisioner: newDeprovisioner(chart, provBehavior, creatorDeleter),
 	}, nil
 }

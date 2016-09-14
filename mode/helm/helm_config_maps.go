@@ -11,6 +11,7 @@ func rangeConfigMaps(
 	cmInfos []cmNamespaceAndName,
 	fn func(*api.ConfigMap) error) error {
 	for _, cmInfo := range cmInfos {
+		logger.Debugf("getting config map %s/%s", cmInfo.Namespace, cmInfo.Name)
 		cm, err := cmNamespacer.ConfigMaps(cmInfo.Namespace).Get(cmInfo.Name)
 		if err != nil {
 			logger.Debugf("no such ConfigMap %s/%s", cmInfo.Namespace, cmInfo.Name)
