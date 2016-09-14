@@ -10,7 +10,6 @@ DEV_ENV_CMD := ${DEV_ENV_PREFIX} ${DEV_ENV_IMAGE}
 DEV_ENV_CMD_INT := ${DEV_ENV_PREFIX} -it ${DEV_ENV_IMAGE}
 
 VERSION ?= "dev"
-LDFLAGS := "-s -w -X main.version=${VERSION}"
 BINARY_DEST_DIR := rootfs/bin
 
 all:
