@@ -6,30 +6,13 @@ All subsequent sections of this document assume that you have a running Kubernet
 
 ## Prerequisites
 
-### A Service Broker
+Pre-requisites for Steward vary based on the mode with which steward is run. Please see the below documents according to the mode with which you wish to configure and run steward.
 
-Since Steward acts as a _service broker gateway_, a Steward instance is of no use unless backed by a service broker.
+- CloudFoundry Broker: https://github.com/deis/steward/blob/master/doc/CF_BROKER_MODE.md
+  - Note that if you're trying Steward for the first time or are hacking on Steward, the Steward team has provided a trivial Cloud Foundry [sample broker][cf-sample-broker]. See that project's [README.md](https://github.com/deis/cf-sample-broker/blob/master/README.md) for installation instructions.
+- Helm: https://github.com/deis/steward/blob/master/doc/HELM_MODE.md
+- Command: https://github.com/deis/steward/blob/master/doc/CMD_MODE.md
 
-Before proceeding further, be sure that the service broker you wish to expose via Steward is available. Whether it runs on-or-off-cluster is inconsequential.
-
-If you are trying Steward for the first time or are hacking on Steward, the Steward team has provided a trivial Cloud Foundry [sample broker][cf-sample-broker]. See that project's [README.md](https://github.com/deis/cf-sample-broker/blob/master/README.md) for installation instructions.
-
-## Installation Steps
-
-### Configure Broker Details
-
-For Steward instances running in Cloud Foundry mode, the following environment variables are required to describe the connection to and credentials for the backing broker:
-
-- `CF_BROKER_NAME` - the name of the broker for which this Steward instance will be a gateway
-- `CF_BROKER_SCHEME` - the scheme with which to construct the URL to communicate with the backing broker. Can be either `http` or `https`
-- `CF_BROKER_HOSTNAME` - the host name of the backing service broker
-- `CF_BROKER_PORT` - the port of the backing service broker
-- `CF_BROKER_USERNAME` - the username to use in the HTTP basic authentication to the backing service broker
-- `CF_BROKER_PASSWORD` - the password to use in the HTTP basic authentication to the backing service broker
-
-Before proceeding, refer to the documentation for the backing broker you will be exposing via Steward.
-
-If using Steward to expose the [cf-sample-broker], that broker's connection details are easily sourced into the current bash shell as described [here](https://github.com/deis/cf-sample-broker/blob/master/README.md#source-connection-details).
 
 ### Deploy Steward
 
