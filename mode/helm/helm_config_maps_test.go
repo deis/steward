@@ -5,7 +5,7 @@ import (
 
 	"github.com/arschles/assert"
 	"github.com/deis/steward/k8s"
-	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/client-go/1.4/pkg/api/v1"
 )
 
 func TestRangeConfigMaps(t *testing.T) {
@@ -14,8 +14,8 @@ func TestRangeConfigMaps(t *testing.T) {
 		{Name: "name2", Namespace: "ns2"},
 	}
 	namespacer := k8s.NewFakeConfigMapsNamespacer()
-	gathered := []*api.ConfigMap{}
-	rangeConfigMaps(namespacer, infos, func(cm *api.ConfigMap) error {
+	gathered := []*v1.ConfigMap{}
+	rangeConfigMaps(namespacer, infos, func(cm *v1.ConfigMap) error {
 		gathered = append(gathered, cm)
 		return nil
 	})

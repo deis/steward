@@ -9,8 +9,9 @@ import (
 	"github.com/arschles/assert"
 	"github.com/deis/steward/mode"
 	"github.com/pborman/uuid"
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/watch"
+	"k8s.io/client-go/1.4/pkg/api"
+	"k8s.io/client-go/1.4/pkg/api/v1"
+	"k8s.io/client-go/1.4/pkg/watch"
 )
 
 func configMapData() map[string]string {
@@ -85,8 +86,8 @@ func TestConfigMapWatcher(t *testing.T) {
 	// add a config map and expect it to be sent on the channel
 	name := uuid.New()
 	data := configMapData()
-	ifaces[0].Add(&api.ConfigMap{
-		ObjectMeta: api.ObjectMeta{Name: name},
+	ifaces[0].Add(&v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: name},
 		Data:       data,
 	})
 	select {
@@ -105,8 +106,8 @@ func TestConfigMapWatcher(t *testing.T) {
 
 	name = uuid.New()
 	data = configMapData()
-	ifaces[1].Add(&api.ConfigMap{
-		ObjectMeta: api.ObjectMeta{Name: name},
+	ifaces[1].Add(&v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: name},
 		Data:       data,
 	})
 	select {
@@ -130,7 +131,7 @@ func TestEventFromConfigMapEvent(t *testing.T) {
 
 	rawEvt = watch.Event{
 		Type: watch.Added,
-		Object: &api.ConfigMap{
+		Object: &v1.ConfigMap{
 			Data: map[string]string{},
 		},
 	}
@@ -141,7 +142,7 @@ func TestEventFromConfigMapEvent(t *testing.T) {
 	data := configMapData()
 	rawEvt = watch.Event{
 		Type:   watch.Added,
-		Object: &api.ConfigMap{Data: data},
+		Object: &v1.ConfigMap{Data: data},
 	}
 	evt, err = eventFromConfigMapEvent(rawEvt)
 	assert.NotNil(t, evt, "returned *Event")

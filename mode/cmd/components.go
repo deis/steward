@@ -2,11 +2,11 @@ package cmd
 
 import (
 	"github.com/deis/steward/mode"
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
+	"k8s.io/client-go/1.4/kubernetes"
 )
 
 // GetComponents returns suitable implementations of the Cataloger and Lifecycler interfaces
-func GetComponents(cl *kcl.Client) (mode.Cataloger, *mode.Lifecycler, error) {
+func GetComponents(cl *kubernetes.Clientset) (mode.Cataloger, *mode.Lifecycler, error) {
 	cfg, err := getConfig()
 	if err != nil {
 		return nil, nil, err

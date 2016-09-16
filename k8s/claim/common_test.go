@@ -4,8 +4,8 @@ import (
 	"github.com/deis/steward/mode"
 	"github.com/juju/loggo"
 	"github.com/pborman/uuid"
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/watch"
+	"k8s.io/client-go/1.4/pkg/api/v1"
+	"k8s.io/client-go/1.4/pkg/watch"
 )
 
 func init() {
@@ -16,7 +16,7 @@ func getEvent(claim mode.ServicePlanClaim) *Event {
 	return &Event{
 		claim: &ServicePlanClaimWrapper{
 			Claim: &claim,
-			ObjectMeta: api.ObjectMeta{
+			ObjectMeta: v1.ObjectMeta{
 				ResourceVersion: "1",
 				Name:            "testclaim",
 				Namespace:       "testns",

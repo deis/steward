@@ -3,7 +3,7 @@ package k8s
 import (
 	"encoding/json"
 
-	"k8s.io/kubernetes/pkg/client/restclient"
+	"k8s.io/client-go/1.4/rest"
 )
 
 const (
@@ -12,11 +12,11 @@ const (
 )
 
 type k8sRestClientImpl struct {
-	cl *restclient.RESTClient
+	cl *rest.RESTClient
 }
 
 // NewK8sServiceCatalogInteractor creates a new ServiceCatalogInteractor which uses the Kubernetes API (using cl) to implement its functionality
-func NewK8sServiceCatalogInteractor(cl *restclient.RESTClient) ServiceCatalogInteractor {
+func NewK8sServiceCatalogInteractor(cl *rest.RESTClient) ServiceCatalogInteractor {
 	return k8sRestClientImpl{cl: cl}
 }
 

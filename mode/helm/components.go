@@ -6,14 +6,14 @@ import (
 	"net/http"
 
 	"github.com/deis/steward/mode"
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
+	"k8s.io/client-go/1.4/kubernetes/typed/core/v1"
 )
 
 // GetComponents returns suitable implementations of the Cataloger and Lifecycler interfaces
 func GetComponents(
 	ctx context.Context,
 	httpCl *http.Client,
-	cmNamespacer kcl.ConfigMapsNamespacer,
+	cmNamespacer v1.ConfigMapsGetter,
 ) (mode.Cataloger, *mode.Lifecycler, error) {
 	helmCfg, err := getConfig()
 	if err != nil {

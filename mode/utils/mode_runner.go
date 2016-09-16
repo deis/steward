@@ -10,8 +10,9 @@ import (
 	"github.com/deis/steward/mode/cf"
 	"github.com/deis/steward/mode/cmd"
 	"github.com/deis/steward/mode/helm"
-	"k8s.io/kubernetes/pkg/api"
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
+	"k8s.io/client-go/1.4/kubernetes"
+	"k8s.io/client-go/1.4/pkg/api"
+	"k8s.io/client-go/1.4/rest"
 )
 
 const (
@@ -30,7 +31,11 @@ func Run(
 	brokerName string,
 	errCh chan<- error, namespaces []string) error {
 
-	k8sClient, err := kcl.NewInCluster()
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return err
+	}
+	k8sClient, err := kubernetes.NewForConfig(config)
 	if err != nil {
 		return errGettingK8sClient{Original: err}
 	}
@@ -63,7 +68,7 @@ func Run(
 
 	// Everything else does not vary by mode...
 
-	catalogInteractor := k8s.NewK8sServiceCatalogInteractor(k8sClient.RESTClient)
+	catalogInteractor := k8s.NewK8sServiceCatalogInteractor(k8sClient.CoreClient.RESTClient)
 	published, err := publishCatalog(brokerName, cataloger, catalogInteractor)
 	if err != nil {
 		return errPublishingServiceCatalog{Original: err}

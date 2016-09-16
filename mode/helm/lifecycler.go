@@ -4,8 +4,8 @@ import (
 	"context"
 
 	"github.com/deis/steward/mode"
+	"k8s.io/client-go/1.4/kubernetes/typed/core/v1"
 	"k8s.io/helm/pkg/proto/hapi/chart"
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
 // newLifecycler creates a new mode.Lifecycler that's backed by a Tiller instance accessible by iface
@@ -15,7 +15,7 @@ func newLifecycler(
 	installNS string,
 	provBehavior ProvisionBehavior,
 	creatorDeleter ReleaseCreatorDeleter,
-	cmNamespacer kcl.ConfigMapsNamespacer,
+	cmNamespacer v1.ConfigMapsGetter,
 ) (*mode.Lifecycler, error) {
 
 	binder, err := newBinder(chart, cmNamespacer)

@@ -1,8 +1,8 @@
 package k8s
 
 import (
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
+	"k8s.io/client-go/1.4/pkg/api"
+	"k8s.io/client-go/1.4/pkg/api/unversioned"
 )
 
 // ServiceCatalogEntryList is the third party resource that represents a list of service catalog entries

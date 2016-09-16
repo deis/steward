@@ -1,5 +1,6 @@
 package: github.com/deis/steward
 ignore:
+  - k8s.io/kubernetes
   - camlistore.org
   - code.google.com
   - github.com/docker/docker
@@ -28,3 +29,4 @@ import:
 - package: github.com/pborman/uuid
 - package: k8s.io/helm
   version: v2.0.0-alpha.3
+- package: k8s.io/client-go/1.4

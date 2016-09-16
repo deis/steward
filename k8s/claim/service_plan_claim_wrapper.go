@@ -4,23 +4,23 @@ import (
 	"fmt"
 
 	"github.com/deis/steward/mode"
-	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/client-go/1.4/pkg/api/v1"
 )
 
 // ServicePlanClaimWrapper is a wrapper for a ServicePlanClaim that also contains kubernetes-specific information
 type ServicePlanClaimWrapper struct {
-	ObjectMeta api.ObjectMeta
+	ObjectMeta v1.ObjectMeta
 	Claim      *mode.ServicePlanClaim
 }
 
-func servicePlanClaimWrapperFromConfigMap(cm *api.ConfigMap) (*ServicePlanClaimWrapper, error) {
+func servicePlanClaimWrapperFromConfigMap(cm *v1.ConfigMap) (*ServicePlanClaimWrapper, error) {
 	claim, err := mode.ServicePlanClaimFromMap(cm.Data)
 	if err != nil {
 		return nil, err
 	}
 	return &ServicePlanClaimWrapper{
 		Claim: claim,
-		ObjectMeta: api.ObjectMeta{
+		ObjectMeta: v1.ObjectMeta{
 			ResourceVersion: cm.ResourceVersion,
 			Name:            cm.Name,
 			Namespace:       cm.Namespace,
@@ -34,8 +34,8 @@ func (spc ServicePlanClaimWrapper) String() string {
 	return fmt.Sprintf("%s (resource %s)", *spc.Claim, spc.ObjectMeta.ResourceVersion)
 }
 
-func (spc ServicePlanClaimWrapper) toConfigMap() *api.ConfigMap {
-	return &api.ConfigMap{
+func (spc ServicePlanClaimWrapper) toConfigMap() *v1.ConfigMap {
+	return &v1.ConfigMap{
 		ObjectMeta: spc.ObjectMeta,
 		Data:       spc.Claim.ToMap(),
 	}

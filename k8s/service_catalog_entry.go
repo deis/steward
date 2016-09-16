@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/deis/steward/mode"
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
+	"k8s.io/client-go/1.4/pkg/api"
+	"k8s.io/client-go/1.4/pkg/api/unversioned"
 )
 
 const (

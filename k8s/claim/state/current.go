@@ -2,7 +2,7 @@ package state
 
 import (
 	"github.com/deis/steward/mode"
-	"k8s.io/kubernetes/pkg/watch"
+	"k8s.io/client-go/1.4/pkg/watch"
 )
 
 // Current represents the current state of a ServicePlanClaim

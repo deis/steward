@@ -5,7 +5,7 @@ import (
 
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
+	"k8s.io/client-go/1.4/kubernetes/typed/core/v1"
 )
 
 // StartControlLoops calls StartControlLoop for each namespace in namespaces. For each call to StartControlLoop, it calls evtNamespacer.Events(ns) to create a new ConfigMapInterface. Because each StartControlLoop call is done in a new goroutine, this function need not be called in its own goroutine.
@@ -14,7 +14,7 @@ import (
 func StartControlLoops(
 	ctx context.Context,
 	evtNamespacer InteractorNamespacer,
-	secretsNamespacer kcl.SecretsNamespacer,
+	secretsNamespacer v1.SecretsGetter,
 	lookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 	namespaces []string,

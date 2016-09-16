@@ -3,7 +3,7 @@ package claim
 import (
 	"context"
 
-	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/client-go/1.4/pkg/api"
 )
 
 // Interactor is the interface that enables the requisite set of operations on claims that the control loop needs to do its job

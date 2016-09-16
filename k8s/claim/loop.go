@@ -7,10 +7,10 @@ import (
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/k8s/claim/state"
 	"github.com/deis/steward/mode"
-	"k8s.io/kubernetes/pkg/api"
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
-	"k8s.io/kubernetes/pkg/labels"
-	"k8s.io/kubernetes/pkg/watch"
+	"k8s.io/client-go/1.4/kubernetes/typed/core/v1"
+	"k8s.io/client-go/1.4/pkg/api"
+	"k8s.io/client-go/1.4/pkg/labels"
+	"k8s.io/client-go/1.4/pkg/watch"
 )
 
 const (
@@ -30,7 +30,7 @@ var (
 func StartControlLoop(
 	ctx context.Context,
 	iface Interactor,
-	secretsNamespacer kcl.SecretsNamespacer,
+	secretsNamespacer v1.SecretsGetter,
 	lookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 ) error {
@@ -72,7 +72,7 @@ func receiveEvent(
 	ctx context.Context,
 	evt *Event,
 	iface Interactor,
-	secretsNamespacer kcl.SecretsNamespacer,
+	secretsNamespacer v1.SecretsGetter,
 	lookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 ) {

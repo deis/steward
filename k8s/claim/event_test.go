@@ -7,7 +7,7 @@ import (
 	"github.com/arschles/assert"
 	"github.com/deis/steward/mode"
 	"github.com/pborman/uuid"
-	"k8s.io/kubernetes/pkg/watch"
+	"k8s.io/client-go/1.4/pkg/watch"
 )
 
 func TestEventToConfigMap(t *testing.T) {

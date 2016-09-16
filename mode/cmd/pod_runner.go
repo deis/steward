@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"strings"
 
-	"k8s.io/kubernetes/pkg/api"
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
-	"k8s.io/kubernetes/pkg/util/wait"
+	"k8s.io/client-go/1.4/kubernetes"
+	"k8s.io/client-go/1.4/pkg/api"
+	v1types "k8s.io/client-go/1.4/pkg/api/v1"
+	"k8s.io/client-go/1.4/pkg/util/wait"
 )
 
 type podRunner struct {
-	client *kcl.Client
+	client *kubernetes.Clientset
 	config *config
 }
 
@@ -46,7 +47,7 @@ func (r *podRunner) run(podName string, command string, args ...string) (string,
 	logger.Debugf("Checking pod exit code")
 	containerExitCode := pod.Status.ContainerStatuses[0].State.Terminated.ExitCode
 
-	logReq := podClient.GetLogs(podName, &api.PodLogOptions{})
+	logReq := podClient.GetLogs(podName, &v1types.PodLogOptions{})
 	logRes := logReq.Do()
 	logBytes, err := logRes.Raw()
 	if err != nil {
@@ -62,7 +63,7 @@ func (r *podRunner) run(podName string, command string, args ...string) (string,
 	return output, nil
 }
 
-func (r *podRunner) getManifest(podName string, command string, args []string) (*api.Pod, error) {
+func (r *podRunner) getManifest(podName string, command string, args []string) (*v1types.Pod, error) {
 	commandAndArgs := []string{command}
 	commandAndArgs = append(commandAndArgs, args...)
 	envVars, err := r.getEnvManifestFragment()
@@ -71,21 +72,21 @@ func (r *podRunner) getManifest(podName string, command string, args []string) (
 	}
 	volumeMounts := r.getVolumeMountsFragment()
 	volumes := r.getVolumesFragment()
-	pod := &api.Pod{
-		ObjectMeta: api.ObjectMeta{
+	pod := &v1types.Pod{
+		ObjectMeta: v1types.ObjectMeta{
 			Name:      podName,
 			Namespace: "steward",
 			Labels: map[string]string{
 				"heritage": "steward",
 			},
 		},
-		Spec: api.PodSpec{
-			RestartPolicy: api.RestartPolicyNever,
-			Containers: []api.Container{
-				api.Container{
+		Spec: v1types.PodSpec{
+			RestartPolicy: v1types.RestartPolicyNever,
+			Containers: []v1types.Container{
+				v1types.Container{
 					Name:            podName,
 					Image:           r.config.Image,
-					ImagePullPolicy: api.PullPolicy("Always"),
+					ImagePullPolicy: v1types.PullAlways,
 					Command:         commandAndArgs,
 					Env:             envVars,
 					VolumeMounts:    volumeMounts,
@@ -97,7 +98,7 @@ func (r *podRunner) getManifest(podName string, command string, args []string) (
 	return pod, nil
 }
 
-func (r *podRunner) getEnvManifestFragment() ([]api.EnvVar, error) {
+func (r *podRunner) getEnvManifestFragment() ([]v1types.EnvVar, error) {
 	configMapKeys, err := r.getKeysFromConfigMap()
 	if err != nil {
 		return nil, err
@@ -106,14 +107,14 @@ func (r *podRunner) getEnvManifestFragment() ([]api.EnvVar, error) {
 	if err != nil {
 		return nil, err
 	}
-	envVars := make([]api.EnvVar, len(configMapKeys)+len(secretKeys))
+	envVars := make([]v1types.EnvVar, len(configMapKeys)+len(secretKeys))
 	i := 0
 	for _, configMapKey := range configMapKeys {
-		envVars[i] = api.EnvVar{
+		envVars[i] = v1types.EnvVar{
 			Name: toEnvVarName(configMapKey),
-			ValueFrom: &api.EnvVarSource{
-				ConfigMapKeyRef: &api.ConfigMapKeySelector{
-					LocalObjectReference: api.LocalObjectReference{
+			ValueFrom: &v1types.EnvVarSource{
+				ConfigMapKeyRef: &v1types.ConfigMapKeySelector{
+					LocalObjectReference: v1types.LocalObjectReference{
 						Name: r.config.ConfigMapName,
 					},
 					Key: configMapKey,
@@ -123,11 +124,11 @@ func (r *podRunner) getEnvManifestFragment() ([]api.EnvVar, error) {
 		i++
 	}
 	for _, secretKey := range secretKeys {
-		envVars[i] = api.EnvVar{
+		envVars[i] = v1types.EnvVar{
 			Name: toEnvVarName(secretKey),
-			ValueFrom: &api.EnvVarSource{
-				SecretKeyRef: &api.SecretKeySelector{
-					LocalObjectReference: api.LocalObjectReference{
+			ValueFrom: &v1types.EnvVarSource{
+				SecretKeyRef: &v1types.SecretKeySelector{
+					LocalObjectReference: v1types.LocalObjectReference{
 						Name: r.config.SecretName,
 					},
 					Key: secretKey,
@@ -181,16 +182,16 @@ func (r *podRunner) getKeysFromSecret() ([]string, error) {
 	return keys, nil
 }
 
-func (r *podRunner) getVolumeMountsFragment() []api.VolumeMount {
-	var mounts []api.VolumeMount
+func (r *podRunner) getVolumeMountsFragment() []v1types.VolumeMount {
+	var mounts []v1types.VolumeMount
 	if r.config.ConfigMapName != "" {
-		mounts = append(mounts, api.VolumeMount{
+		mounts = append(mounts, v1types.VolumeMount{
 			Name:      "config-volume",
 			MountPath: "/config",
 		})
 	}
 	if r.config.SecretName != "" {
-		mounts = append(mounts, api.VolumeMount{
+		mounts = append(mounts, v1types.VolumeMount{
 			Name:      "secret-volume",
 			MountPath: "/secret",
 		})
@@ -198,14 +199,14 @@ func (r *podRunner) getVolumeMountsFragment() []api.VolumeMount {
 	return mounts
 }
 
-func (r *podRunner) getVolumesFragment() []api.Volume {
-	var volumes []api.Volume
+func (r *podRunner) getVolumesFragment() []v1types.Volume {
+	var volumes []v1types.Volume
 	if r.config.ConfigMapName != "" {
-		volumes = append(volumes, api.Volume{
+		volumes = append(volumes, v1types.Volume{
 			Name: "config-volume",
-			VolumeSource: api.VolumeSource{
-				ConfigMap: &api.ConfigMapVolumeSource{
-					LocalObjectReference: api.LocalObjectReference{
+			VolumeSource: v1types.VolumeSource{
+				ConfigMap: &v1types.ConfigMapVolumeSource{
+					LocalObjectReference: v1types.LocalObjectReference{
 						Name: r.config.ConfigMapName,
 					},
 				},
@@ -213,10 +214,10 @@ func (r *podRunner) getVolumesFragment() []api.Volume {
 		})
 	}
 	if r.config.SecretName != "" {
-		volumes = append(volumes, api.Volume{
+		volumes = append(volumes, v1types.Volume{
 			Name: "secret-volume",
-			VolumeSource: api.VolumeSource{
-				Secret: &api.SecretVolumeSource{
+			VolumeSource: v1types.VolumeSource{
+				Secret: &v1types.SecretVolumeSource{
 					SecretName: r.config.SecretName,
 				},
 			},
@@ -239,7 +240,7 @@ func (r *podRunner) waitForPodEnd(podName string) error {
 		if err != nil {
 			return false, err
 		}
-		if pod.Status.Phase == api.PodSucceeded || pod.Status.Phase == api.PodFailed {
+		if pod.Status.Phase == v1types.PodSucceeded || pod.Status.Phase == v1types.PodFailed {
 			logger.Debugf("Pod %s/%s has exited", r.config.PodNamespace, podName)
 			return true, nil
 		}
@@ -248,7 +249,7 @@ func (r *podRunner) waitForPodEnd(podName string) error {
 }
 
 // newPodRunner builds and returns a podRunner
-func newPodRunner(client *kcl.Client, cfg *config) *podRunner {
+func newPodRunner(client *kubernetes.Clientset, cfg *config) *podRunner {
 	return &podRunner{
 		client: client,
 		config: cfg,

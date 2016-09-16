@@ -1,7 +1,7 @@
 package k8s
 
 import (
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
+	"k8s.io/client-go/1.4/kubernetes/typed/core/v1"
 )
 
 // FakeSecretsNamespacer is a fake implementation of (k8s.io/kubernetes/pkg/client/unversioned).SecretsNamespacer, suitable for use in unit tests.
@@ -15,7 +15,7 @@ func NewFakeSecretsNamespacer() *FakeSecretsNamespacer {
 }
 
 // Secrets is the (k8s.io/kubernetes/pkg/client/unversioned).SecretsNamespacer interface implementation. It returns an empty kcl.SecretsInterface
-func (f *FakeSecretsNamespacer) Secrets(ns string) kcl.SecretsInterface {
+func (f *FakeSecretsNamespacer) Secrets(ns string) v1.SecretInterface {
 	ret := &FakeSecretsInterface{}
 	f.Returned[ns] = ret
 	return ret

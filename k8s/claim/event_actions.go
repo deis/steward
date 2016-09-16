@@ -9,9 +9,10 @@ import (
 	"github.com/deis/steward/k8s/claim/state"
 	"github.com/deis/steward/mode"
 	"github.com/pborman/uuid"
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/api/unversioned"
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
+	"k8s.io/client-go/1.4/kubernetes/typed/core/v1"
+	"k8s.io/client-go/1.4/pkg/api"
+	"k8s.io/client-go/1.4/pkg/api/unversioned"
+	v1types "k8s.io/client-go/1.4/pkg/api/v1"
 )
 
 var (
@@ -48,7 +49,7 @@ func getService(claim mode.ServicePlanClaim, catalog k8s.ServiceCatalogLookup) (
 func processProvision(
 	ctx context.Context,
 	evt *Event,
-	secretsNamespacer kcl.SecretsNamespacer,
+	secretsNamespacer v1.SecretsGetter,
 	catalogLookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 	claimCh chan<- state.Update,
@@ -99,7 +100,7 @@ func processProvision(
 func processBind(
 	ctx context.Context,
 	evt *Event,
-	secretsNamespacer kcl.SecretsNamespacer,
+	secretsNamespacer v1.SecretsGetter,
 	catalogLookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 	claimCh chan<- state.Update,
@@ -151,9 +152,9 @@ func processBind(
 		credBytes[k] = []byte(v)
 	}
 
-	if _, err := secretsNamespacer.Secrets(claimWrapper.ObjectMeta.Namespace).Create(&api.Secret{
+	if _, err := secretsNamespacer.Secrets(claimWrapper.ObjectMeta.Namespace).Create(&v1types.Secret{
 		TypeMeta: unversioned.TypeMeta{},
-		ObjectMeta: api.ObjectMeta{
+		ObjectMeta: v1types.ObjectMeta{
 			Name:      claim.TargetName,
 			Namespace: claimWrapper.ObjectMeta.Namespace,
 		},
@@ -175,7 +176,7 @@ func processBind(
 func processUnbind(
 	ctx context.Context,
 	evt *Event,
-	secretsNamespacer kcl.SecretsNamespacer,
+	secretsNamespacer v1.SecretsGetter,
 	catalogLookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 	claimCh chan<- state.Update,
@@ -228,7 +229,8 @@ func processUnbind(
 	}
 
 	// delete secret
-	if err := secretsNamespacer.Secrets(claimWrapper.ObjectMeta.Namespace).Delete(claim.TargetName); err != nil {
+	secretsIface := secretsNamespacer.Secrets(claimWrapper.ObjectMeta.Namespace)
+	if err := secretsIface.Delete(claim.TargetName, &api.DeleteOptions{}); err != nil {
 		select {
 		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
@@ -246,7 +248,7 @@ func processUnbind(
 func processDeprovision(
 	ctx context.Context,
 	evt *Event,
-	secretsNamespacer kcl.SecretsNamespacer,
+	secretsNamespacer v1.SecretsGetter,
 	catalogLookup k8s.ServiceCatalogLookup,
 	lifecycler *mode.Lifecycler,
 	claimCh chan<- state.Update,

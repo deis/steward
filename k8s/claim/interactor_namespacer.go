@@ -1,7 +1,7 @@
 package claim
 
 import (
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
+	"k8s.io/client-go/1.4/kubernetes/typed/core/v1"
 )
 
 // InteractorNamespacer gets the Interface for a given namespace
@@ -10,11 +10,11 @@ type InteractorNamespacer interface {
 }
 
 type cmNamespacer struct {
-	cmNS kcl.ConfigMapsNamespacer
+	cmNS v1.ConfigMapsGetter
 }
 
 // NewConfigMapsInteractorNamespacer returns a new EventsNamespacer that works on config maps
-func NewConfigMapsInteractorNamespacer(cmns kcl.ConfigMapsNamespacer) InteractorNamespacer {
+func NewConfigMapsInteractorNamespacer(cmns v1.ConfigMapsGetter) InteractorNamespacer {
 	return cmNamespacer{cmNS: cmns}
 }
 

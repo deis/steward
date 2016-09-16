@@ -1,42 +1,53 @@
 package k8s
 
 import (
-	"k8s.io/kubernetes/pkg/api"
-	"k8s.io/kubernetes/pkg/watch"
+	"k8s.io/client-go/1.4/pkg/api"
+	"k8s.io/client-go/1.4/pkg/api/v1"
+	"k8s.io/client-go/1.4/pkg/watch"
 )
 
-// FakeSecretsInterface is a fake version of (k8s.io/kubernetes/pkg/client/unversioned).SecretsInterface, for use in unit tests
+// FakeSecretsInterface is a fake version of (k8s.io/client-go/1.4/kubernetes/typed/core/v1).SecretInterface, for use in unit tests
 type FakeSecretsInterface struct {
-	Created []*api.Secret
+	Created []*v1.Secret
 }
 
-// Get is the (k8s.io/kubernetes/pkg/client/unversioned).SecretsInterface interface implementation. It currently is not implemented and returns nil, nil. It will be implemented if the need arises in tests
-func (f *FakeSecretsInterface) Get(string) (*api.Secret, error) {
+// Get is the SecretInterface interface implementation. It currently is not implemented and returns nil, nil
+func (f *FakeSecretsInterface) Get(string) (*v1.Secret, error) {
 	return nil, nil
 }
 
-// List is the (k8s.io/kubernetes/pkg/client/unversioned).SecretsInterface interface implementation. It currently is not implemented and returns nil, nil. It will be implemented if the need arises in tests
-func (f *FakeSecretsInterface) List(opts api.ListOptions) (*api.SecretList, error) {
+// List is the SecretInterface interface implementation. It currently is not implemented and returns nil, nil
+func (f *FakeSecretsInterface) List(opts api.ListOptions) (*v1.SecretList, error) {
 	return nil, nil
 }
 
-// Create is the (k8s.io/kubernetes/pkg/client/unversioned).SecretsInterface interface implementation. It appends cm to f.Created and then returns cm, nil. This function is not concurrency-safe
-func (f *FakeSecretsInterface) Create(secret *api.Secret) (*api.Secret, error) {
+// Create is the SecretInterface interface implementation. It appends cm to f.Created and then returns cm, nil. This function is not concurrency-safe
+func (f *FakeSecretsInterface) Create(secret *v1.Secret) (*v1.Secret, error) {
 	f.Created = append(f.Created, secret)
 	return secret, nil
 }
 
-// Delete is the (k8s.io/kubernetes/pkg/client/unversioned).SecretsInterface interface implementation. It currently is not implemented and returns nil. It will be implemented if the need arises in tests
-func (f *FakeSecretsInterface) Delete(string) error {
+// Delete is the SecretInterface interface implementation. It currently is not implemented and returns nil
+func (f *FakeSecretsInterface) Delete(string, *api.DeleteOptions) error {
 	return nil
 }
 
-// Update is the (k8s.io/kubernetes/pkg/client/unversioned).SecretsInterface interface implementation. It currently is not implemented and returns nil, nil. It will be implemented if the need arises in tests
-func (f *FakeSecretsInterface) Update(*api.Secret) (*api.Secret, error) {
+// DeleteCollection is the SecretInterface interface implementation. It currently is not implemented and returns nil
+func (f *FakeSecretsInterface) DeleteCollection(*api.DeleteOptions, api.ListOptions) error {
+	return nil
+}
+
+// Update is the SecretInterface interface implementation. It currently is not implemented and returns nil, nil
+func (f *FakeSecretsInterface) Update(*v1.Secret) (*v1.Secret, error) {
 	return nil, nil
 }
 
-// Watch is the (k8s.io/kubernetes/pkg/client/unversioned).Secretsnterface interface implementation. It currently is not implemented and returns nil, nil. It will be implemented if the need arises in tests
+// Patch is the SecretInterface interface implementation. It currently is not implemented and returns nil, ni
+func (f FakeSecretsInterface) Patch(string, api.PatchType, []byte, ...string) (*v1.Secret, error) {
+	return nil, nil
+}
+
+// Watch is the (k8s.io/kubernetes/pkg/client/unversioned).Secretsnterface interface implementation. It currently is not implemented and returns nil, nil
 func (f *FakeSecretsInterface) Watch(api.ListOptions) (watch.Interface, error) {
 	return nil, nil
 }

@@ -7,9 +7,9 @@ import (
 	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/k8s/claim/state"
 	"github.com/deis/steward/mode"
-	"k8s.io/kubernetes/pkg/api"
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
-	"k8s.io/kubernetes/pkg/watch"
+	"k8s.io/client-go/1.4/kubernetes/typed/core/v1"
+	v1types "k8s.io/client-go/1.4/pkg/api/v1"
+	"k8s.io/client-go/1.4/pkg/watch"
 )
 
 type errNoNextAction struct {
@@ -34,7 +34,7 @@ func isNoNextActionErr(e error) bool {
 type nextFunc func(
 	context.Context,
 	*Event,
-	kcl.SecretsNamespacer,
+	v1.SecretsGetter,
 	k8s.ServiceCatalogLookup,
 	*mode.Lifecycler,
 	chan<- state.Update,
@@ -47,7 +47,7 @@ type Event struct {
 }
 
 func eventFromConfigMapEvent(raw watch.Event) (*Event, error) {
-	configMap, ok := raw.Object.(*api.ConfigMap)
+	configMap, ok := raw.Object.(*v1types.ConfigMap)
 	if !ok {
 		return nil, errNotAConfigMap
 	}
@@ -61,7 +61,7 @@ func eventFromConfigMapEvent(raw watch.Event) (*Event, error) {
 	}, nil
 }
 
-func (e Event) toConfigMap() *api.ConfigMap {
+func (e Event) toConfigMap() *v1types.ConfigMap {
 	return e.claim.toConfigMap()
 }
 

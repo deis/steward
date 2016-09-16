@@ -3,7 +3,7 @@ package claim
 import (
 	"context"
 
-	"k8s.io/kubernetes/pkg/api"
+	"k8s.io/client-go/1.4/pkg/api"
 )
 
 // FakeInteractor is a fake implementation of Interactor, to be use in unit testing

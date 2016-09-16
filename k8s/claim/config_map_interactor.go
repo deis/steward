@@ -3,13 +3,14 @@ package claim
 import (
 	"context"
 
-	"k8s.io/kubernetes/pkg/api"
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
-	"k8s.io/kubernetes/pkg/watch"
+	"k8s.io/client-go/1.4/kubernetes/typed/core/v1"
+	"k8s.io/client-go/1.4/pkg/api"
+	v1types "k8s.io/client-go/1.4/pkg/api/v1"
+	"k8s.io/client-go/1.4/pkg/watch"
 )
 
 type cmInterface struct {
-	cm kcl.ConfigMapsInterface
+	cm v1.ConfigMapInterface
 }
 
 func (c cmInterface) Get(name string) (*ServicePlanClaimWrapper, error) {
@@ -40,7 +41,7 @@ func (c cmInterface) List(opts api.ListOptions) (*ServicePlanClaimsListWrapper, 
 }
 
 func (c cmInterface) Update(spc *ServicePlanClaimWrapper) (*ServicePlanClaimWrapper, error) {
-	cm := &api.ConfigMap{
+	cm := &v1types.ConfigMap{
 		Data:       spc.Claim.ToMap(),
 		ObjectMeta: spc.ObjectMeta,
 	}

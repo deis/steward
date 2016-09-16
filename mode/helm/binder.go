@@ -4,9 +4,9 @@ import (
 	"fmt"
 
 	"github.com/deis/steward/mode"
+	"k8s.io/client-go/1.4/kubernetes/typed/core/v1"
+	v1types "k8s.io/client-go/1.4/pkg/api/v1"
 	"k8s.io/helm/pkg/proto/hapi/chart"
-	"k8s.io/kubernetes/pkg/api"
-	kcl "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
 const (
@@ -16,10 +16,10 @@ const (
 
 type binder struct {
 	cmInfos      []cmNamespaceAndName
-	cmNamespacer kcl.ConfigMapsNamespacer
+	cmNamespacer v1.ConfigMapsGetter
 }
 
-func dataFieldKey(cm *api.ConfigMap, key string) string {
+func dataFieldKey(cm *v1types.ConfigMap, key string) string {
 	return fmt.Sprintf("%s-%s-%s", cm.Namespace, cm.Name, key)
 }
 
@@ -29,7 +29,7 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 	}
 
 	// use b.cmInfo to try and find all the listed ConfigMaps in k8s. use the data from each ConfigMap to fill in the bind response's Data field
-	if err := rangeConfigMaps(b.cmNamespacer, b.cmInfos, func(cm *api.ConfigMap) error {
+	if err := rangeConfigMaps(b.cmNamespacer, b.cmInfos, func(cm *v1types.ConfigMap) error {
 		for key, val := range cm.Data {
 			resp.Creds[dataFieldKey(cm, key)] = val
 		}
@@ -42,7 +42,7 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 }
 
 // newBinder returns a Tiller-backed mode.Binder
-func newBinder(chart *chart.Chart, cmNamespacer kcl.ConfigMapsNamespacer) (mode.Binder, error) {
+func newBinder(chart *chart.Chart, cmNamespacer v1.ConfigMapsGetter) (mode.Binder, error) {
 	cmInfos, err := getStewardConfigMapInfo(chart.Values)
 	if err != nil {
 		logger.Errorf("getting steward config map info (%s)", err)

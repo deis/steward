@@ -7,16 +7,16 @@ import (
 	"github.com/arschles/assert"
 	"github.com/deis/steward/k8s"
 	"github.com/pborman/uuid"
+	"k8s.io/client-go/1.4/pkg/api/v1"
 	"k8s.io/helm/pkg/chartutil"
-	"k8s.io/kubernetes/pkg/api"
 )
 
 func TestDataFieldKey(t *testing.T) {
 	const (
 		key = "key1"
 	)
-	cm := &api.ConfigMap{
-		ObjectMeta: api.ObjectMeta{Name: uuid.New(), Namespace: uuid.New()},
+	cm := &v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{Name: uuid.New(), Namespace: uuid.New()},
 	}
 	fullKey := dataFieldKey(cm, key)
 	assert.Equal(t, fullKey, fmt.Sprintf("%s-%s-%s", cm.Namespace, cm.Name, key), "data field key")
@@ -33,8 +33,8 @@ func TestBind(t *testing.T) {
 	assert.NoErr(t, err)
 	nsr := k8s.NewFakeConfigMapsNamespacer()
 	defaultIface := k8s.NewFakeConfigMapsInterface()
-	defaultIface.GetReturns[cmName] = &api.ConfigMap{
-		ObjectMeta: api.ObjectMeta{
+	defaultIface.GetReturns[cmName] = &v1.ConfigMap{
+		ObjectMeta: v1.ObjectMeta{
 			Name:      "testName",
 			Namespace: "testNamespace",
 		},
