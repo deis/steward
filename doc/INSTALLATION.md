@@ -14,13 +14,46 @@ Pre-requisites for Steward vary based on the mode with which steward is run. Ple
 - Command: https://github.com/deis/steward/blob/master/doc/CMD_MODE.md
 
 
-### Deploy Steward
+## Deploy Steward
 
 With all configuration now set, Steward can be deployed as follows:
 
+### Cloud Foundry Mode
+
 ```
-$ make deploy
+$ make deploy-cf
 ```
+
+Or build and deploy from source using:
+
+```
+$ make dev-deploy-cf
+```
+
+### Helm Mode
+
+```
+$ make deploy-helm
+```
+
+Or build and deploy from source using:
+
+```
+$ make dev-deploy-helm
+```
+
+### CMD Mode
+
+```
+$ make deploy-cmd
+```
+
+Or build and deploy from source using:
+
+```
+$ make dev-deploy-cmd
+```
+
 
 For details on Steward's pure Kubernetes-based workflow, please refer to [README.md](./README.md).
 
