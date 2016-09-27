@@ -12,6 +12,9 @@ import (
 	"github.com/deis/steward/mode/helm"
 	"k8s.io/client-go/1.4/kubernetes"
 	"k8s.io/client-go/1.4/pkg/api"
+	"k8s.io/client-go/1.4/pkg/api/unversioned"
+	"k8s.io/client-go/1.4/pkg/api/v1"
+	ext "k8s.io/client-go/1.4/pkg/apis/extensions/v1beta1"
 	"k8s.io/client-go/1.4/rest"
 )
 
@@ -67,6 +70,32 @@ func Run(
 	}
 
 	// Everything else does not vary by mode...
+	extensions := k8sClient.Extensions()
+	tpr := extensions.ThirdPartyResources()
+	catalogDefinition := &ext.ThirdPartyResource{
+		TypeMeta: unversioned.TypeMeta{
+			Kind:       "ThirdPartyResource",
+			APIVersion: "extensions/v1beta1",
+		},
+		ObjectMeta: v1.ObjectMeta{
+			Name: "service-catalog-entry.steward.deis.io",
+			Labels: map[string]string{
+				"heritage": "deis",
+			},
+		},
+		Description: "A description of a single (service, plan) pair that a steward instance is able to provision",
+		Versions: []ext.APIVersion{
+			{Name: "v1"},
+		},
+	}
+
+	_, err = tpr.Create(catalogDefinition)
+	if err != nil {
+		newErr := errCreatingThirdPartyResource{Original: err}
+		if !newErr.AlreadyExists() {
+			return err
+		}
+	}
 
 	catalogInteractor := k8s.NewK8sServiceCatalogInteractor(k8sClient.CoreClient.RESTClient)
 	published, err := publishCatalog(brokerName, cataloger, catalogInteractor)

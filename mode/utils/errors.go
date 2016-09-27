@@ -49,3 +49,15 @@ type errGettingBrokerConfig struct {
 func (e errGettingBrokerConfig) Error() string {
 	return fmt.Sprintf("error getting broker config: %s", e.Original)
 }
+
+type errCreatingThirdPartyResource struct {
+	Original error
+}
+
+func (e errCreatingThirdPartyResource) Error() string {
+	return fmt.Sprintf("error creating third party resource: %s", e.Original)
+}
+
+func (e errCreatingThirdPartyResource) AlreadyExists() bool {
+	return e.Original.Error() == `thirdpartyresources.extensions "service-catalog-entry.steward.deis.io" already exists`
+}
