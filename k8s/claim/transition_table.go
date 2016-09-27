@@ -28,5 +28,7 @@ var (
 		state.NewCurrent(mode.StatusBound, mode.ActionUnbind, watch.Modified): nextFunc(processUnbind),
 		// if event was MODIFIED, status is unbound and action is deprovision, next action is processDeprovision
 		state.NewCurrent(mode.StatusUnbound, mode.ActionDeprovision, watch.Modified): nextFunc(processDeprovision),
+		// if event was MODIFIED, status is unbound and action is bind, next action is processBind
+		state.NewCurrent(mode.StatusUnbound, mode.ActionBind, watch.Modified): nextFunc(processBind),
 	}
 )
