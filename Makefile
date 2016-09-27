@@ -42,10 +42,6 @@ docker-build: build
 install-namespace:
 	kubectl get ns steward || kubectl create -f manifests/steward-namespace.yaml
 
-install-3prs:
-	kubectl get thirdpartyresource service-catalog-entry.steward.deis.io || \
-	kubectl create -f manifests/service-catalog-entry.yaml
-
 STEWARD_IMAGE ?= quay.io/deisci/steward:devel
 
 install-cf-steward:
