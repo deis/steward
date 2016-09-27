@@ -49,3 +49,11 @@ type errGettingBrokerConfig struct {
 func (e errGettingBrokerConfig) Error() string {
 	return fmt.Sprintf("error getting broker config: %s", e.Original)
 }
+
+type errCreatingThirdPartyResource struct {
+	Original error
+}
+
+func (e errCreatingThirdPartyResource) Error() string {
+	return fmt.Sprintf("error creating third party resource: %s", e.Original)
+}

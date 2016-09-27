@@ -42,9 +42,6 @@ docker-build: build
 install-namespace:
 	kubectl get ns steward || kubectl create -f manifests/steward-namespace.yaml
 
-install-3prs:
-	kubectl get thirdpartyresource service-catalog-entry.steward.deis.io || \
-	kubectl create -f manifests/service-catalog-entry.yaml
 
 STEWARD_IMAGE ?= quay.io/deisci/steward:devel
 
@@ -156,11 +153,11 @@ endif
 	kubectl apply -f manifests/${CMD_BROKER_NAME}-cmd-steward.yaml || \
 	kubectl create -f manifests/${CMD_BROKER_NAME}-cmd-steward.yaml
 
-deploy-cf: install-namespace install-3prs install-cf-steward
+deploy-cf: install-namespace install-cf-steward
 
-deploy-helm: install-namespace install-3prs install-helm-steward
+deploy-helm: install-namespace install-helm-steward
 
-deploy-cmd: install-namespace install-3prs install-cmd-steward
+deploy-cmd: install-namespace install-cmd-steward
 
 dev-deploy-cf: docker-build docker-push
 	STEWARD_IMAGE=${IMAGE} $(MAKE) deploy-cf
