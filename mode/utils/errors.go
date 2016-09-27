@@ -57,7 +57,3 @@ type errCreatingThirdPartyResource struct {
 func (e errCreatingThirdPartyResource) Error() string {
 	return fmt.Sprintf("error creating third party resource: %s", e.Original)
 }
-
-func (e errCreatingThirdPartyResource) AlreadyExists() bool {
-	return e.Original.Error() == `thirdpartyresources.extensions "service-catalog-entry.steward.deis.io" already exists`
-}

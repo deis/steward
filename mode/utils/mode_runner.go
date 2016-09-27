@@ -12,6 +12,7 @@ import (
 	"github.com/deis/steward/mode/helm"
 	"k8s.io/client-go/1.4/kubernetes"
 	"k8s.io/client-go/1.4/pkg/api"
+	"k8s.io/client-go/1.4/pkg/api/errors"
 	"k8s.io/client-go/1.4/rest"
 )
 
@@ -73,11 +74,8 @@ func Run(
 	tpr := extensions.ThirdPartyResources()
 
 	_, err = tpr.Create(k8s.ServiceCatalog3PR)
-	if err != nil {
-		newErr := errCreatingThirdPartyResource{Original: err}
-		if !newErr.AlreadyExists() {
-			return err
-		}
+	if err != nil && !errors.IsAlreadyExists(err) {
+		return errCreatingThirdPartyResource{Original: err}
 	}
 
 	catalogInteractor := k8s.NewK8sServiceCatalogInteractor(k8sClient.CoreClient.RESTClient)
