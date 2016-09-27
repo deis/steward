@@ -1,5 +1,5 @@
-hash: aa1c320359ded89aaed0333ae42f61aab42d666e7e69461879effa0080e26a7b
-updated: 2016-09-27T10:59:59.121481-07:00
+hash: e9ba438e8bb11efe217f78083f8a65c132c6fe6d39d240b834b4cd71fcd8da1d
+updated: 2016-09-29T19:23:39.387949515Z
 imports:
 - name: github.com/arschles/assert
   version: fc2da9844984ce5093111298174706e14d4c0c47
@@ -13,6 +13,13 @@ imports:
   version: 6d212800a42e8ab5c146b8ace3490ee17e5225f9
   subpackages:
   - spew
+- name: github.com/deis/k8s-claimer
+  version: e6151d1ed5f290ab7b61c51be95b28c3657f26a4
+  subpackages:
+  - api
+  - client
+  - htp
+  - k8s
 - name: github.com/emicklei/go-restful
   version: 3d66f886316ac990eb502aaa89ea38546420b8b7
   subpackages:
@@ -39,6 +46,8 @@ imports:
   version: 08b5f424b9271eedf6f9f0ce86cb9396ed337a42
 - name: github.com/gorilla/mux
   version: 757bef944d0f21880861c2dd9c871ca543023cba
+- name: github.com/imdario/mergo
+  version: 50d4dbd4eb0e84778abe37cefef140271d96fade
 - name: github.com/juju/ansiterm
   version: b99631de12cf04a906c1d4e4ec54fb86eae5863d
   subpackages:
@@ -52,15 +61,17 @@ imports:
 - name: github.com/lunixbochs/vtclean
   version: 4fbf7632a2c6d3fbdb9931439bdbbeded02cbe36
 - name: github.com/mattn/go-colorable
-  version: ed8eb9e318d7a84ce5915b495b7d35e0cfe7b5a8
+  version: 5da554b8d30ea210af19ee14a058919661bf0d04
 - name: github.com/mattn/go-isatty
   version: 66b8e73f3f5cda9f96b69efd03dd3d7fc4a5cdb8
 - name: github.com/pborman/uuid
   version: b984ec7fa9ff9e428bd0cf0abf429384dfbe3e37
 - name: github.com/spf13/pflag
   version: 367864438f1b1a3c7db4da06a2f55b144e6784e0
+- name: github.com/technosophos/moniker
+  version: 9f956786b91d9786ca11aa5be6104542fa911546
 - name: github.com/ugorji/go
-  version: b7eff9abce531d6aeda923e759ae668e56601d21
+  version: faddd6128c66c4708f45fdc007f575f75e592a3c
   subpackages:
   - codec
 - name: golang.org/x/net
@@ -153,6 +164,7 @@ imports:
   - 1.4/pkg/util/flowcontrol
   - 1.4/pkg/util/framer
   - 1.4/pkg/util/hash
+  - 1.4/pkg/util/homedir
   - 1.4/pkg/util/integer
   - 1.4/pkg/util/intstr
   - 1.4/pkg/util/json
@@ -172,7 +184,11 @@ imports:
   - 1.4/pkg/watch
   - 1.4/pkg/watch/versioned
   - 1.4/rest
+  - 1.4/tools/auth
+  - 1.4/tools/clientcmd
   - 1.4/tools/clientcmd/api
+  - 1.4/tools/clientcmd/api/latest
+  - 1.4/tools/clientcmd/api/v1
   - 1.4/tools/metrics
   - 1.4/transport
 - name: k8s.io/helm

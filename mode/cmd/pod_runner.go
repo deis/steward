@@ -75,7 +75,7 @@ func (r *podRunner) getManifest(podName string, command string, args []string) (
 	pod := &v1types.Pod{
 		ObjectMeta: v1types.ObjectMeta{
 			Name:      podName,
-			Namespace: "steward",
+			Namespace: r.config.PodNamespace,
 			Labels: map[string]string{
 				"heritage": "steward",
 			},

@@ -33,3 +33,6 @@ import:
   version: v2.0.0-alpha.3
 - package: k8s.io/client-go/1.4
   version: 93fcd402979cfad8a7151f96e016416947c6a3cb
+- package: github.com/deis/k8s-claimer
+  version: v0.1.0
+- package: github.com/technosophos/moniker
