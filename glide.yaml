@@ -4,6 +4,7 @@ ignore:
   - camlistore.org
   - code.google.com
   - github.com/docker/docker
+  - github.com/docker/distribution
   - github.com/camlistore/camlistore
   - labix.org/v2/mgo
   - github.com/influxdb/influxdb
@@ -20,6 +21,7 @@ ignore:
   - github.com/docker/go-connections
   - code.google.com/p/go-charset
   - k8s.io/heapster
+  - golang.org/x/sys
 import:
 - package: github.com/arschles/assert
 - package: github.com/kelseyhightower/envconfig
@@ -30,3 +32,4 @@ import:
 - package: k8s.io/helm
   version: v2.0.0-alpha.3
 - package: k8s.io/client-go/1.4
+  version: 93fcd402979cfad8a7151f96e016416947c6a3cb
