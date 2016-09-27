@@ -23,6 +23,8 @@ spec:
           value: trace
         - name: STEWARD_MODE
           value: cf
+        - name: WATCH_NAMESPACES
+          value: default
         - name: CF_BROKER_SCHEME
           value: "#cf_broker_scheme#"
         - name: CF_BROKER_HOSTNAME

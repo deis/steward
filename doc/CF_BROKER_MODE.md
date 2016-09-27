@@ -14,3 +14,7 @@ Configure steward to run in Cloud Foundry mode by setting the `STEWARD_MODE` env
 - `CF_BROKER_USERNAME` - the username steward should use to authenticate with the broker
 - `CF_BROKER_PASSWORD` - the password steward should use to authenticate with the broker
 - `HTTP_REQUEST_TIMEOUT_SEC` - the timeout after which steward should fail a request to the broker for any individual request
+
+Note that steward will, by default, watch for claims submitted in the `default` namespaces. However, it can be configured to watch in other namespaces as well. To do so, set the `WATCH_NAMESPACES` environment variable to a comma-separated list of namespaces.
+
+For example, to listen in the `steward` and `default` namespaces, set `WATCH_NAMESPACES="default,steward"`

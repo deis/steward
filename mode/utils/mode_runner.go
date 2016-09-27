@@ -30,7 +30,9 @@ func Run(
 	httpCl *http.Client,
 	modeStr string,
 	brokerName string,
-	errCh chan<- error, namespaces []string) error {
+	errCh chan<- error,
+	namespaces []string,
+) error {
 
 	config, err := rest.InClusterConfig()
 	if err != nil {

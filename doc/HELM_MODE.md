@@ -22,6 +22,9 @@ Configure steward to run in helm mode by setting the `STEWARD_MODE` environment 
 - `HELM_PLAN_NAME` - the plan name to list in the service catalog for this steward instance
 - `HELM_PLAN_DESCRIPTION` - the plan description to list in the service catalog for this steward instance
 
+Note that steward will, by default, watch for claims submitted in the `default` namespaces. However, it can be configured to watch in other namespaces as well. To do so, set the `WATCH_NAMESPACES` environment variable to a comma-separated list of namespaces.
+
+For example, to listen in the `steward` and `default` namespaces, set `WATCH_NAMESPACES="default,steward"`
 
 ### Provision and Deprovision Operations
 

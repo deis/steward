@@ -23,6 +23,8 @@ spec:
           value: trace
         - name: STEWARD_MODE
           value: cmd
+        - name: WATCH_NAMESPACES
+          value: default
         - name: POD_NAMESPACE
           valueFrom:
             fieldRef:

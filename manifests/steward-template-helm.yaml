@@ -21,6 +21,8 @@ spec:
             value: #helm_name#
           - name: STEWARD_MODE
             value: helm
+          - WATCH_NAMESPACES
+            value: default
           - name: LOG_LEVEL
             value: trace
           - name: HELM_TILLER_IP

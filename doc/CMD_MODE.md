@@ -15,6 +15,11 @@ Configure Steward to run in cmd mode by setting the `STEWARD_MODE` environment v
 * `CMD_CONFIG_MAP`, the _optional_ name of a configmap within the same namespace as the Steward instance. This configmap may include (non-sensitive) configuration for the containers in which discrete operations will be executed.
 * `CMD_SECRET`, the _optional_ name of a secret within the same namespace as the Steward instance. This secret may include (sensitive) configuration for the containers in which discrete operations will be executed.
 
+Note that steward will, by default, watch for claims submitted in the `default` namespaces. However, it can be configured to watch in other namespaces as well. To do so, set the `WATCH_NAMESPACES` environment variable to a comma-separated list of namespaces.
+
+For example, to listen in the `steward` and `default` namespaces, set `WATCH_NAMESPACES="default,steward"`
+
+
 #### Configmap and/or Secret (optional)
 
 If a broker requires specific configuration (e.g. RDBMS connection details or cloud platform credentials), these can be conveyed via a Kubernetes configmap and/or secret. When _referenced_ by name in Steward's own configuration (as mentioned in the previous section), Steward will make all such configuration values within available to a broker using _two_ different mechanisms. Broker authors may opt to utilize whichever they find more convenient.

@@ -13,7 +13,6 @@ Pre-requisites for Steward vary based on the mode with which steward is run. Ple
 - Helm: https://github.com/deis/steward/blob/master/doc/HELM_MODE.md
 - Command: https://github.com/deis/steward/blob/master/doc/CMD_MODE.md
 
-
 ## Deploy Steward
 
 With all configuration now set, Steward can be deployed as follows:
