@@ -35,10 +35,12 @@ func main() {
 	ctx, cancelFn := context.WithCancel(rootCtx)
 	defer cancelFn()
 
-	if err := modeutils.Run(ctx, httpCl, cfg.Mode, cfg.BrokerName, errCh, cfg.WatchNamespaces); err != nil {
+	cleanup, err := modeutils.Run(ctx, httpCl, cfg.Mode, cfg.BrokerName, errCh, cfg.WatchNamespaces)
+	if err != nil {
 		logger.Criticalf("Error starting %s mode: %s", cfg.Mode, err)
 		exitWithCode(cancelFn, 1)
 	}
+	defer cleanup()
 
 	// Start the API server
 	go api.Serve(errCh)

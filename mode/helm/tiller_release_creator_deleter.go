@@ -8,16 +8,11 @@ import (
 )
 
 type tillerRCD struct {
-	tillerHost string
+	conn *grpc.ClientConn
 }
 
 func (t tillerRCD) Create(ch *chart.Chart, installNS string) (*rls.InstallReleaseResponse, error) {
-	c, err := grpc.Dial(t.tillerHost, grpc.WithInsecure())
-	if err != nil {
-		return nil, err
-	}
-	defer c.Close()
-	rlsCl := rls.NewReleaseServiceClient(c)
+	rlsCl := rls.NewReleaseServiceClient(t.conn)
 	ctx := context.Background()
 	req := &rls.InstallReleaseRequest{
 		Chart:        ch,
@@ -30,12 +25,7 @@ func (t tillerRCD) Create(ch *chart.Chart, installNS string) (*rls.InstallReleas
 }
 
 func (t tillerRCD) Delete(relName string) (*rls.UninstallReleaseResponse, error) {
-	c, err := grpc.Dial(t.tillerHost, grpc.WithInsecure())
-	if err != nil {
-		return nil, err
-	}
-	defer c.Close()
-	rlsCl := rls.NewReleaseServiceClient(c)
+	rlsCl := rls.NewReleaseServiceClient(t.conn)
 	ctx := context.Background()
 	req := &rls.UninstallReleaseRequest{
 		Name:         relName,
@@ -46,6 +36,6 @@ func (t tillerRCD) Delete(relName string) (*rls.UninstallReleaseResponse, error)
 }
 
 // newTillerReleaseCreatorDeleter returns a new ReleaseCreatorDeleter implemented with a tiller backend
-func newTillerReleaseCreatorDeleter(tillerHost string) ReleaseCreatorDeleter {
-	return tillerRCD{tillerHost: tillerHost}
+func newTillerReleaseCreatorDeleter(conn *grpc.ClientConn) ReleaseCreatorDeleter {
+	return tillerRCD{conn: conn}
 }

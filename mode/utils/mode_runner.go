@@ -10,6 +10,7 @@ import (
 	"github.com/deis/steward/mode/cf"
 	"github.com/deis/steward/mode/cmd"
 	"github.com/deis/steward/mode/helm"
+	"google.golang.org/grpc"
 	"k8s.io/client-go/1.4/kubernetes"
 	"k8s.io/client-go/1.4/pkg/api"
 	"k8s.io/client-go/1.4/pkg/api/errors"
@@ -24,7 +25,7 @@ const (
 )
 
 // Run publishes the underlying broker's service offerings to the catalog, then starts Steward's
-// control loop in the specified mode.
+// control loop in the specified mode. returns a function that should be used by the caller to clean up, should the run stop. this function will be
 func Run(
 	ctx context.Context,
 	httpCl *http.Client,
@@ -32,16 +33,18 @@ func Run(
 	brokerName string,
 	errCh chan<- error,
 	namespaces []string,
-) error {
+) (func(), error) {
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return err
+		return nil, err
 	}
 	k8sClient, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return errGettingK8sClient{Original: err}
+		return nil, errGettingK8sClient{Original: err}
 	}
+
+	cleanupFunc := func() {}
 
 	var cataloger mode.Cataloger
 	var lifecycler *mode.Lifecycler
@@ -50,23 +53,25 @@ func Run(
 	case cfMode:
 		cataloger, lifecycler, err = cf.GetComponents(ctx, httpCl)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	case helmMode:
-		var err error
-		cataloger, lifecycler, err = helm.GetComponents(ctx, httpCl, k8sClient)
+		// ignore the returned connection. we're going to hold onto it for the whole lifespan of this steward, so we don't need to close it
+		var conn *grpc.ClientConn
+		conn, cataloger, lifecycler, err = helm.GetComponents(ctx, httpCl, k8sClient)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		cleanupFunc = func() { conn.Close() }
 	case cmdMode:
 		fallthrough
 	case commandMode:
 		cataloger, lifecycler, err = cmd.GetComponents(k8sClient)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	default:
-		return errUnrecognizedMode{mode: modeStr}
+		return nil, errUnrecognizedMode{mode: modeStr}
 	}
 
 	// Everything else does not vary by mode...
@@ -77,25 +82,25 @@ func Run(
 
 	_, err = tpr.Create(k8s.ServiceCatalog3PR)
 	if err != nil && !errors.IsAlreadyExists(err) {
-		return errCreatingThirdPartyResource{Original: err}
+		return nil, errCreatingThirdPartyResource{Original: err}
 	}
 
 	catalogInteractor := k8s.NewK8sServiceCatalogInteractor(k8sClient.CoreClient.RESTClient)
 	published, err := publishCatalog(brokerName, cataloger, catalogInteractor)
 	if err != nil {
-		return errPublishingServiceCatalog{Original: err}
+		return nil, errPublishingServiceCatalog{Original: err}
 	}
 	logger.Infof("published %d entries into the service catalog", len(published))
 
 	evtNamespacer := claim.NewConfigMapsInteractorNamespacer(k8sClient)
 	lookup, err := k8s.FetchServiceCatalogLookup(catalogInteractor)
 	if err != nil {
-		return errGettingServiceCatalogLookupTable{Original: err}
+		return nil, errGettingServiceCatalogLookupTable{Original: err}
 	}
 	logger.Infof("created service catalog lookup with %d items", lookup.Len())
 	claim.StartControlLoops(ctx, evtNamespacer, k8sClient, *lookup, lifecycler, namespaces, errCh)
 
-	return nil
+	return cleanupFunc, nil
 }
 
 // Does the following:
