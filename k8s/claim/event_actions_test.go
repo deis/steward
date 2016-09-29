@@ -140,6 +140,7 @@ func TestProcessProvisionServiceFound(t *testing.T) {
 		assert.Equal(t, claimUpdate.Status(), mode.StatusProvisioned, "new status")
 		assert.True(t, len(claimUpdate.InstanceID()) > 0, "no instance ID written")
 		assert.Equal(t, len(claimUpdate.BindID()), 0, "bind ID written when it shouldn't have been")
+		assert.Equal(t, claimUpdate.Extra(), provisioner.Resp.Extra, "extra data")
 		assert.Equal(t, len(provisioner.Provisioned), 1, "number of provision calls")
 		assert.True(t, state.UpdateIsTerminal(claimUpdate), "provisioned update was not marked terminal")
 		provCall := provisioner.Provisioned[0]
