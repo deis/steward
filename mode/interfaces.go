@@ -24,3 +24,7 @@ type Binder interface {
 type Unbinder interface {
 	Unbind(instanceID, bindingID string, unbindRequest *UnbindRequest) error
 }
+
+type LastOperationGetter interface {
+	GetLastOperation(instanceID string) (*GetLastOperationResponse, error)
+}
