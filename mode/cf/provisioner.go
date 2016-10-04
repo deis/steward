@@ -32,14 +32,20 @@ func (p provisioner) Provision(instanceID string, pReq *mode.ProvisionRequest) (
 	if err != nil {
 		return nil, err
 	}
-	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
+
+	resp := new(mode.ProvisionResponse)
+	switch res.StatusCode {
+	case http.StatusOK, http.StatusCreated:
+		resp.IsAsync = false
+	case http.StatusAccepted:
+		resp.IsAsync = true
+	default:
 		return nil, web.ErrUnexpectedResponseCode{
 			URL:      req.URL.String(),
 			Expected: http.StatusOK,
 			Actual:   res.StatusCode,
 		}
 	}
-	resp := new(mode.ProvisionResponse)
 	if err := json.NewDecoder(res.Body).Decode(resp); err != nil {
 		return nil, err
 	}
