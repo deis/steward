@@ -3,6 +3,7 @@ package claim
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -242,8 +243,15 @@ func TestProcessBindInstanceIDFound(t *testing.T) {
 	assert.Equal(t, bindCall.Req.ServiceID, evt.claim.Claim.ServiceID, "service ID")
 	assert.Equal(t, bindCall.Req.PlanID, evt.claim.Claim.PlanID, "plan ID")
 
-	// TODO: check the config maps namespacer
-
+	// check the secrets namespacer
+	assert.Equal(t, len(secretsNamespacer.Returned), 1, "number of returned secrets interfaces")
+	secretsIface := secretsNamespacer.Returned["testns"]
+	assert.Equal(t, len(secretsIface.Created), 1, "number of created secrets")
+	secret := secretsIface.Created[0]
+	assert.Equal(t, len(secret.Data), len(binder.Res.Creds), "number of creds in the secret")
+	for k, v := range secret.Data {
+		assert.Equal(t, string(v), binder.Res.Creds[k], fmt.Sprintf("value for key %s", k))
+	}
 }
 
 func TestProcessUnbindServiceNotFound(t *testing.T) {
@@ -287,7 +295,47 @@ func TestProcessUnbindServiceFound(t *testing.T) {
 }
 
 func TestProcessUnbindInstanceIDFound(t *testing.T) {
-	t.Skip("TODO")
+	claim := getClaim(mode.ActionUnbind)
+	claim.InstanceID = uuid.New()
+	claim.BindID = uuid.New()
+	evt := getEvent(claim)
+	catalogLookup := getCatalogFromEvents(evt)
+	unbinder := &fake.Unbinder{}
+	lifecycler := &mode.Lifecycler{Unbinder: unbinder}
+	secretsNamespacer := k8s.NewFakeSecretsNamespacer()
+	ch := make(chan state.Update)
+	cancelCtx, cancelFn := context.WithCancel(ctx)
+	defer cancelFn()
+	go processUnbind(cancelCtx, evt, secretsNamespacer, catalogLookup, lifecycler, ch)
+
+	// unbinding status
+	select {
+	case claimUpdate := <-ch:
+		assert.False(t, state.UpdateIsTerminal(claimUpdate), "claim update was marked terminal when it shouldn't have been")
+		assert.Equal(t, claimUpdate.Status(), mode.StatusUnbinding, "new status")
+	case <-time.After(waitDur):
+		t.Fatalf("didn't receive a claim update within %s", waitDur)
+	}
+
+	// unbound status
+	select {
+	case claimUpdate := <-ch:
+		assert.True(t, state.UpdateIsTerminal(claimUpdate), "claim update was not marked terminal when it should have been")
+		assert.Equal(t, claimUpdate.Status(), mode.StatusUnbound, "new status")
+	case <-time.After(waitDur):
+		t.Fatalf("didn't receive a claim update within %s", waitDur)
+	}
+
+	// check the lifecycler
+	assert.Equal(t, len(unbinder.UnbindCalls), 1, "number of bind calls")
+	unbindCall := unbinder.UnbindCalls[0]
+	assert.Equal(t, unbindCall.InstanceID, claim.InstanceID, "instance ID")
+	assert.Equal(t, unbindCall.BindID, claim.BindID, "bind ID")
+
+	// check the secrets namespacer
+	assert.Equal(t, len(secretsNamespacer.Returned), 1, "number of returned secrets interfaces")
+	secretsIface := secretsNamespacer.Returned["testns"]
+	assert.Equal(t, len(secretsIface.Deleted), 1, "number of deleted secrets")
 }
 
 func TestProcessDeprovisionServiceNotFound(t *testing.T) {
@@ -339,5 +387,47 @@ func TestProcessDeprovisionServiceFound(t *testing.T) {
 }
 
 func TestDeprovisionInstanceIDFound(t *testing.T) {
-	t.Skip("TODO")
+	claim := getClaim(mode.ActionDeprovision)
+	claim.InstanceID = uuid.New()
+	claim.Extra = mode.JSONObject(map[string]string{
+		uuid.New(): uuid.New(),
+	})
+	evt := getEvent(claim)
+	catalogLookup := getCatalogFromEvents(evt)
+	ch := make(chan state.Update)
+	cancelCtx, cancelFn := context.WithCancel(ctx)
+	defer cancelFn()
+	deprovisioner := &fake.Deprovisioner{
+		Resp: &mode.DeprovisionResponse{Operation: "testop"},
+	}
+	lifecycler := &mode.Lifecycler{
+		Deprovisioner: deprovisioner,
+	}
+	go processDeprovision(cancelCtx, evt, nil, catalogLookup, lifecycler, ch)
+
+	// deprovisioning status
+	select {
+	case claimUpdate := <-ch:
+		assert.False(t, state.UpdateIsTerminal(claimUpdate), "update was marked terminal when it shouldn't have been")
+		assert.Equal(t, claimUpdate.Status(), mode.StatusDeprovisioning, "new status")
+	case <-time.After(waitDur):
+		t.Fatalf("didn't receive a claim update within %s", waitDur)
+	}
+
+	// deprovisioned status
+	select {
+	case claimUpdate := <-ch:
+		assert.True(t, state.UpdateIsTerminal(claimUpdate), "update was not marked terminal when it should have been")
+		assert.Equal(t, claimUpdate.Status(), mode.StatusDeprovisioned, "new status")
+		// assert.Equal(t, claimUpdate.Extra(), deprivi.Resp.Extra, "extra data")
+		assert.Equal(t, len(deprovisioner.Deprovisions), 1, "number of provision calls")
+		assert.True(t, state.UpdateIsTerminal(claimUpdate), "provisioned update was not marked terminal")
+		deprovCall := deprovisioner.Deprovisions[0]
+		assert.Equal(t, deprovCall.InstanceID, claim.InstanceID, "instance ID")
+		assert.Equal(t, deprovCall.ServiceID, claim.ServiceID, "service ID")
+		assert.Equal(t, deprovCall.PlanID, claim.PlanID, "plan ID")
+		assert.Equal(t, deprovCall.Params, claim.Extra, "extra")
+	case <-time.After(waitDur):
+		t.Fatalf("didn't receive a claim update within %s", waitDur)
+	}
 }

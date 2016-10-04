@@ -9,6 +9,7 @@ import (
 // FakeSecretsInterface is a fake version of (k8s.io/client-go/1.4/kubernetes/typed/core/v1).SecretInterface, for use in unit tests
 type FakeSecretsInterface struct {
 	Created []*v1.Secret
+	Deleted []string
 }
 
 // Get is the SecretInterface interface implementation. It currently is not implemented and returns nil, nil
@@ -27,8 +28,9 @@ func (f *FakeSecretsInterface) Create(secret *v1.Secret) (*v1.Secret, error) {
 	return secret, nil
 }
 
-// Delete is the SecretInterface interface implementation. It currently is not implemented and returns nil
-func (f *FakeSecretsInterface) Delete(string, *api.DeleteOptions) error {
+// Delete is the SecretInterface interface implementation. It appends name to f.Deleted and returns nil. This function is not concurrency-safe
+func (f *FakeSecretsInterface) Delete(name string, opts *api.DeleteOptions) error {
+	f.Deleted = append(f.Deleted, name)
 	return nil
 }
 
