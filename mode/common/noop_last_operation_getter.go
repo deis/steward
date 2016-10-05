@@ -8,6 +8,6 @@ import (
 type NoopLastOperationGetter struct{}
 
 // GetLastOperation is the LastOperationGetter interface implementation. It always returns a successful response
-func (n NoopLastOperationGetter) GetLastOperation(instanceID string) (*mode.GetLastOperationResponse, error) {
+func (n NoopLastOperationGetter) GetLastOperation(string, string, string, string) (*mode.GetLastOperationResponse, error) {
 	return &mode.GetLastOperationResponse{State: mode.LastOperationStateSucceeded.String()}, nil
 }
