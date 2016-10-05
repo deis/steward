@@ -312,12 +312,38 @@ func processDeprovision(
 		PlanID:     claim.PlanID,
 		Parameters: evt.claim.Claim.Extra,
 	}
-	if _, err := lifecycler.Deprovision(instanceID, deprovisionReq); err != nil {
+	deprovisionResp, err := lifecycler.Deprovision(instanceID, deprovisionReq)
+	if err != nil {
 		select {
 		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
 		}
 		return
+	}
+	if deprovisionResp.IsAsync {
+		finalState := pollDeprovisionState(
+			ctx,
+			claim.ServiceID,
+			claim.PlanID,
+			deprovisionResp.Operation,
+			instanceID,
+			lifecycler,
+			claimCh,
+		)
+		if finalState == mode.LastOperationStateFailed {
+			failState := state.FullUpdate(
+				mode.StatusFailed,
+				"polling async deprovision status failed",
+				instanceID,
+				"",
+				mode.EmptyJSONObject(),
+			)
+			select {
+			case claimCh <- failState:
+			case <-ctx.Done():
+			}
+			return
+		}
 	}
 	claim.Status = mode.StatusDeprovisioned.String()
 	select {
