@@ -90,6 +90,32 @@ func processProvision(
 		}
 		return
 	}
+	if provisionResp.IsAsync {
+		endState := pollProvisionState(
+			ctx,
+			claim.ServiceID,
+			claim.PlanID,
+			provisionResp.Operation,
+			instanceID,
+			lifecycler,
+			claimCh,
+		)
+		if endState == mode.LastOperationStateFailed {
+			failStatus := state.FullUpdate(
+				mode.StatusFailed,
+				"failed polling for asynchrnous provision",
+				instanceID,
+				"",
+				mode.EmptyJSONObject(),
+			)
+			select {
+			case claimCh <- failStatus:
+			case <-ctx.Done():
+				return
+			}
+		}
+		return
+	}
 	select {
 	case claimCh <- state.FullUpdate(mode.StatusProvisioned, "", instanceID, "", provisionResp.Extra):
 	case <-ctx.Done():
