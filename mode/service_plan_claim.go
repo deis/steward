@@ -57,6 +57,8 @@ const (
 
 	// StatusProvisioning is the status indicating that the provisioning process has started
 	StatusProvisioning Status = "provisioning"
+	// StatusProvisioningAsync is the status indicating that the provisioning process has started but is in the process of polling for an asynchronous provision
+	StatusProvisioningAsync Status = "provisioning-async"
 	// StatusProvisioned is the status indicating that the provisioning process has succeeded
 	StatusProvisioned Status = "provisioned"
 	// StatusBinding is the status indicating that the binding process has started
