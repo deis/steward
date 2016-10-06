@@ -18,7 +18,8 @@ func newLifecycler(
 	cmNamespacer v1.ConfigMapsGetter,
 ) (*mode.Lifecycler, error) {
 
-	binder, err := newBinder(chart, cmNamespacer)
+	cmIface := cmNamespacer.ConfigMaps(installNS)
+	binder, err := newBinder(chart, cmIface)
 	if err != nil {
 		return nil, err
 	}

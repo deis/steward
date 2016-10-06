@@ -15,8 +15,8 @@ const (
 )
 
 type binder struct {
-	cmInfos      []cmNamespaceAndName
-	cmNamespacer v1.ConfigMapsGetter
+	cmNames []string
+	cmIface v1.ConfigMapInterface
 }
 
 func dataFieldKey(cm *v1types.ConfigMap, key string) string {
@@ -29,7 +29,7 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 	}
 
 	// use b.cmInfo to try and find all the listed ConfigMaps in k8s. use the data from each ConfigMap to fill in the bind response's Data field
-	if err := rangeConfigMaps(b.cmNamespacer, b.cmInfos, func(cm *v1types.ConfigMap) error {
+	if err := rangeConfigMaps(b.cmIface, b.cmNames, func(cm *v1types.ConfigMap) error {
 		for key, val := range cm.Data {
 			resp.Creds[dataFieldKey(cm, key)] = val
 		}
@@ -42,13 +42,16 @@ func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest
 }
 
 // newBinder returns a Tiller-backed mode.Binder
-func newBinder(chart *chart.Chart, cmNamespacer v1.ConfigMapsGetter) (mode.Binder, error) {
-	cmInfos, err := getStewardConfigMapInfo(chart.Values)
+func newBinder(chart *chart.Chart, cmIface v1.ConfigMapInterface) (mode.Binder, error) {
+	// parse the values file for steward-specific config map info
+	cmNames, err := getStewardConfigMapInfo(chart.Values)
 	if err != nil {
 		logger.Errorf("getting steward config map info (%s)", err)
 		return nil, err
 	}
-	logger.Debugf("got config map infos for helm chart %s", cmInfos)
-	// parse the values file for steward-specific config map info
-	return binder{cmInfos: cmInfos, cmNamespacer: cmNamespacer}, nil
+	logger.Debugf("got config map names for helm chart %s", cmNames)
+	return binder{
+		cmNames: cmNames,
+		cmIface: cmIface,
+	}, nil
 }

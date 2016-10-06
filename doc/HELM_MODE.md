@@ -42,10 +42,9 @@ On bind operations, steward reads a set of chart-specified `ConfigMap`s to get t
 
 ```yaml
 stewardConfigMaps:
-  - name: cm1
-    namespace: ns1
-  - name: cm2
-    namespace: ns2
+  - cm1
+  - cm2
+  - cm3
 ```
 
 On unbind operations, steward will attempt to delete this same set of `ConfigMap`s.

@@ -7,14 +7,14 @@ import (
 
 // look up the ConfigMap using cmNamespacer for each item in cmInfos. return any errors getting config map or calling fn
 func rangeConfigMaps(
-	cmNamespacer v1.ConfigMapsGetter,
-	cmInfos []cmNamespaceAndName,
+	cmIface v1.ConfigMapInterface,
+	cmNames []string,
 	fn func(*v1types.ConfigMap) error) error {
-	for _, cmInfo := range cmInfos {
-		logger.Debugf("getting config map %s/%s", cmInfo.Namespace, cmInfo.Name)
-		cm, err := cmNamespacer.ConfigMaps(cmInfo.Namespace).Get(cmInfo.Name)
+	for _, cmName := range cmNames {
+		logger.Debugf("getting config map %s", cmName)
+		cm, err := cmIface.Get(cmName)
 		if err != nil {
-			logger.Debugf("no such ConfigMap %s/%s", cmInfo.Namespace, cmInfo.Name)
+			logger.Debugf("no such ConfigMap %s", cmName)
 			return err
 		}
 		if err := fn(cm); err != nil {

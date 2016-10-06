@@ -31,7 +31,6 @@ func TestBind(t *testing.T) {
 	)
 	chart, err := chartutil.Load(alpineChartLoc())
 	assert.NoErr(t, err)
-	nsr := k8s.NewFakeConfigMapsNamespacer()
 	defaultIface := k8s.NewFakeConfigMapsInterface()
 	defaultIface.GetReturns[cmName] = &v1.ConfigMap{
 		ObjectMeta: v1.ObjectMeta{
@@ -40,8 +39,7 @@ func TestBind(t *testing.T) {
 		},
 		Data: map[string]string{"testKey": "testVal"},
 	}
-	nsr.ToReturn[cmNamespace] = defaultIface
-	binder, err := newBinder(chart, nsr)
+	binder, err := newBinder(chart, defaultIface)
 	assert.NoErr(t, err)
 	resp, err := binder.Bind(instID, bindID, nil)
 	assert.NoErr(t, err)
