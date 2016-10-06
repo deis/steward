@@ -15,10 +15,10 @@ type GetLastOperationCall struct {
 // LastOperationGetter is a fake implementation of a mode.LastOperationGetter. It's useful for use in unit tests
 type LastOperationGetter struct {
 	Calls []*GetLastOperationCall
-	Ret   *mode.GetLastOperationResponse
+	Ret   func() *mode.GetLastOperationResponse
 }
 
-// GetLastOperation appends to l.Calls and returns l.Ret, nil. Not concurrency safe
+// GetLastOperation appends to l.Calls and returns l.Ret(), nil. Not concurrency safe
 func (l *LastOperationGetter) GetLastOperation(
 	serviceID,
 	planID,
@@ -33,5 +33,5 @@ func (l *LastOperationGetter) GetLastOperation(
 		InstanceID: instanceID,
 	}
 	l.Calls = append(l.Calls, newCall)
-	return l.Ret, nil
+	return l.Ret(), nil
 }
