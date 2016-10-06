@@ -33,7 +33,7 @@ func pollDeprovisionState(
 
 		// otherwise continue provisioning state
 		update := state.FullUpdate(
-			mode.StatusProvisioningAsync,
+			mode.StatusDeprovisioningAsync,
 			"polling for asynchronous provisionining",
 			instanceID,
 			"",

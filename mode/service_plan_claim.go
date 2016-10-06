@@ -71,6 +71,8 @@ const (
 	StatusUnbound Status = "unbound"
 	// StatusDeprovisioning is the status indicating that the deprovisioning process has started
 	StatusDeprovisioning Status = "deprovisioning"
+	// StatusDeprovisioningAsync is the status indicating the the deprovisioning process has started but is in the process of polling for an asynchronous deprovision
+	StatusDeprovisioningAsync Status = "deprovisioning-async"
 	// StatusDeprovisioned is the status indicating that the deprovisioning process has succeeded
 	StatusDeprovisioned Status = "deprovisioned"
 	// StatusFailed is the status indicating that a service's creation or deletion operation has failed for some reason. The human-readable explanation of the failure will be written to the status description
