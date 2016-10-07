@@ -77,11 +77,12 @@ func processProvision(
 	spaceGUID := uuid.New()
 	instanceID := uuid.New()
 	provisionResp, err := lifecycler.Provision(instanceID, &mode.ProvisionRequest{
-		OrganizationGUID: orgGUID,
-		PlanID:           svc.Plan.ID,
-		ServiceID:        svc.Info.ID,
-		SpaceGUID:        spaceGUID,
-		Parameters:       mode.JSONObject(map[string]string{}),
+		OrganizationGUID:  orgGUID,
+		PlanID:            svc.Plan.ID,
+		ServiceID:         svc.Info.ID,
+		SpaceGUID:         spaceGUID,
+		AcceptsIncomplete: true,
+		Parameters:        mode.JSONObject(map[string]string{}),
 	})
 	if err != nil {
 		select {
@@ -308,9 +309,10 @@ func processDeprovision(
 
 	// deprovision
 	deprovisionReq := &mode.DeprovisionRequest{
-		ServiceID:  claim.ServiceID,
-		PlanID:     claim.PlanID,
-		Parameters: evt.claim.Claim.Extra,
+		ServiceID:         claim.ServiceID,
+		PlanID:            claim.PlanID,
+		AcceptsIncomplete: true,
+		Parameters:        evt.claim.Claim.Extra,
 	}
 	deprovisionResp, err := lifecycler.Deprovision(instanceID, deprovisionReq)
 	if err != nil {

@@ -19,8 +19,9 @@ const (
 
 func TestCfProvision(t *testing.T) {
 	resp, err := testLifecycler.Provision(fakeInstanceID, &mode.ProvisionRequest{
-		ServiceID: fakeServiceID,
-		PlanID:    fakePlanID,
+		ServiceID:         fakeServiceID,
+		PlanID:            fakePlanID,
+		AcceptsIncomplete: true,
 	})
 	assert.NoErr(t, err)
 	// Compare to known results from cf-sample-broker...
@@ -50,8 +51,9 @@ func TestCfUnbind(t *testing.T) {
 
 func TestCfDeprovision(t *testing.T) {
 	resp, err := testLifecycler.Deprovision(fakeInstanceID, &mode.DeprovisionRequest{
-		ServiceID: fakeServiceID,
-		PlanID:    fakePlanID,
+		ServiceID:         fakeServiceID,
+		PlanID:            fakePlanID,
+		AcceptsIncomplete: true,
 	})
 	assert.NoErr(t, err)
 	// Compare to known results from cf-sample-broker...
