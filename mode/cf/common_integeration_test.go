@@ -3,32 +3,50 @@
 package cf
 
 import (
+	"context"
 	"log"
+	"net/http"
 	"os"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/deis/steward/mode"
 	"github.com/deis/steward/test-utils/k8s"
 	testsetup "github.com/deis/steward/test-utils/setup"
 	"github.com/technosophos/moniker"
+	"k8s.io/client-go/1.4/kubernetes"
 	"k8s.io/client-go/1.4/pkg/api/v1"
 	"k8s.io/client-go/1.4/pkg/util/intstr"
 	"k8s.io/client-go/1.4/pkg/util/wait"
 )
 
-var namespace string
+var (
+	clientset      *kubernetes.Clientset
+	testCataloger  mode.Cataloger
+	testLifecycler *mode.Lifecycler
+	testNamespace  string
+	cancelFn       context.CancelFunc
+)
 
 func TestMain(m *testing.M) {
 	testsetup.SetupAndTearDown(m, setup, teardown)
 }
 
 func setup() error {
-	namespace = moniker.New().NameSep("-")
-	if err := k8s.EnsureNamespace(namespace); err != nil {
+	testNamespace = moniker.New().NameSep("-")
+	if err := k8s.EnsureNamespace(testNamespace); err != nil {
 		return err
 	}
 	if err := ensureBroker(); err != nil {
+		return err
+	}
+	rootCtx := context.Background()
+	httpCl := http.DefaultClient
+	var ctx context.Context
+	ctx, cancelFn = context.WithCancel(rootCtx)
+	var err error
+	if testCataloger, testLifecycler, err = GetComponents(ctx, httpCl); err != nil {
 		return err
 	}
 	return nil
@@ -40,11 +58,11 @@ func ensureBroker() error {
 	if err != nil {
 		return err
 	}
-	serviceClient := clientset.Services(namespace)
+	serviceClient := clientset.Services(testNamespace)
 	if _, err = serviceClient.Create(&v1.Service{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "cf-sample-broker",
-			Namespace: namespace,
+			Namespace: testNamespace,
 			Labels: map[string]string{
 				"app": "cf-sample-broker",
 			},
@@ -64,11 +82,11 @@ func ensureBroker() error {
 	}); err != nil {
 		return err
 	}
-	podClient := clientset.Pods(namespace)
+	podClient := clientset.Pods(testNamespace)
 	if _, err = podClient.Create(&v1.Pod{
 		ObjectMeta: v1.ObjectMeta{
 			Name:      "cf-sample-broker",
-			Namespace: namespace,
+			Namespace: testNamespace,
 			Labels: map[string]string{
 				"app": "cf-sample-broker",
 			},
@@ -149,7 +167,7 @@ func ensureBroker() error {
 		}
 	}()
 	// Wait for the service to have endpoints
-	endpointsClient := clientset.Endpoints(namespace)
+	endpointsClient := clientset.Endpoints(testNamespace)
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -192,8 +210,9 @@ func ensureBroker() error {
 }
 
 func teardown() error {
+	cancelFn()
 	// This will also delete the broker
-	if err := k8s.DeleteNamespace(namespace); err != nil {
+	if err := k8s.DeleteNamespace(testNamespace); err != nil {
 		return err
 	}
 	return nil
