@@ -32,9 +32,15 @@ Specifically, its high-level goals are to:
 * **Cloud Foundry Service Broker API**: API definition created by CloudFoundry, broadly describing provisioning/deprovisioning and binding/unbinding
 * **Cloud Foundry Service Broker**: a concrete implementation of the CF Service Broker API, e.g. <https://github.com/cloudfoundry/cf-mysql-release>
 
-# Installation
+# Deploying Steward
 
-Please see [INSTALLATION.md](./doc/INSTALLATION.md) for full instructions on how to install steward.
+Please see [INSTALLATION.md](./doc/INSTALLATION.md) for full instructions, including sample Kubernetes manifests, on how to deploy steward to your cluster.
+
+Once deployed, you can view logs for each steward instance via the standard `kubectl logs` command:
+
+```console
+kubectl logs -f ${STEWARD_POD_NAME} --namespace=${STEWARD_NAMESPACE}
+```
 
 # Concepts
 
