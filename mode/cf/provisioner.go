@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/deis/steward/mode"
@@ -18,11 +19,13 @@ type provisioner struct {
 }
 
 func (p provisioner) Provision(instanceID string, pReq *mode.ProvisionRequest) (*mode.ProvisionResponse, error) {
+	query := url.Values(map[string][]string{})
+	query.Add(asyncQueryKey, "true")
 	bodyBytes := new(bytes.Buffer)
 	if err := json.NewEncoder(bodyBytes).Encode(pReq); err != nil {
 		return nil, err
 	}
-	req, err := p.cl.Put(emptyQuery, bodyBytes, "v2", "service_instances", instanceID)
+	req, err := p.cl.Put(query, bodyBytes, "v2", "service_instances", instanceID)
 	if err != nil {
 		return nil, err
 	}

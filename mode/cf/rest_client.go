@@ -12,8 +12,12 @@ import (
 )
 
 const (
-	apiVersion    = "2.9"
-	versionHeader = "X-Broker-Api-Version"
+	apiVersion        = "2.9"
+	versionHeader     = "X-Broker-Api-Version"
+	serviceIDQueryKey = "service_id"
+	planIDQueryKey    = "plan_id"
+	operationQueryKey = "operation"
+	asyncQueryKey     = "accepts_incomplete"
 )
 
 var (

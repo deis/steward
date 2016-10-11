@@ -21,6 +21,7 @@ func (d deprovisioner) Deprovision(instanceID string, dReq *mode.DeprovisionRequ
 	query := url.Values(map[string][]string{})
 	query.Add(serviceIDQueryKey, dReq.ServiceID)
 	query.Add(planIDQueryKey, dReq.PlanID)
+	query.Add(asyncQueryKey, "true")
 	req, err := d.cl.Delete(query, "v2", "service_instances", instanceID)
 	if err != nil {
 		return nil, err

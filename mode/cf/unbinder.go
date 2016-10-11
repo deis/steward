@@ -10,12 +10,6 @@ import (
 	"github.com/deis/steward/web"
 )
 
-const (
-	serviceIDQueryKey = "service_id"
-	planIDQueryKey    = "plan_id"
-	operationQueryKey = "operation"
-)
-
 type unbinder struct {
 	cl          *restClient
 	baseCtx     context.Context
