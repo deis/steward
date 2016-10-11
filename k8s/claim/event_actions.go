@@ -115,7 +115,6 @@ func processProvision(
 				return
 			}
 		}
-		return
 	}
 	select {
 	case claimCh <- state.FullUpdate(mode.StatusProvisioned, "", instanceID, "", provisionResp.Extra):
