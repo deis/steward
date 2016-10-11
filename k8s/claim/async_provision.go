@@ -3,6 +3,7 @@ package claim
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/deis/steward/k8s/claim/state"
 	"github.com/deis/steward/mode"
@@ -65,5 +66,6 @@ func pollProvisionState(
 			return mode.LastOperationStateFailed
 		}
 		pollState = newState
+		time.Sleep(30 * time.Second)
 	}
 }

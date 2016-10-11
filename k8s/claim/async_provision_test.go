@@ -63,7 +63,7 @@ func TestPollProvisionState(t *testing.T) {
 }
 
 func acceptStatus(claimCh <-chan state.Update, expected mode.Status) error {
-	const timeout = 1 * time.Second
+	const timeout = 31 * time.Second
 	select {
 	case update := <-claimCh:
 		if update.Status() != expected {
