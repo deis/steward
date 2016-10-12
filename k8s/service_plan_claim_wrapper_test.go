@@ -1,4 +1,4 @@
-package claim
+package k8s
 
 import (
 	"testing"

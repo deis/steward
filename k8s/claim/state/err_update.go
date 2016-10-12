@@ -3,6 +3,7 @@ package state
 import (
 	"fmt"
 
+	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
 )
 
@@ -20,8 +21,8 @@ func (e errUpdate) String() string {
 	return fmt.Sprintf("status update to failure with error %s", e.err)
 }
 
-func (e errUpdate) Status() mode.Status {
-	return mode.StatusFailed
+func (e errUpdate) Status() k8s.ServicePlanClaimStatus {
+	return k8s.StatusFailed
 }
 
 func (e errUpdate) Description() string {

@@ -1,7 +1,7 @@
 package claim
 
 import (
-	"github.com/deis/steward/mode"
+	"github.com/deis/steward/k8s"
 	"github.com/juju/loggo"
 	"github.com/pborman/uuid"
 	"k8s.io/client-go/1.4/pkg/api/v1"
@@ -12,9 +12,9 @@ func init() {
 	logger.SetLogLevel(loggo.TRACE)
 }
 
-func getEvent(claim mode.ServicePlanClaim) *Event {
+func getEvent(claim k8s.ServicePlanClaim) *Event {
 	return &Event{
-		claim: &ServicePlanClaimWrapper{
+		claim: &k8s.ServicePlanClaimWrapper{
 			Claim: &claim,
 			ObjectMeta: v1.ObjectMeta{
 				ResourceVersion: "1",
@@ -27,8 +27,8 @@ func getEvent(claim mode.ServicePlanClaim) *Event {
 	}
 }
 
-func getClaim(action mode.Action) mode.ServicePlanClaim {
-	return mode.ServicePlanClaim{
+func getClaim(action k8s.ServicePlanClaimAction) k8s.ServicePlanClaim {
+	return k8s.ServicePlanClaim{
 		TargetName: "target1",
 		ServiceID:  "svc1",
 		PlanID:     "plan1",
@@ -37,7 +37,7 @@ func getClaim(action mode.Action) mode.ServicePlanClaim {
 	}
 }
 
-func getClaimWithStatus(action mode.Action, status mode.Status) mode.ServicePlanClaim {
+func getClaimWithStatus(action k8s.ServicePlanClaimAction, status k8s.ServicePlanClaimStatus) k8s.ServicePlanClaim {
 	cl := getClaim(action)
 	cl.Status = status.String()
 	return cl

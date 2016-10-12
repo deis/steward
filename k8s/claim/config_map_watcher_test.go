@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/arschles/assert"
-	"github.com/deis/steward/mode"
+	"github.com/deis/steward/k8s"
 	"github.com/pborman/uuid"
 	"k8s.io/client-go/1.4/pkg/api"
 	"k8s.io/client-go/1.4/pkg/api/v1"
@@ -35,7 +35,7 @@ func (e errClaimMapMismatch) Error() string {
 	return fmt.Sprintf("claim %s value (%s) doesn't match map %s value (%s)", e.name, e.claimVal, e.name, e.mapVal)
 }
 
-func matchClaimToMap(claim *mode.ServicePlanClaim, data map[string]string) error {
+func matchClaimToMap(claim *k8s.ServicePlanClaim, data map[string]string) error {
 	if claim.TargetName != data["target-name"] {
 		return errClaimMapMismatch{name: "target name", claimVal: claim.TargetName, mapVal: data["target-name"]}
 	}

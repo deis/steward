@@ -3,13 +3,14 @@ package state
 import (
 	"fmt"
 
+	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
 )
 
 // Update represents the update to the state of a ServicePlanClaim
 type Update interface {
 	fmt.Stringer
-	Status() mode.Status
+	Status() k8s.ServicePlanClaimStatus
 	Description() string
 	InstanceID() string
 	BindID() string
@@ -17,12 +18,12 @@ type Update interface {
 }
 
 // UpdateClaim updates claim in-place, according to update
-func UpdateClaim(claim *mode.ServicePlanClaim, update Update) {
+func UpdateClaim(claim *k8s.ServicePlanClaim, update Update) {
 	switch u := update.(type) {
 	case statusUpdate:
 		claim.Status = u.status.String()
 	case errUpdate:
-		claim.Status = mode.StatusFailed.String()
+		claim.Status = k8s.StatusFailed.String()
 		claim.StatusDescription = u.err.Error()
 	case fullUpdate:
 		claim.Status = u.status.String()
@@ -43,7 +44,7 @@ func UpdateClaim(claim *mode.ServicePlanClaim, update Update) {
 // UpdateIsTerminal returns true if u will, after applied to a ServicePlanClaim, result in the claim being in a potentially terminal state. Note that "potentially terminal state" doesn't necessarily mean that the claim is no longer actionable. It just means that steward has the option to not _automatically_ take more action on the claim. For example, a 'provision' claim will result in the claim becoming 'provisioned', which is a potentially terminal state. At this point, steward doesn't need to take further action on the claim, but it will if the user sets the claim's action to 'bind'
 func UpdateIsTerminal(u Update) bool {
 	switch u.Status() {
-	case mode.StatusFailed, mode.StatusBound, mode.StatusProvisioned, mode.StatusUnbound, mode.StatusDeprovisioned:
+	case k8s.StatusFailed, k8s.StatusBound, k8s.StatusProvisioned, k8s.StatusUnbound, k8s.StatusDeprovisioned:
 		return true
 	default:
 		return false

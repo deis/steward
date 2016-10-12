@@ -34,7 +34,7 @@ func isNoSuchServiceAndPlanErr(e error) bool {
 	return ok
 }
 
-func getService(claim mode.ServicePlanClaim, catalog k8s.ServiceCatalogLookup) (*k8s.ServiceCatalogEntry, error) {
+func getService(claim k8s.ServicePlanClaim, catalog k8s.ServiceCatalogLookup) (*k8s.ServiceCatalogEntry, error) {
 	svc := catalog.Get(claim.ServiceID, claim.PlanID)
 	if svc == nil {
 		logger.Debugf("service %s, plan %s not found", claim.ServiceID, claim.PlanID)
@@ -69,7 +69,7 @@ func processProvision(
 	}
 
 	select {
-	case claimCh <- state.StatusUpdate(mode.StatusProvisioning):
+	case claimCh <- state.StatusUpdate(k8s.StatusProvisioning):
 	case <-ctx.Done():
 		return
 	}
@@ -91,7 +91,7 @@ func processProvision(
 		return
 	}
 	select {
-	case claimCh <- state.FullUpdate(mode.StatusProvisioned, "", instanceID, "", provisionResp.Extra):
+	case claimCh <- state.FullUpdate(k8s.StatusProvisioned, "", instanceID, "", provisionResp.Extra):
 	case <-ctx.Done():
 		return
 	}
@@ -119,7 +119,7 @@ func processBind(
 	}
 
 	select {
-	case claimCh <- state.StatusUpdate(mode.StatusBinding):
+	case claimCh <- state.StatusUpdate(k8s.StatusBinding):
 	case <-ctx.Done():
 		return
 	}
@@ -167,7 +167,7 @@ func processBind(
 		return
 	}
 	select {
-	case claimCh <- state.FullUpdate(mode.StatusBound, "", instanceID, bindID, mode.EmptyJSONObject()):
+	case claimCh <- state.FullUpdate(k8s.StatusBound, "", instanceID, bindID, mode.EmptyJSONObject()):
 	case <-ctx.Done():
 		return
 	}
@@ -195,7 +195,7 @@ func processUnbind(
 	}
 
 	select {
-	case claimCh <- state.StatusUpdate(mode.StatusUnbinding):
+	case claimCh <- state.StatusUpdate(k8s.StatusUnbinding):
 	case <-ctx.Done():
 		return
 	}
@@ -239,7 +239,7 @@ func processUnbind(
 	}
 
 	select {
-	case claimCh <- state.StatusUpdate(mode.StatusUnbound):
+	case claimCh <- state.StatusUpdate(k8s.StatusUnbound):
 	case <-ctx.Done():
 		return
 	}
@@ -266,7 +266,7 @@ func processDeprovision(
 	}
 
 	select {
-	case claimCh <- state.StatusUpdate(mode.StatusDeprovisioning):
+	case claimCh <- state.StatusUpdate(k8s.StatusDeprovisioning):
 	case <-ctx.Done():
 		return
 	}
@@ -293,9 +293,9 @@ func processDeprovision(
 		}
 		return
 	}
-	claim.Status = mode.StatusDeprovisioned.String()
+	claim.Status = k8s.StatusDeprovisioned.String()
 	select {
-	case claimCh <- state.StatusUpdate(mode.StatusDeprovisioned):
+	case claimCh <- state.StatusUpdate(k8s.StatusDeprovisioned):
 	case <-ctx.Done():
 		return
 	}

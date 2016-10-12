@@ -3,11 +3,12 @@ package state
 import (
 	"fmt"
 
+	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
 )
 
 type fullUpdate struct {
-	status      mode.Status
+	status      k8s.ServicePlanClaimStatus
 	description string
 	instanceID  string
 	bindID      string
@@ -15,7 +16,7 @@ type fullUpdate struct {
 }
 
 // FullUpdate returns an Update implementation with all fields filled in
-func FullUpdate(st mode.Status, desc, instID, bindID string, extra mode.JSONObject) Update {
+func FullUpdate(st k8s.ServicePlanClaimStatus, desc, instID, bindID string, extra mode.JSONObject) Update {
 	return fullUpdate{
 		status:      st,
 		description: desc,
@@ -36,7 +37,7 @@ func (f fullUpdate) String() string {
 	)
 }
 
-func (f fullUpdate) Status() mode.Status {
+func (f fullUpdate) Status() k8s.ServicePlanClaimStatus {
 	return f.status
 }
 

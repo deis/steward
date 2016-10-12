@@ -5,23 +5,24 @@ import (
 	"testing"
 
 	"github.com/arschles/assert"
+	"github.com/deis/steward/k8s"
 	"github.com/deis/steward/mode"
 	"github.com/pborman/uuid"
 )
 
 func TestUpdateClaim(t *testing.T) {
 	type testCase struct {
-		claim  mode.ServicePlanClaim
+		claim  k8s.ServicePlanClaim
 		update Update
 	}
 	testCases := []testCase{
 		testCase{
-			claim: mode.ServicePlanClaim{
-				Status:            mode.StatusBinding.String(),
+			claim: k8s.ServicePlanClaim{
+				Status:            k8s.StatusBinding.String(),
 				StatusDescription: "some description",
 			},
 			update: FullUpdate(
-				mode.StatusBound,
+				k8s.StatusBound,
 				"some other description",
 				uuid.New(),
 				uuid.New(),
@@ -29,13 +30,13 @@ func TestUpdateClaim(t *testing.T) {
 			),
 		},
 		testCase{
-			claim: mode.ServicePlanClaim{
-				Status:            mode.StatusProvisioned.String(),
+			claim: k8s.ServicePlanClaim{
+				Status:            k8s.StatusProvisioned.String(),
 				StatusDescription: "start",
 				Extra:             mode.JSONObject(map[string]string{"a": "b"}),
 			},
 			update: FullUpdate(
-				mode.StatusBinding,
+				k8s.StatusBinding,
 				"end",
 				uuid.New(),
 				uuid.New(),
@@ -43,20 +44,20 @@ func TestUpdateClaim(t *testing.T) {
 			),
 		},
 		testCase{
-			claim: mode.ServicePlanClaim{
-				Status:            mode.StatusProvisioned.String(),
+			claim: k8s.ServicePlanClaim{
+				Status:            k8s.StatusProvisioned.String(),
 				StatusDescription: "something",
 				Extra:             mode.EmptyJSONObject(),
 			},
 			update: ErrUpdate(errors.New("error")),
 		},
 		testCase{
-			claim: mode.ServicePlanClaim{
-				Status:            mode.StatusProvisioned.String(),
+			claim: k8s.ServicePlanClaim{
+				Status:            k8s.StatusProvisioned.String(),
 				StatusDescription: "something else",
 				Extra:             mode.EmptyJSONObject(),
 			},
-			update: StatusUpdate(mode.StatusBinding),
+			update: StatusUpdate(k8s.StatusBinding),
 		},
 	}
 
@@ -67,7 +68,7 @@ func TestUpdateClaim(t *testing.T) {
 		eUpdate, isErrUpdate := testCase.update.(errUpdate)
 		_, isStatusUpdate := testCase.update.(statusUpdate)
 
-		assert.Equal(t, mode.Status(testCase.claim.Status), testCase.update.Status(), "new status")
+		assert.Equal(t, k8s.ServicePlanClaimStatus(testCase.claim.Status), testCase.update.Status(), "new status")
 		if isFullUpdate {
 			// on full update, the description should be updated
 			assert.Equal(t, testCase.claim.StatusDescription, testCase.update.Description(), "new status description")

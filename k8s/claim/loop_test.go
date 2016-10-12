@@ -14,7 +14,7 @@ func TestStartLoop(t *testing.T) {
 
 func TestReceiveEvent(t *testing.T) {
 	ctx := context.Background()
-	evt := getEvent(getClaim(mode.ActionProvision))
+	evt := getEvent(getClaim(k8s.ActionProvision))
 	iface := &FakeInteractor{}
 	secretsNamespacer := &k8s.FakeSecretsNamespacer{}
 	lookup := k8s.NewServiceCatalogLookup(nil) // TODO: add service/plan to the catalog
