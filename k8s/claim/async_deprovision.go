@@ -35,7 +35,7 @@ func pollDeprovisionState(
 		// otherwise continue provisioning state
 		update := state.FullUpdate(
 			mode.StatusDeprovisioningAsync,
-			"polling for asynchronous provisionining",
+			"polling for asynchronous deprovisionining",
 			instanceID,
 			"",
 			mode.JSONObject(map[string]string{
