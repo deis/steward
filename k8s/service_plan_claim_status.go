@@ -21,7 +21,7 @@ const (
 	StatusFailed ServicePlanClaimStatus = "failed"
 )
 
-// Status is the type representing the current status of a claim. It implements fmt.Stringer
+// ServicePlanClaimStatus is the type representing the current status of a claim. It implements fmt.Stringer
 type ServicePlanClaimStatus string
 
 // StringIsStatus returns true if s == st.String()
