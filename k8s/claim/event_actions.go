@@ -348,7 +348,7 @@ func processDeprovision(
 	}
 	claim.Status = mode.StatusDeprovisioned.String()
 	select {
-	case claimCh <- state.StatusUpdate(mode.StatusDeprovisioned):
+	case claimCh <- state.FullUpdate(mode.StatusDeprovisioned, "", instanceID, "", mode.EmptyJSONObject()):
 	case <-ctx.Done():
 		return
 	}
