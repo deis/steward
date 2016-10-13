@@ -131,7 +131,7 @@ While steward provides the same consumer-facing interface (`ServiceCatalogEntry`
 
 Steward is written in Go and tested with [Go unit tests](https://godoc.org/testing).
 
-If you'd like to contribute to this project, simply fork the repository, make your changes, and submit a pull request. Please make sure to follow [these guidelines](https://deis.com/docs/workflow/contributing/submitting-a-pull-request/) when contributing.
+If you'd like to contribute to this project, simply fork the repository, make your changes, and submit a pull request. Please make sure to follow [these guidelines](CONTRIBUTING.md) when contributing.
 
 [cfbroker]: https://docs.cloudfoundry.org/services/overview.html
 [3pr]: https://github.com/kubernetes/kubernetes/blob/master/docs/design/extending-api.md
