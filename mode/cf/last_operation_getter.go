@@ -37,6 +37,13 @@ func (l *lastOperationGetter) GetLastOperation(
 		return nil, err
 	}
 	defer res.Body.Close()
+	// An HTTP response code of 410 (gone) is a distinct state that deprovision may wish to
+	// interpret as success.
+	if res.StatusCode == http.StatusGone {
+		return &mode.GetLastOperationResponse{
+			State: mode.LastOperationStateGone.String(),
+		}, nil
+	}
 	resp := new(mode.GetLastOperationResponse)
 	if err := json.NewDecoder(res.Body).Decode(resp); err != nil {
 		return nil, err

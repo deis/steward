@@ -32,6 +32,10 @@ func pollProvisionState(
 			// if the polling went into success or failed state, just return that
 			return pollState
 		}
+		if pollState == mode.LastOperationStateGone {
+			// When provisioning, treat "gone" as a failure
+			return mode.LastOperationStateFailed
+		}
 
 		// otherwise continue provisioning state
 		update := state.FullUpdate(

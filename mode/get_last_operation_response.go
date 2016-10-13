@@ -25,8 +25,11 @@ const (
 	LastOperationStateSucceeded LastOperationState = "succeeded"
 	// LastOperationStateFailed is the LastOperationState indicating that the operation has failed
 	LastOperationStateFailed LastOperationState = "failed"
-	// LastOperationStateInProgress is the LastOperationState indicating the the operation is still in progress
+	// LastOperationStateInProgress is the LastOperationState indicating that the operation is still in progress
 	LastOperationStateInProgress LastOperationState = "in progress"
+	// LastOperationStateGone is the LastOperationState indicating that the broker has deleted the
+	// instance in question. In the case of async deprovisioning, this is an indicator of success.
+	LastOperationStateGone LastOperationState = "gone"
 )
 
 // GetLastOperationResponse is the response body from a get last operation call
