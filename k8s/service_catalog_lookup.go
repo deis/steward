@@ -45,6 +45,7 @@ func (scl *ServiceCatalogLookup) Set(entry *ServiceCatalogEntry) {
 	scl.lookup[catalogKey(entry.Info.ID, entry.Plan.ID)] = entry
 }
 
+// Len gets the number of items in scl
 func (scl *ServiceCatalogLookup) Len() int {
 	return len(scl.lookup)
 }
