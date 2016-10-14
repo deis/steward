@@ -7,7 +7,54 @@ import (
 	"github.com/arschles/assert"
 	"github.com/deis/steward/mode"
 	"github.com/pborman/uuid"
+	"k8s.io/client-go/1.4/pkg/api"
 )
+
+func TestFetchServiceCatalogLookup(t *testing.T) {
+	iface := &FakeServiceCatalogInteractor{
+		ListRet: &ServiceCatalogEntryList{},
+	}
+	lookup, err := FetchServiceCatalogLookup(iface)
+	assert.NoErr(t, err)
+	assert.Equal(t, lookup.Len(), 0, "number of items in the catalog")
+	iface.ListRet.Items = []*ServiceCatalogEntry{
+		NewServiceCatalogEntry(
+			"testBroker1",
+			api.ObjectMeta{},
+			mode.ServiceInfo{
+				ID:   uuid.New(),
+				Name: "testSvc1",
+			},
+			mode.ServicePlan{
+				ID:   uuid.New(),
+				Name: "testPlan1",
+			},
+		),
+		NewServiceCatalogEntry(
+			"testBroker2",
+			api.ObjectMeta{},
+			mode.ServiceInfo{
+				ID:   uuid.New(),
+				Name: "testSvc2",
+			},
+			mode.ServicePlan{
+				ID:   uuid.New(),
+				Name: "testPlan2",
+			},
+		),
+	}
+	lookup, err = FetchServiceCatalogLookup(iface)
+	assert.NoErr(t, err)
+	assert.Equal(t, lookup.Len(), len(iface.ListRet.Items), "number of items in the catalog")
+	for _, entry := range iface.ListRet.Items {
+		assert.Equal(
+			t,
+			lookup.Get(entry.Info.ID, entry.Plan.ID),
+			entry,
+			fmt.Sprintf("service %s, plan %s", entry.Info.ID, entry.Plan.ID),
+		)
+	}
+}
 
 func TestServiceCatalogLookupCatalogKey(t *testing.T) {
 	svcID := uuid.New()
