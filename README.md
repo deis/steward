@@ -17,20 +17,26 @@ Specifically, its high-level goals are to:
 
 ## Glossary
 
+* **Cloud Foundry Service Broker API**: API definition created by CloudFoundry, broadly describing provisioning/deprovisioning and binding/unbinding
+* **Cloud Foundry Service Broker**: a concrete implementation of the CF Service Broker API, e.g. <https://github.com/cloudfoundry/cf-mysql-release>
+
 * **Consumer**: An application and/or developer who would like access to some service provided by a third party. The consumer might not directly provision the service that it needs.
 * **Requestable Service** (RS): is something that may be provisioned, created, or exposed on behalf of a Consumer. **Requestable Services** are not related to Kubernetes services. Example include:
     * account and access credentials for an off-cluster SaaS service like Sendgrid
     * access credentials for a relational data store like MySQL or Postgres
 * **Service Plan**: is a specific "configuration" of a service, which may be expressed in terms like "small", "medium", or "large". Any specific quota or difference between plans is left up to the Service Provider to implement.
-* **Service Catalog**: is a registry of Requestable Services published into a Kubernetes cluster.
-* **ServicePlanClaim**: is a concrete Kubernetes resource (created as a `ConfigMap`) which represents the desire of a **Consumer** to gain access to a **Requestable Service**. The **ServicePlanClaim** references the **Requestable Service** and informs Steward where the consuming application expects to read **Service Credentials** that are created after processing the claim.
+* **Service Plan Claim**: is a concrete Kubernetes `ConfigMap` which represents the desire of a **Consumer** to gain access to a **Requestable Service**. The **Service Plan Claim** references the **Requestable Service** and informs Steward where the consuming application expects to read **Service Credentials** that are created after processing the claim.
+* **Service Catalog**: is a registry of **Requestable Services**  into a Kubernetes cluster.
+* **Service Credentials/Configuration**: is the configuration (hostnames, usernames, passwords, etc.) meant for the **Consumer** to use for connection and authentication to the **Service Instance**.
 * **Service Provider**: is a system that lives either on or off-cluster and holds implementation logic for a **Requestable Service**. In the case of a SaaS-based RS like Sendgrid, the **Service Provider** is the Sendgrid SaaS platform.
-* **Service Instance**: is the entity or enteties created or exposed on behalf of the **Consumer** placing a **ServicePlanClaim** and that claim being fulfilled by a **Service Provider**. Example **Service Instance**s include:
+* **Service Instance**: is the entity or entities created or exposed on behalf of the **Consumer** placing a **ServicePlanClaim** and that claim being fulfilled by a **Service Provider**. Example **Service Instance**s include:
     * a provisioned AWS RDS service, a logical database and credentials
     * a logical database, username and password created on a shared RDBM system
-* **Service Credentials/Configuration**: is the configuration (hostnames, usernames, passwords, etc.) meant for the **Consumer** to use for connection and authentication to the **Service Instance**.
-* **Cloud Foundry Service Broker API**: API definition created by CloudFoundry, broadly describing provisioning/deprovisioning and binding/unbinding
-* **Cloud Foundry Service Broker**: a concrete implementation of the CF Service Broker API, e.g. <https://github.com/cloudfoundry/cf-mysql-release>
+* **Service Backend**: is a process that handles API calls as part of creating a Requestable Service, including `provision`, `deprovision`, `bind`, `unbind`. The **Service Backend** sits "in front" of the **Service Provider**. Example **Service Backend**s include:
+    * a deployed Cloud Foundry Service Broker
+    * a deployed Steward running in Helm Mode
+    * a deployed Steward running in Command Mode
+
 
 # Deploying Steward
 
@@ -46,13 +52,13 @@ kubectl logs -f ${STEWARD_POD_NAME} --namespace=${STEWARD_NAMESPACE}
 
 Steward runs a control loop to watch the Kubernetes event stream for a set of [`ThirdPartyResource`][3pr]s (called 3PRs hereafter) in one, some, or all available namespaces. It uses these 3PRs to communicate with an operator that requests a service.
 
-A single Steward process is responsible for talking to a single backend system that provides services and plans. Each Steward process may run in one of three _modes_:
+A single Steward process is responsible for talking to a single **Service Provider**. If an operator wants to deploy multiple **Service Providers**, a cluster operator would deploy additional stewards. Each Steward process may run in one of three _modes_:
 
-- CloudFoundry Broker
-- Helm Tiller
-- Command
+- CloudFoundry Broker Mode
+- Helm Tiller Mode
+- Command Mode
 
-A single Steward process should be run in a cluster to support a configuration of each mode. Below is a cluster that exemplifies multiple configurations of multiple modes:
+Below is an example deployment that that exemplifies multiple Steward processes each exposing a **Service Provider**:
 
 - One Steward process configured to use CloudFoundry Broker A
 - One Steward process configured to use CloudFoundry Broker B
@@ -60,11 +66,11 @@ A single Steward process should be run in a cluster to support a configuration o
 - One Steward Process configured to use Command A
 - One Steward process configured to use Command B
 
-Details on each mode can be found below.
+Details on each Steward mode can be found below.
 
 ## Available Services
 
-On startup, a Steward publishes its data to a set of `ServiceCatalogEntry` 3PRs that indicate the availability of each of the service's plans. Conceptually, each 3PR contains the name of the Steward instance (specified in configuration), the service, and one of its plans. Here are some example 3PRs:
+On startup, a Steward process publishes its service data as a set of `ServiceCatalogEntry` 3PRs that indicate the availability of each of a **Requestable Service**. Each **Service Catalog Entry** contains the name of the Steward instance (specified in configuration), the **Requestable Service**, and at least one **Service Plan**. Here are some example 3PRs:
 
 - `firststeward-mysql-small`
 - `secondsteward-mysql-large`
