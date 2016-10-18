@@ -25,7 +25,7 @@ func dataFieldKey(cm *v1types.ConfigMap, key string) string {
 
 func (b binder) Bind(instanceID, bindingID string, bindRequest *mode.BindRequest) (*mode.BindResponse, error) {
 	resp := &mode.BindResponse{
-		Creds: mode.JSONObject(map[string]string{}),
+		Creds: mode.JSONObject(map[string]interface{}{}),
 	}
 
 	// use b.cmInfo to try and find all the listed ConfigMaps in k8s. use the data from each ConfigMap to fill in the bind response's Data field

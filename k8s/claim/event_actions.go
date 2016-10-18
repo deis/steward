@@ -163,7 +163,7 @@ func processBind(
 	bindRes, err := lifecycler.Bind(instanceID, bindID, &mode.BindRequest{
 		ServiceID:  claim.ServiceID,
 		PlanID:     claim.PlanID,
-		Parameters: mode.JSONObject(map[string]string{}),
+		Parameters: mode.JSONObject(map[string]interface{}{}),
 	})
 	if err != nil {
 		select {
@@ -175,7 +175,9 @@ func processBind(
 
 	credBytes := make(map[string][]byte, len(bindRes.Creds))
 	for k, v := range bindRes.Creds {
-		credBytes[k] = []byte(v)
+		// Should turn anything into a string representation, which is easily turned into bytes
+		valStr := fmt.Sprintf("%v", v)
+		credBytes[k] = []byte(valStr)
 	}
 
 	if _, err := secretsNamespacer.Secrets(claimWrapper.ObjectMeta.Namespace).Create(&v1types.Secret{

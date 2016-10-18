@@ -32,7 +32,7 @@ func (p provisioner) Provision(instanceID string, req *mode.ProvisionRequest) (*
 
 	resp := &mode.ProvisionResponse{
 		Operation: provisionedActiveOperation,
-		Extra: mode.JSONObject(map[string]string{
+		Extra: mode.JSONObject(map[string]interface{}{
 			releaseNameKey: createResp.Release.Name,
 		}),
 	}
