@@ -26,21 +26,21 @@ func TestUpdateClaim(t *testing.T) {
 				"some other description",
 				uuid.New(),
 				uuid.New(),
-				mode.JSONObject(map[string]string{"a": "b"}),
+				mode.JSONObject(map[string]interface{}{"a": "b"}),
 			),
 		},
 		testCase{
 			claim: k8s.ServicePlanClaim{
 				Status:            k8s.StatusProvisioned.String(),
 				StatusDescription: "start",
-				Extra:             mode.JSONObject(map[string]string{"a": "b"}),
+				Extra:             mode.JSONObject(map[string]interface{}{"a": "b"}),
 			},
 			update: FullUpdate(
 				k8s.StatusBinding,
 				"end",
 				uuid.New(),
 				uuid.New(),
-				mode.JSONObject(map[string]string{"c": "d", "e": "f"}),
+				mode.JSONObject(map[string]interface{}{"c": "d", "e": "f"}),
 			),
 		},
 		testCase{

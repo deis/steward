@@ -72,7 +72,7 @@ func pollProvisionState(
 			"polling for asynchronous provisionining",
 			instanceID,
 			"",
-			mode.JSONObject(map[string]string{
+			mode.JSONObject(map[string]interface{}{
 				asyncProvisionRespOperationKey: operation,
 				asyncProvisionPollStateKey:     pollState.String(),
 				asyncProvisionPollCountKey:     strconv.Itoa(pollNum),

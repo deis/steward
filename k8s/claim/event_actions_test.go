@@ -115,7 +115,7 @@ func TestProcessProvisionServiceFound(t *testing.T) {
 	defer cancelFn()
 	provisioner := &fake.Provisioner{
 		Resp: &mode.ProvisionResponse{
-			Extra: mode.JSONObject(map[string]string{
+			Extra: mode.JSONObject(map[string]interface{}{
 				uuid.New(): uuid.New(),
 			}),
 		},
@@ -201,7 +201,7 @@ func TestProcessBindInstanceIDFound(t *testing.T) {
 	catalogLookup := getCatalogFromEvents(evt)
 	binder := &fake.Binder{
 		Res: &mode.BindResponse{
-			Creds: mode.JSONObject(map[string]string{
+			Creds: mode.JSONObject(map[string]interface{}{
 				"cred1": uuid.New(),
 				"cred2": uuid.New(),
 			}),
@@ -389,7 +389,7 @@ func TestProcessDeprovisionServiceFound(t *testing.T) {
 func TestDeprovisionInstanceIDFound(t *testing.T) {
 	claim := getClaim(k8s.ActionDeprovision)
 	claim.InstanceID = uuid.New()
-	claim.Extra = mode.JSONObject(map[string]string{
+	claim.Extra = mode.JSONObject(map[string]interface{}{
 		uuid.New(): uuid.New(),
 	})
 	evt := getEvent(claim)

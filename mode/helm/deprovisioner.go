@@ -32,10 +32,14 @@ func (d deprovisioner) Deprovision(instanceID string, dreq *mode.DeprovisionRequ
 			Operation: deprovisionedNoopOperation,
 		}, nil
 	}
-	releaseName, ok := dreq.Parameters[releaseNameKey]
+	_, ok := dreq.Parameters[releaseNameKey]
 	if !ok {
 		logger.Errorf("finding the release name key")
 		return nil, errMissingReleaseName{params: dreq.Parameters}
+	}
+	releaseName, err := dreq.Parameters.String(releaseNameKey)
+	if err != nil {
+		return nil, err
 	}
 	if _, err := d.deleter.Delete(releaseName); err != nil {
 		logger.Errorf("deleting the helm chart (%s)", err)

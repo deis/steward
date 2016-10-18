@@ -71,7 +71,7 @@ func pollDeprovisionState(
 			"polling for asynchronous deprovisionining",
 			instanceID,
 			"",
-			mode.JSONObject(map[string]string{
+			mode.JSONObject(map[string]interface{}{
 				asyncDeprovisionRespOperationKey: operation,
 				asyncDeprovisionPollStateKey:     pollState.String(),
 				asyncDeprovisionPollCountKey:     strconv.Itoa(pollNum),
