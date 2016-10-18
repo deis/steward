@@ -6,4 +6,5 @@ type Lifecycler struct {
 	Deprovisioner
 	Binder
 	Unbinder
+	LastOperationGetter
 }

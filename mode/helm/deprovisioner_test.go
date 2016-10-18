@@ -24,7 +24,8 @@ func TestDeprovisionActive(t *testing.T) {
 	deleter := &fakeCreatorDeleter{}
 	deprov := newDeprovisioner(chart, ProvisionBehaviorActive, deleter)
 	deprovReq := &mode.DeprovisionRequest{
-		Parameters: mode.JSONObject(map[string]string{releaseNameKey: releaseName}),
+		AcceptsIncomplete: true,
+		Parameters:        mode.JSONObject(map[string]string{releaseNameKey: releaseName}),
 	}
 	resp, err := deprov.Deprovision(instID, deprovReq)
 	assert.NoErr(t, err)

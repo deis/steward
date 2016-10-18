@@ -77,11 +77,12 @@ func processProvision(
 	spaceGUID := uuid.New()
 	instanceID := uuid.New()
 	provisionResp, err := lifecycler.Provision(instanceID, &mode.ProvisionRequest{
-		OrganizationGUID: orgGUID,
-		PlanID:           svc.Plan.ID,
-		ServiceID:        svc.Info.ID,
-		SpaceGUID:        spaceGUID,
-		Parameters:       mode.JSONObject(map[string]string{}),
+		OrganizationGUID:  orgGUID,
+		PlanID:            svc.Plan.ID,
+		ServiceID:         svc.Info.ID,
+		SpaceGUID:         spaceGUID,
+		AcceptsIncomplete: true,
+		Parameters:        mode.EmptyJSONObject(),
 	})
 	if err != nil {
 		select {
@@ -89,6 +90,31 @@ func processProvision(
 		case <-ctx.Done():
 		}
 		return
+	}
+	if provisionResp.IsAsync {
+		endState := pollProvisionState(
+			ctx,
+			claim.ServiceID,
+			claim.PlanID,
+			provisionResp.Operation,
+			instanceID,
+			lifecycler,
+			claimCh,
+		)
+		if endState == mode.LastOperationStateFailed {
+			failStatus := state.FullUpdate(
+				k8s.StatusFailed,
+				"failed polling for asynchrnous provision",
+				instanceID,
+				"",
+				mode.EmptyJSONObject(),
+			)
+			select {
+			case claimCh <- failStatus:
+			case <-ctx.Done():
+				return
+			}
+		}
 	}
 	select {
 	case claimCh <- state.FullUpdate(k8s.StatusProvisioned, "", instanceID, "", provisionResp.Extra):
@@ -282,20 +308,47 @@ func processDeprovision(
 
 	// deprovision
 	deprovisionReq := &mode.DeprovisionRequest{
-		ServiceID:  claim.ServiceID,
-		PlanID:     claim.PlanID,
-		Parameters: evt.claim.Claim.Extra,
+		ServiceID:         claim.ServiceID,
+		PlanID:            claim.PlanID,
+		AcceptsIncomplete: true,
+		Parameters:        evt.claim.Claim.Extra,
 	}
-	if _, err := lifecycler.Deprovision(instanceID, deprovisionReq); err != nil {
+	deprovisionResp, err := lifecycler.Deprovision(instanceID, deprovisionReq)
+	if err != nil {
 		select {
 		case claimCh <- state.ErrUpdate(err):
 		case <-ctx.Done():
 		}
 		return
 	}
+	if deprovisionResp.IsAsync {
+		finalState := pollDeprovisionState(
+			ctx,
+			claim.ServiceID,
+			claim.PlanID,
+			deprovisionResp.Operation,
+			instanceID,
+			lifecycler,
+			claimCh,
+		)
+		if finalState == mode.LastOperationStateFailed {
+			failState := state.FullUpdate(
+				k8s.StatusFailed,
+				"polling async deprovision status failed",
+				instanceID,
+				"",
+				mode.EmptyJSONObject(),
+			)
+			select {
+			case claimCh <- failState:
+			case <-ctx.Done():
+			}
+			return
+		}
+	}
 	claim.Status = k8s.StatusDeprovisioned.String()
 	select {
-	case claimCh <- state.StatusUpdate(k8s.StatusDeprovisioned):
+	case claimCh <- state.FullUpdate(k8s.StatusDeprovisioned, "", instanceID, "", mode.EmptyJSONObject()):
 	case <-ctx.Done():
 		return
 	}

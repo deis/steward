@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/deis/steward/mode"
@@ -18,11 +19,13 @@ type provisioner struct {
 }
 
 func (p provisioner) Provision(instanceID string, pReq *mode.ProvisionRequest) (*mode.ProvisionResponse, error) {
+	query := url.Values(map[string][]string{})
+	query.Add(asyncQueryKey, "true")
 	bodyBytes := new(bytes.Buffer)
 	if err := json.NewEncoder(bodyBytes).Encode(pReq); err != nil {
 		return nil, err
 	}
-	req, err := p.cl.Put(emptyQuery, bodyBytes, "v2", "service_instances", instanceID)
+	req, err := p.cl.Put(query, bodyBytes, "v2", "service_instances", instanceID)
 	if err != nil {
 		return nil, err
 	}
@@ -32,14 +35,20 @@ func (p provisioner) Provision(instanceID string, pReq *mode.ProvisionRequest) (
 	if err != nil {
 		return nil, err
 	}
-	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusCreated {
+
+	resp := new(mode.ProvisionResponse)
+	switch res.StatusCode {
+	case http.StatusOK, http.StatusCreated:
+		resp.IsAsync = false
+	case http.StatusAccepted:
+		resp.IsAsync = true
+	default:
 		return nil, web.ErrUnexpectedResponseCode{
 			URL:      req.URL.String(),
 			Expected: http.StatusOK,
 			Actual:   res.StatusCode,
 		}
 	}
-	resp := new(mode.ProvisionResponse)
 	if err := json.NewDecoder(res.Body).Decode(resp); err != nil {
 		return nil, err
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/deis/steward/mode"
+	"github.com/deis/steward/mode/common"
 	"k8s.io/client-go/1.4/kubernetes/typed/core/v1"
 	"k8s.io/helm/pkg/proto/hapi/chart"
 )
@@ -24,9 +25,10 @@ func newLifecycler(
 		return nil, err
 	}
 	return &mode.Lifecycler{
-		Provisioner:   newProvisioner(chart, installNS, provBehavior, creatorDeleter),
-		Binder:        binder,
-		Unbinder:      newUnbinder(),
-		Deprovisioner: newDeprovisioner(chart, provBehavior, creatorDeleter),
+		Provisioner:         newProvisioner(chart, installNS, provBehavior, creatorDeleter),
+		Binder:              binder,
+		Unbinder:            newUnbinder(),
+		Deprovisioner:       newDeprovisioner(chart, provBehavior, creatorDeleter),
+		LastOperationGetter: common.NoopLastOperationGetter{},
 	}, nil
 }

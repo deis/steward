@@ -24,3 +24,8 @@ type Binder interface {
 type Unbinder interface {
 	Unbind(instanceID, bindingID string, unbindRequest *UnbindRequest) error
 }
+
+// LastOperationGetter fetches the last operation performed after an async provision or deprovision response
+type LastOperationGetter interface {
+	GetLastOperation(serviceID, planID, operation, instanceID string) (*GetLastOperationResponse, error)
+}

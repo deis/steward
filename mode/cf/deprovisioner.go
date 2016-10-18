@@ -21,6 +21,7 @@ func (d deprovisioner) Deprovision(instanceID string, dReq *mode.DeprovisionRequ
 	query := url.Values(map[string][]string{})
 	query.Add(serviceIDQueryKey, dReq.ServiceID)
 	query.Add(planIDQueryKey, dReq.PlanID)
+	query.Add(asyncQueryKey, "true")
 	req, err := d.cl.Delete(query, "v2", "service_instances", instanceID)
 	if err != nil {
 		return nil, err
@@ -32,14 +33,21 @@ func (d deprovisioner) Deprovision(instanceID string, dReq *mode.DeprovisionRequ
 		return nil, err
 	}
 	defer res.Body.Close()
-	if res.StatusCode != http.StatusOK && res.StatusCode != http.StatusAccepted {
+
+	resp := new(mode.DeprovisionResponse)
+	switch res.StatusCode {
+	case http.StatusOK:
+		resp.IsAsync = false
+	case http.StatusAccepted:
+		resp.IsAsync = true
+	default:
 		return nil, web.ErrUnexpectedResponseCode{
 			URL:      req.URL.String(),
 			Expected: http.StatusOK,
 			Actual:   res.StatusCode,
 		}
 	}
-	resp := new(mode.DeprovisionResponse)
+
 	if err := json.NewDecoder(res.Body).Decode(resp); err != nil {
 		return nil, err
 	}
