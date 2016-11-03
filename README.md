@@ -2,8 +2,8 @@
 
 [![Build Status](https://travis-ci.com/deis/steward.svg?token=UQsxfwHAz3NPyVqxkrrp&branch=master)](https://travis-ci.com/deis/steward)
 
-*__Note__*: This project is in __alpha status__. It is subject to API and architectural changes.
-We will change or remove this notice when development status changes.
+*__Note__: This project is in __alpha status__. It is subject to API and architectural changes.
+We will change or remove this notice when development status changes.*
 
 This is the Kubernetes-native service broker. Modeled after the [CloudFoundry Service Broker System][cfbroker]
 it functions as a gateway from your cluster-aware applications to other services, both inside and outside your cluster.
