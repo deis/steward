@@ -95,13 +95,13 @@ a [`ServicePlanClaim`](./doc/DATA_STRUCTURES.md) data structure (just called `Se
 Steward constantly watches for `ServicePlanClaim`s in its control loop. Upon finding a new `ServicePlanClaim`,
 it executes the following algorithm:
 
-1. Looks for the `ServiceCatalogEntry` 3PR in the catalog
-  - If not found, sets the `status` field to `Failed`, adds an appropriate explanation to the `statusDescription` field
+  1. Looks for the `ServiceCatalogEntry` 3PR in the catalog
+    - If not found, sets the `status` field to `Failed`, adds an appropriate explanation to the `statusDescription` field
     field to a human-readable description of the error, and stops processing
-1. Looks in the `action` field of the claim and takes the appropriate action
-  - Valid values are `provision`, `bind`, `unbind`, `deprovision`, `create` and `delete`. See [`ServicePlanClaim` documentation](./doc/DATA_STRUCTURES.md#serviceplanclaim) for details on each value
-  - If the action failed, Steward sets the `status` field to `Failed` and adds an appropriate explanation to the `statusDescription` field
-1. On success, writes values appropriate to the `action` that was submitted. See below for details on each `action`
+  2. Looks in the `action` field of the claim and takes the appropriate action
+    - Valid values are `provision`, `bind`, `unbind`, `deprovision`, `create` and `delete`. See [`ServicePlanClaim` documentation](./doc/DATA_STRUCTURES.md#serviceplanclaim) for details on each value
+    - If the action failed, Steward sets the `status` field to `Failed` and adds an appropriate explanation to the `statusDescription` field
+  3. On success, writes values appropriate to the `action` that was submitted. See below for details on each `action`
 
 ### `provision`
 - `status: provisioned`
